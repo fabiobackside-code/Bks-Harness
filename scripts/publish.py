@@ -21,6 +21,7 @@ ALLOW = (
     '.claude-plugin/', 'agents/', 'commands/', 'evals/', 'hooks/', 'profiles/', 'skills/',
     'templates/', 'tests/', 'scripts/',
     'docs/artefatos/atlas/', 'docs/artefatos/apresentacao/', 'docs/artefatos/manual/',
+    'docs/artefatos/treinamento/',
     'docs/ARCHITECTURE.md', 'README.md', 'LICENSE', '.gitignore', '.gitattributes',
 )
 

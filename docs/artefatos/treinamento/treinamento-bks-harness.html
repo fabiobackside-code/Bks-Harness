@@ -1,0 +1,585 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Treinamento do bks-harness — Instalação e uso · v1.0.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0F1923;--paper:#13202E;--ink:#EDE9E1;--soft:#C9D3DC;--quiet:#8FA0B0;--line:#2D4257;--accent:#F0904F;--accent2:#F0904F;--codebg:#0C1620;--axis:#7D8C99;--grid:#2D4257;--tint:#1D2E40}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Arial,sans-serif;font-size:16px;line-height:1.6}
+main{max-width:860px;margin:0 auto;padding:48px 32px 96px}
+.cover{min-height:92vh;display:flex;flex-direction:column;justify-content:space-between;padding:64px 0;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:'JetBrains Mono','Courier New',monospace;font-size:13px;letter-spacing:.06em;color:var(--accent)}
+.cover h1{font-size:56px;line-height:1.05;margin:24px 0 16px;font-weight:600;border:none;padding:0}
+.cover p.sub{font-size:20px;color:var(--soft);max-width:620px}
+.meta{font-family:'JetBrains Mono','Courier New',monospace;font-size:13px;color:var(--quiet)}
+nav.toc{padding:48px 0;border-bottom:1px solid var(--line)} nav.toc ol{padding-left:20px;columns:2;column-gap:40px} nav.toc li{margin:6px 0}
+a{color:var(--accent)}
+h2{font-size:32px;line-height:1.15;margin:72px 0 16px;padding-top:24px;border-top:3px solid var(--accent2);font-weight:600}
+h3{font-size:22px;margin:40px 0 8px;font-weight:600}
+h4{font-size:18px;margin:32px 0 6px;font-weight:600;color:var(--accent)}
+h5{font-size:16px;margin:24px 0 4px;font-weight:600}
+p,li{color:var(--soft)} strong,b{color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:16px 0 24px;display:block;overflow-x:auto}
+th{text-align:left;border-bottom:2px solid var(--ink);padding:8px 10px} td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top;color:var(--soft)}
+code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.88em;background:var(--codebg);padding:1px 5px;border-radius:4px}
+pre{background:var(--codebg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;font-size:13px;line-height:1.5;white-space:pre-wrap} pre code{background:none;padding:0}
+blockquote{margin:16px 0;padding:8px 20px;border-left:3px solid var(--accent2);background:var(--paper);border-radius:0 10px 10px 0}
+figure{margin:28px 0;padding:20px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+figure svg{width:100%;height:auto;display:block} figcaption{font-size:13px;color:var(--quiet);margin-top:10px}
+ul li::marker,ol li::marker{color:var(--accent)}
+@page{size:A4;margin:18mm 16mm 20mm}
+@media print{
+ :root{--bg:#fff;--paper:#fff;--ink:#1C2733;--soft:#2E3A47;--quiet:#5A636E;--line:#D8D2C6;--accent:#A84E18;--accent2:#D9682B;--codebg:#F4F1EA;--axis:#7A7F84;--grid:#CFCAC0;--tint:#F3EFE7}
+ html,body{font-size:11pt} main{max-width:none;padding:0}
+ .cover{min-height:250mm;page-break-after:always;border:none} nav.toc{page-break-after:always;border:none}
+ h2{page-break-before:always;margin-top:0} h3,h4,h5{page-break-after:avoid}
+ figure,table,pre,blockquote{page-break-inside:avoid} table{display:table}
+ a{color:var(--ink);text-decoration:none}
+}
+</style></head><body><main>
+<section class="cover"><div class="eyebrow">BKS HARNESS · TREINAMENTO</div>
+<div><h1>Treinamento do bks-harness</h1><p class="sub">Instalação e uso: do zero à primeira sessão produtiva e a um ciclo completo com a equipe de agentes.</p></div>
+<div class="meta">Versão 1.0.0 · para quem instala pelo repositório público</div></section>
+<nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#antes-de-comecar">Antes de começar</a></li><li><a href="#parte-1-instalacao">Parte 1 — Instalação</a></li><li><a href="#parte-2-uso">Parte 2 — Uso</a></li><li><a href="#historico-de-versoes">Histórico de versões</a></li></ol></nav>
+<h2 id="antes-de-comecar">Antes de começar</h2>
+<p>Este manual leva você do zero até a primeira sessão produtiva e, depois, a um ciclo completo com a
+equipe de agentes. Ele é um roteiro, não uma referência: siga os capítulos na ordem.</p>
+<p>Cada capítulo fecha com <strong>Confira</strong>, o que deve aparecer na sua tela se o passo deu certo. Não
+avance com uma conferência falhando. Os capítulos de uso trazem também um <strong>Exercício</strong> curto.</p>
+<p>O harness (o conjunto de ferramentas em volta do modelo) tem duas peças que você instala:</p>
+<ul>
+<li><strong>o kit</strong>, o plugin <code>bkhar</code> do Claude Code, publicado no repositório <code>Bks-Harness</code>;</li>
+<li><strong>o vault</strong>, opcional, o template <code>bks-2brains</code>, onde ficam o seu perfil, o seu conhecimento e
+  os seus projetos.</li>
+</ul>
+<p>Os caminhos deste manual são exemplos, como <code>C:\dev\2brains</code>. Troque pelos seus.</p>
+<p>Para o porquê de cada decisão, leia o Atlas. Para o detalhe de cada comando, o manual de comandos,
+que é a Parte X do Atlas. Os dois estão em <code>docs/artefatos/</code> do repositório.</p>
+<h2 id="parte-1-instalacao">Parte 1 — Instalação</h2>
+<h3>1. O que você vai instalar</h3>
+<p>O <strong>kit</strong> é o motor. Traz as skills (instruções que o agente carrega sob demanda), os comandos
+<code>/bkhar:*</code>, os seis agentes da equipe e os guardas, scripts que recusam a escrita fora do padrão.
+Instala uma vez por máquina e vale em qualquer pasta.</p>
+<p>O <strong>vault</strong> é a memória entre projetos. Guarda quem você é (<code>workbench/</code>), o que você aprendeu
+(<code>knowledge/</code>) e os seus projetos (<code>repos/</code>). É opcional: sem ele, o kit funciona no diretório
+onde a sessão estiver aberta.</p>
+<p>O <strong>projeto</strong> guarda o próprio estado: <code>STATUS.md</code>, specs, decisões e código, com git próprio.
+Nenhum comando depende de um hub central.</p>
+<div markdown="0"><figure><svg viewBox='0 0 760 330' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Kit, vault e projeto' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='t1' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='var(--axis)'/></marker></defs><g fill='none' stroke='var(--axis)' stroke-width='1.25'><path d='M526 102H240' marker-end='url(#t1)'/><path d='M44 134V258H269' marker-end='url(#t1)'/><path d='M726 134V258H491' marker-end='url(#t1)' stroke-dasharray='5 4'/></g><text x='24' y='28' font-size='15' font-weight='600' fill='var(--ink)' text-anchor='start'>Três peças: o kit trabalha, o vault lembra, o projeto guarda o próprio estado</text><rect x='24' y='70' width='210' height='64' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='129' y='98' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle'>Kit · plugin bkhar</text><text x='129' y='115' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>repositório Bks-Harness</text><text x='58' y='156' font-size='11.5' fill='var(--quiet)' text-anchor='start'>skills, comandos, agentes, guardas</text><text x='58' y='172' font-size='11.5' fill='var(--quiet)' text-anchor='start'>instalado uma vez por máquina</text><rect x='526' y='70' width='210' height='64' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25' stroke-dasharray='5 4'/><text x='631' y='98' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>Vault · bks-2brains</text><text x='631' y='115' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>opcional</text><text x='530' y='156' font-size='11.5' fill='var(--quiet)' text-anchor='start'>perfil, conhecimento, decisões</text><text x='530' y='172' font-size='11.5' fill='var(--quiet)' text-anchor='start'>um por pessoa</text><rect x='275' y='226' width='210' height='64' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='380' y='254' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>Projeto</text><text x='380' y='271' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>repos/{categoria}/{nome}</text><text x='380' y='312' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>STATUS, specs, decisões, código, git próprio</text><text x='383' y='94' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>o kit lê o perfil e o conhecimento</text><text x='56' y='210' font-size='11.5' fill='var(--quiet)' text-anchor='start'>os comandos escrevem aqui</text><text x='714' y='210' font-size='11.5' fill='var(--quiet)' text-anchor='end'>o vault contém o projeto</text></svg><figcaption><b>Figura 1</b> · kit, vault e projeto</figcaption></figure></div>
+
+<p><strong>Confira.</strong> Você sabe responder: se eu apagar o vault, o kit continua funcionando? Sim. O que se
+perde é a memória entre projetos.</p>
+<h3>2. Antes de começar</h3>
+<table>
+<thead>
+<tr>
+<th>Requisito</th>
+<th>Para quê</th>
+<th>Como conferir</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Code, instalado e autenticado</td>
+<td>é onde o plugin roda</td>
+<td><code>claude --version</code></td>
+</tr>
+<tr>
+<td><code>git</code></td>
+<td>clonar o vault e versionar os projetos</td>
+<td><code>git --version</code></td>
+</tr>
+<tr>
+<td>Python 3 no <code>PATH</code>, chamado <code>python</code></td>
+<td>os guardas são scripts Python</td>
+<td><code>python --version</code></td>
+</tr>
+</tbody>
+</table>
+<p>O manual foi testado com o Claude Code 2.1.303. Versões mais novas devem funcionar; se algo
+divergir, confira a versão antes de qualquer outra coisa.</p>
+<p>O Python é obrigatório, mesmo sem escrever uma linha de Python. Os guardas rodam antes de cada
+escrita de arquivo; se o comando <code>python</code> não existir, eles falham em toda escrita.</p>
+<p>No Windows, o instalador do Python tem a opção de pôr o <code>python.exe</code> no <code>PATH</code>. Marque. Se o terminal
+responder <code>python3</code> mas não <code>python</code>, crie o alias ou reinstale com a opção marcada.</p>
+<p><strong>Confira.</strong> Os três comandos da tabela respondem com uma versão, sem erro.</p>
+<h3>3. Instalar o plugin</h3>
+<p>Dentro de uma sessão do Claude Code:</p>
+<pre><code>/plugin marketplace add fabiobackside-code/Bks-Harness
+/plugin install bkhar@bks-harness
+</code></pre>
+<p>Ou pelo terminal, fora da sessão:</p>
+<pre><code>claude plugin marketplace add fabiobackside-code/Bks-Harness
+claude plugin install bkhar@bks-harness
+</code></pre>
+<p>Três nomes aparecem aqui, e cada um tem um papel:</p>
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>É o quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Bks-Harness</code></td>
+<td>o repositório no GitHub</td>
+</tr>
+<tr>
+<td><code>bks-harness</code></td>
+<td>o marketplace, o catálogo que o Claude Code registra</td>
+</tr>
+<tr>
+<td><code>bkhar</code></td>
+<td>o plugin, e o prefixo dos comandos: <code>/bkhar:brain</code></td>
+</tr>
+</tbody>
+</table>
+<p>O plugin entra no escopo <code>user</code>: vale em qualquer pasta da máquina. Feche a sessão e abra outra
+para os comandos aparecerem; a instalação avisa <code>Restart to apply changes</code>.</p>
+<p>Para instalar a partir de um clone local, troque o primeiro comando por
+<code>claude plugin marketplace add &lt;pasta-do-clone&gt;</code>, por exemplo <code>C:\dev\bks-harness</code>. Nesse caso o
+plugin é lido direto da pasta: o que estiver no disco vale na próxima sessão.</p>
+<div markdown="0"><figure><svg viewBox='0 0 760 250' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Caminho da instalação' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='t2' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='var(--axis)'/></marker></defs><g fill='none' stroke='var(--axis)' stroke-width='1.25'><path d='M148 116H172' marker-end='url(#t2)'/><path d='M296 116H320' marker-end='url(#t2)'/><path d='M444 116H468' marker-end='url(#t2)'/><path d='M592 116H616' marker-end='url(#t2)'/></g><text x='24' y='28' font-size='15' font-weight='600' fill='var(--ink)' text-anchor='start'>Cinco passos, cada um com o que conferir antes do próximo</text><rect x='24' y='90' width='124' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='86' y='120.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>Pré-requisitos</text><text x='86' y='172' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>confira</text><text x='86' y='190' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>python --version</text><rect x='172' y='90' width='124' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='234' y='120.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>Marketplace</text><text x='234' y='172' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>confira</text><text x='234' y='190' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>marketplace add</text><rect x='320' y='90' width='124' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='382' y='120.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>Plugin</text><text x='382' y='172' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>confira</text><text x='382' y='190' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>plugin list</text><rect x='468' y='90' width='124' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25' stroke-dasharray='5 4'/><text x='530' y='120.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>Vault</text><text x='530' y='172' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>confira</text><text x='530' y='190' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>BKS_VAULT</text><rect x='616' y='90' width='124' height='52' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='678' y='120.5' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle'>Conferência</text><text x='678' y='172' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>confira</text><text x='678' y='190' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:brain</text><text x='468' y='222' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>opcional: sem vault, o kit funciona no diretório da sessão</text></svg><figcaption><b>Figura 2</b> · caminho da instalação</figcaption></figure></div>
+
+<p><strong>Confira.</strong> <code>claude plugin list</code> mostra:</p>
+<pre><code>❯ bkhar@bks-harness
+  Version: 0.9.0
+  Scope: user
+  Status: ✔ enabled
+</code></pre>
+<p>E <code>claude plugin details bkhar@bks-harness</code> lista <code>Agents (6)  architect, developer, quality,
+scribe, security, tester</code> e os hooks <code>PreToolUse</code>, <code>SessionStart</code> e <code>PostToolUse</code>. O custo fixo
+fica em torno de 3,2 mil tokens por sessão.</p>
+<h3>4. Montar o vault (opcional)</h3>
+<p>Pule este capítulo se quiser só o kit. Volte a ele quando sentir falta de memória entre projetos.</p>
+<p><strong>Clonar e desligar do template.</strong> O template já cumpriu o papel dele; o seu vault é outro
+repositório:</p>
+<pre><code>git clone https://github.com/fabiobackside-code/bks-2brains C:\dev\2brains
+cd C:\dev\2brains
+rm -rf .git
+git init
+git add -A
+git commit -m &quot;chore: vault inicial a partir do template&quot;
+</code></pre>
+<p>No PowerShell, troque o <code>rm -rf .git</code> por <code>Remove-Item -Recurse -Force .git</code>.</p>
+<p>Se for publicar o seu vault, use um repositório <strong>privado</strong>. A partir do perfil, ele guarda o que
+é seu.</p>
+<p><strong>Apontar o kit para o vault.</strong> Duas variáveis de ambiente, em <code>~/.claude/settings.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;env&quot;: {
+    &quot;BKS_VAULT&quot;: &quot;C:/dev/2brains&quot;,
+    &quot;BKS_KNOWLEDGE&quot;: &quot;C:/dev/2brains/knowledge&quot;
+  }
+}
+</code></pre>
+<p>No Windows, barras normais funcionam. Abra uma sessão nova depois de salvar: a sessão aberta antes
+não enxerga a variável.</p>
+<p><strong>Escrever o perfil.</strong> É o arquivo que o agente lê em toda sessão, de qualquer projeto:</p>
+<pre><code>cp workbench/profile.example.md workbench/profile.md
+</code></pre>
+<p>Reescreva com o seu conteúdo: experiência, stack, arquitetura padrão, regras inegociáveis e
+preferências de resposta. Escreva regra, não desejo. "Nunca use MediatR, a orquestração é
+explícita" muda o comportamento do agente; "gosto de código limpo" não muda nada.</p>
+<div markdown="0"><figure><svg viewBox='0 0 760 330' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Mapa do vault' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='t3' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='var(--axis)'/></marker></defs><g fill='none' stroke='var(--axis)' stroke-width='1.25'><path d='M380 94V116H120V134' marker-end='url(#t3)'/><path d='M380 94V116H380V134' marker-end='url(#t3)'/><path d='M380 94V116H640V134' marker-end='url(#t3)'/><path d='M640 252V264' marker-end='url(#t3)'/></g><text x='24' y='28' font-size='15' font-weight='600' fill='var(--ink)' text-anchor='start'>O vault tem três áreas; cada projeto em repos/ tem git próprio</text><rect x='300' y='50' width='160' height='44' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='380' y='76.5' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>vault (BKS_VAULT)</text><rect x='40' y='140' width='160' height='40' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='120' y='164.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>workbench/</text><text x='56' y='206' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>profile.md</text><text x='56' y='226' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>templates/</text><text x='56' y='246' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>decisions/</text><rect x='300' y='140' width='160' height='40' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='380' y='164.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>knowledge/</text><text x='316' y='206' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>raw/  · o bruto</text><text x='316' y='226' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>wiki/ · o curado</text><rect x='560' y='140' width='160' height='40' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='640' y='164.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>repos/</text><text x='576' y='206' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>backside/</text><text x='576' y='226' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>w3/</text><text x='576' y='246' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>private/</text><rect x='540' y='270' width='200' height='40' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25' stroke-dasharray='5 4'/><text x='640' y='294.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>{categoria}/{projeto}</text><text x='40' y='290' font-size='11.5' fill='var(--quiet)' text-anchor='start'>quem você é e o que já decidiu</text><text x='300' y='290' font-size='11.5' fill='var(--quiet)' text-anchor='start'>o que você aprendeu</text></svg><figcaption><b>Figura 3</b> · mapa do vault</figcaption></figure></div>
+
+<p><strong>Confira.</strong> Abra o Claude Code na pasta do vault e pergunte: "Leia o profile.md. O que você
+entendeu sobre como eu trabalho?" A resposta mostra o que o perfil comunica de fato.</p>
+<h3>5. Conferir que está de pé</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Conferência</th>
+<th>Resultado esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>python --version</code></td>
+<td>uma versão 3.x</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>claude plugin list</code></td>
+<td><code>bkhar@bks-harness</code>, <code>enabled</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>digitar <code>/bkhar:</code> numa sessão nova</td>
+<td>a lista mostra <code>brain</code>, <code>ask</code>, <code>panel</code>, <code>save</code> e os demais</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>/bkhar:brain</code> na pasta do vault</td>
+<td>o panorama, vazio se não há projeto</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>/bkhar:brain</code> numa pasta sem vault nem <code>STATUS.md</code></td>
+<td>ele pergunta onde você quer trabalhar</td>
+</tr>
+</tbody>
+</table>
+<p>O item 4 só vale com vault. O item 5 mostra que o comando não adivinha: sem estado, ele pergunta.</p>
+<p><strong>Confira.</strong> Os cinco itens batem, ou os quatro sem o item 4, se você não montou o vault.</p>
+<h3>6. Quando algo não aparece</h3>
+<p>Só os casos já vistos na prática:</p>
+<table>
+<thead>
+<tr>
+<th>Sintoma</th>
+<th>Causa</th>
+<th>O que fazer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/bkhar:</code> não aparece no autocompletar</td>
+<td>a sessão foi aberta antes da instalação</td>
+<td>feche e abra uma sessão nova</td>
+</tr>
+<tr>
+<td>digitar <code>brain</code> sugere só o comando de outro plugin</td>
+<td>dois plugins com comando de mesmo nome</td>
+<td>digite o prefixo <code>/bkhar:</code>, ou desligue o outro plugin no projeto, em <code>.claude/settings.json</code>, com <code>"enabledPlugins": {"&lt;plugin&gt;@&lt;marketplace&gt;": false}</code></td>
+</tr>
+<tr>
+<td>toda escrita de arquivo falha com erro de hook</td>
+<td><code>python</code> fora do <code>PATH</code></td>
+<td>volte ao capítulo 2</td>
+</tr>
+<tr>
+<td><code>/bkhar:brain</code> não acha o vault</td>
+<td><code>BKS_VAULT</code> ausente ou com caminho errado</td>
+<td>confira o <code>settings.json</code> e abra uma sessão nova</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Confira.</strong> Nenhum dos quatro sintomas aparece na sua máquina.</p>
+<h2 id="parte-2-uso">Parte 2 — Uso</h2>
+<h3>7. O primeiro projeto</h3>
+<p>Com vault, abra a sessão na raiz dele e rode:</p>
+<pre><code>/bkhar:new-project
+</code></pre>
+<p>Ele pergunta, numa rodada só, o nome, a categoria e o <strong>perfil</strong>, que define o que o projeto gera:
+<code>docs</code>, <code>fullstack</code>, <code>frontend</code>, <code>backend</code>, <code>component</code>, <code>infra</code>, <code>data</code>, <code>legacy-docs</code> ou
+<code>reengineering</code>. O projeto nasce em <code>repos/{categoria}/{nome}/</code>, com git próprio.</p>
+<p>Sem vault, crie uma pasta com <code>repos/</code> dentro e abra a sessão nela: ela faz o papel de raiz.</p>
+<p>O esqueleto traz os arquivos que dão memória ao projeto:</p>
+<table>
+<thead>
+<tr>
+<th>Arquivo</th>
+<th>Para quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>STATUS.md</code></td>
+<td>onde o projeto parou, o que trava, o próximo passo</td>
+</tr>
+<tr>
+<td><code>JOURNAL.md</code></td>
+<td>os marcos, do mais recente ao mais antigo</td>
+</tr>
+<tr>
+<td><code>LEARNINGS.md</code></td>
+<td>defeitos resolvidos, com evidência, que o <code>tester</code> lê antes de escrever teste novo</td>
+</tr>
+<tr>
+<td><code>CLAUDE.md</code></td>
+<td>o contexto que o agente carrega no projeto</td>
+</tr>
+<tr>
+<td><code>.bks-profile.json</code></td>
+<td>o perfil e o rigor do projeto</td>
+</tr>
+</tbody>
+</table>
+<p>A partir daqui, todo comando de projeto roda <strong>na raiz do projeto</strong>. Abra uma sessão nova lá.</p>
+<p><strong>Exercício.</strong> Crie um projeto <code>docs</code> chamado <code>treino-harness</code>. Abra uma sessão na pasta dele e
+rode <code>/bkhar:brain</code>.</p>
+<p><strong>Confira.</strong> O <code>/bkhar:brain</code> responde em poucas linhas com "onde parou", "o que trava" e
+"próximo passo", lidos do <code>STATUS.md</code> novo.</p>
+<h3>8. O ciclo</h3>
+<p>O trabalho segue uma ordem, e você aprova entre as etapas:</p>
+<table>
+<thead>
+<tr>
+<th>Etapa</th>
+<th>Comando</th>
+<th>O que produz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Material bruto</td>
+<td><code>/bkhar:note</code></td>
+<td>notas em <code>docs/input/notas/</code></td>
+</tr>
+<tr>
+<td>Consolidação</td>
+<td><code>/bkhar:canonize</code></td>
+<td>o contexto canônico em <code>docs/canonical/</code></td>
+</tr>
+<tr>
+<td>Produto</td>
+<td><code>/bkhar:prd</code></td>
+<td>o PRD (documento de requisitos do produto)</td>
+</tr>
+<tr>
+<td>Especificação</td>
+<td><code>/bkhar:refine</code> ou <code>/bkhar:spec</code></td>
+<td>a FEAT (especificação da feature) e o TEST (os cenários)</td>
+</tr>
+<tr>
+<td>Arquitetura</td>
+<td><code>/bkhar:arch</code></td>
+<td>a visão C4 (os níveis contexto, container e componente) e o README</td>
+</tr>
+<tr>
+<td>Implementação</td>
+<td><code>/bkhar:loop</code></td>
+<td>código com teste, task a task</td>
+</tr>
+<tr>
+<td>Revisão</td>
+<td><code>/bkhar:review</code></td>
+<td>os achados do painel</td>
+</tr>
+<tr>
+<td>Fechamento</td>
+<td><code>/bkhar:save</code></td>
+<td><code>STATUS.md</code>, <code>JOURNAL.md</code>, decisões e aprendizados gravados</td>
+</tr>
+</tbody>
+</table>
+<p>Projeto pequeno pode começar na especificação. O que não se pula é a aprovação: nenhuma etapa gera
+artefato sem você aprovar a anterior.</p>
+<p><strong>Refine ou spec?</strong> O <code>/bkhar:refine</code> é o caminho com a equipe: <code>architect</code>, <code>tester</code> e
+<code>security</code> fazem até três perguntas cada antes de escrever. O <code>/bkhar:spec</code> é o caminho direto,
+para quando a feature já está clara.</p>
+<div markdown="0"><figure><svg viewBox='0 0 760 300' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='O ciclo' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='t4' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='var(--axis)'/></marker></defs><g fill='none' stroke='var(--axis)' stroke-width='1.25'><path d='M152 86H164' marker-end='url(#t4)'/><path d='M298 86H310' marker-end='url(#t4)'/><path d='M380 108V150H88V190' marker-end='url(#t4)'/><path d='M152 218H164' marker-end='url(#t4)'/><path d='M298 218H310' marker-end='url(#t4)'/><path d='M444 218H456' marker-end='url(#t4)'/><path d='M590 218H602' marker-end='url(#t4)'/></g><text x='24' y='28' font-size='15' font-weight='600' fill='var(--ink)' text-anchor='start'>Do material bruto ao fechamento, com você aprovando entre as etapas</text><rect x='24' y='64' width='128' height='44' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='88' y='90.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:note</text><rect x='170' y='64' width='128' height='44' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='234' y='90.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:canonize</text><rect x='316' y='64' width='128' height='44' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='380' y='90.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:prd</text><rect x='24' y='196' width='128' height='44' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='88' y='222.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>refine | spec</text><rect x='170' y='196' width='128' height='44' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='234' y='222.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:arch</text><rect x='316' y='196' width='128' height='44' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='380' y='222.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:loop</text><rect x='462' y='196' width='128' height='44' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='526' y='222.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:review</text><rect x='608' y='196' width='128' height='44' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='672' y='222.5' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:save</text><text x='392' y='144' font-size='11.5' fill='var(--quiet)' text-anchor='start'>você aprova o PRD</text><text x='88' y='266' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>FEAT e TEST aprovados</text><text x='380' y='266' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>código com teste</text><text x='526' y='266' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>painel de revisão</text><text x='672' y='266' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>estado gravado</text></svg><figcaption><b>Figura 4</b> · o ciclo</figcaption></figure></div>
+
+<p><strong>Exercício.</strong> No <code>treino-harness</code>, rode <code>/bkhar:note</code> com duas frases sobre o que o projeto deve
+documentar.</p>
+<p><strong>Confira.</strong> Existe um arquivo novo em <code>docs/input/notas/</code>, com o seu texto.</p>
+<h3>9. A equipe</h3>
+<p>Seis agentes, cada um com as ferramentas do seu trabalho e só elas:</p>
+<table>
+<thead>
+<tr>
+<th>Papel</th>
+<th>Modelo</th>
+<th>Pode</th>
+<th>Não pode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>architect</code></td>
+<td>Opus</td>
+<td>escrever FEAT, TASK (a tarefa do plano) e ADR (o registro de decisão)</td>
+<td>executar comando ou escrever código de produção</td>
+</tr>
+<tr>
+<td><code>tester</code></td>
+<td>Sonnet</td>
+<td>escrever o TEST e o teste que falha</td>
+<td>revisar os próprios testes</td>
+</tr>
+<tr>
+<td><code>developer</code></td>
+<td>Sonnet</td>
+<td>implementar uma tentativa por vez</td>
+<td>commitar ou mexer no teste do <code>tester</code></td>
+</tr>
+<tr>
+<td><code>security</code></td>
+<td>Opus</td>
+<td>ler e apontar o risco com <code>arquivo:linha</code></td>
+<td>escrever: só lê</td>
+</tr>
+<tr>
+<td><code>quality</code></td>
+<td>Sonnet</td>
+<td>julgar legibilidade, testes e resultados</td>
+<td>escrever: só lê</td>
+</tr>
+<tr>
+<td><code>scribe</code></td>
+<td>Haiku</td>
+<td>registrar o que foi confirmado</td>
+<td>decidir o que foi feito</td>
+</tr>
+</tbody>
+</table>
+<p>O sétimo papel, o <strong>Gerente</strong>, é a própria sessão seguindo a skill <code>bks-team</code>. Ele chama os
+agentes, junta as respostas sem reescrevê-las e para antes de gerar qualquer artefato. Não opina
+sobre técnica.</p>
+<p>Duas formas de falar com a equipe a qualquer momento:</p>
+<pre><code>/bkhar:ask security o log desta rota grava o CPF do cliente?
+/bkhar:panel devo guardar o histórico em tabela própria ou em evento?
+</code></pre>
+<p>O <code>ask</code> chama um agente. O <code>panel</code> chama dois ou três, cada um sem ver a resposta do outro. O
+Gerente numera as posições, você escolhe, e o <code>scribe</code> grava o ADR com as opções descartadas.</p>
+<p>Os nomes aceitam português: <code>arquiteto</code>, <code>testes</code>, <code>dev</code>, <code>seguranca</code>, <code>qualidade</code>,
+<code>documentador</code>. Não use <code>@agente</code> no prompt: no Claude Code, <code>@</code> menciona arquivo.</p>
+<div markdown="0"><figure><svg viewBox='0 0 760 330' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Equipe e ritos' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='t5' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='var(--axis)'/></marker></defs><g fill='none' stroke='var(--axis)' stroke-width='1.25'></g><text x='24' y='28' font-size='15' font-weight='600' fill='var(--ink)' text-anchor='start'>Quem cada rito chama</text><text x='214' y='62' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>architect</text><text x='302' y='62' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>tester</text><text x='390' y='62' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>developer</text><text x='478' y='62' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>security</text><text x='566' y='62' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>quality</text><text x='654' y='62' font-size='11.5' fill='var(--quiet)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>scribe</text><text x='24' y='102' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:ask</text><circle cx='214' cy='98' r='7' fill='var(--accent)'/><circle cx='302' cy='98' r='7' fill='var(--accent)'/><circle cx='390' cy='98' r='7' fill='var(--accent)'/><circle cx='478' cy='98' r='7' fill='var(--accent)'/><circle cx='566' cy='98' r='7' fill='var(--accent)'/><circle cx='654' cy='98' r='7' fill='var(--accent)'/><text x='24' y='142' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:panel</text><circle cx='214' cy='138' r='7' fill='var(--accent)'/><circle cx='302' cy='138' r='7' fill='var(--accent)'/><circle cx='478' cy='138' r='7' fill='var(--accent)'/><circle cx='566' cy='138' r='7' fill='var(--accent)'/><text x='24' y='182' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:refine</text><circle cx='214' cy='178' r='7' fill='var(--accent)'/><circle cx='302' cy='178' r='7' fill='var(--accent)'/><circle cx='478' cy='178' r='7' fill='var(--accent)'/><text x='24' y='222' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:loop</text><circle cx='302' cy='218' r='7' fill='var(--accent)'/><circle cx='390' cy='218' r='7' fill='var(--accent)'/><text x='24' y='262' font-size='11.5' fill='var(--quiet)' text-anchor='start' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:review</text><circle cx='302' cy='258' r='7' fill='var(--accent)'/><circle cx='478' cy='258' r='6' fill='none' stroke='var(--axis)' stroke-width='1.25' stroke-dasharray='3 3'/><circle cx='566' cy='258' r='7' fill='var(--accent)'/><text x='24' y='300' font-size='11.5' fill='var(--quiet)' text-anchor='start'>ask: um agente, você escolhe qual · panel: dois ou três, o Gerente sugere · review: security só em área sensível</text><text x='24' y='318' font-size='11.5' fill='var(--quiet)' text-anchor='start'>O Gerente é a própria sessão (skill bks-team): chama, junta e para antes de gerar artefato.</text></svg><figcaption><b>Figura 5</b> · equipe e ritos</figcaption></figure></div>
+
+<p><strong>Exercício.</strong> No <code>treino-harness</code>, rode <code>/bkhar:ask architect que pastas este projeto tem e para
+que serve cada uma?</code></p>
+<p><strong>Confira.</strong> A primeira linha da resposta anuncia o agente, como <code>architect - Opus - ...</code>. Cada
+afirmação cita a fonte, e o que vier sem fonte aparece marcado como <strong>opinião</strong>.</p>
+<h3>10. Implementar e revisar</h3>
+<p>O <code>/bkhar:loop</code> implementa uma task do plano, no protocolo LOOP-4: no máximo quatro tentativas.</p>
+<ol>
+<li><strong>Passo 0.</strong> O <code>tester</code> escreve o RED (o teste que ainda falha). Você confirma que ele falha pelo
+   motivo certo: é o portão "RED confirmado".</li>
+<li><strong>Tentativas.</strong> O <code>developer</code> implementa, uma tentativa por vez, contra os goals: build limpo,
+   testes verdes, cenários do TEST cobertos.</li>
+<li><strong>Falha.</strong> O erro real volta como contexto da tentativa seguinte. Nada é escondido.</li>
+<li><strong>Quarta falha.</strong> O loop para com um <code>BLOQUEIO</code> e devolve a decisão para você.</li>
+</ol>
+<p>Quem escreve o teste não é quem o faz passar. É essa separação que impede o teste de ser escrito
+para caber no código.</p>
+<p>Depois, o <code>/bkhar:review</code> revisa em painel: o <code>tester</code> confere a cobertura dos cenários, o
+<code>quality</code> julga o código e os testes e, em área sensível, o <code>security</code> entra. Cada achado sai como
+bloqueante, sugestão ou aprendizado.</p>
+<div markdown="0"><figure><svg viewBox='0 0 760 310' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='LOOP-4 com passo 0' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='t6' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='var(--axis)'/></marker></defs><g fill='none' stroke='var(--axis)' stroke-width='1.25'><path d='M152 132H178' marker-end='url(#t6)'/><path d='M312 132H338' marker-end='url(#t6)'/><path d='M472 132H498' marker-end='url(#t6)'/><path d='M568 92V72H408V100' marker-end='url(#t6)'/><path d='M632 132H676V220' marker-end='url(#t6)'/><path d='M568 172V250H518' marker-end='url(#t6)'/></g><text x='24' y='28' font-size='15' font-weight='600' fill='var(--ink)' text-anchor='start'>O tester escreve o teste que falha; o developer tem até quatro tentativas</text><rect x='24' y='106' width='128' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='88' y='128' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>tester: RED</text><text x='88' y='145' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>passo 0</text><rect x='184' y='106' width='128' height='52' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='248' y='136.5' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle'>RED confirmado</text><rect x='344' y='106' width='128' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='408' y='128' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>developer</text><text x='408' y='145' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>uma tentativa</text><polygon points='504,132 568,92 632,132 568,172' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='568' y='136.5' font-size='13' fill='var(--ink)' text-anchor='middle'>goals passam?</text><rect x='616' y='226' width='120' height='48' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='676' y='254.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:review</text><rect x='344' y='226' width='168' height='48' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='428' y='254.5' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle'>BLOQUEIO · você decide</text><text x='488' y='64' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>falhou: o erro real volta como contexto</text><text x='684' y='180' font-size='11.5' fill='var(--quiet)' text-anchor='start'>sim</text><text x='576' y='204' font-size='11.5' fill='var(--quiet)' text-anchor='start'>4ª falha</text></svg><figcaption><b>Figura 6</b> · LOOP-4 com passo 0</figcaption></figure></div>
+
+<p><strong>Exercício.</strong> Pergunte <code>/bkhar:ask tester o que é o portão RED confirmado do /bkhar:loop?</code></p>
+<p><strong>Confira.</strong> A resposta cita o <code>loop.md</code> como fonte, e você sabe dizer o que acontece na quarta
+falha: o loop para e a decisão é sua.</p>
+<h3>11. Uma sessão de trabalho</h3>
+<p>Toda sessão segue o mesmo desenho:</p>
+<ol>
+<li><strong>Abrir</strong> com <code>/bkhar:brain</code>. Ele lê o <code>STATUS.md</code> e diz onde o projeto parou.</li>
+<li><strong>Trabalhar</strong> com os comandos e os ritos.</li>
+<li><strong>Fechar</strong> com <code>/bkhar:save</code>. Ele grava o estado para a próxima sessão.</li>
+</ol>
+<p>O <code>/bkhar:save</code> atualiza o <code>STATUS.md</code>, acrescenta o marco no <code>JOURNAL.md</code>, grava decisões em
+<code>decisions/</code> e os casos de defeito resolvido no <code>LEARNINGS.md</code>. Os ritos não gravam estado durante
+a conversa; o Gerente lista o que registrar, e o <code>save</code> grava.</p>
+<p>O estado mora em arquivo, não no histórico do chat. Retomar custa a leitura de um arquivo, não a
+reconstrução da conversa.</p>
+<div markdown="0"><figure><svg viewBox='0 0 760 290' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Uma sessão' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='t7' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='var(--axis)'/></marker></defs><g fill='none' stroke='var(--axis)' stroke-width='1.25'><path d='M164 96H206' marker-end='url(#t7)'/><path d='M432 96H474' marker-end='url(#t7)'/><path d='M550 122V178H104V190' marker-end='url(#t7)'/><path d='M550 122V178H288V190' marker-end='url(#t7)'/><path d='M550 122V178H472V190' marker-end='url(#t7)'/><path d='M550 122V178H656V190' marker-end='url(#t7)'/><path d='M104 196V128' marker-end='url(#t7)' stroke-dasharray='5 4'/></g><text x='24' y='28' font-size='15' font-weight='600' fill='var(--ink)' text-anchor='start'>Toda sessão começa no brain e termina no save</text><rect x='24' y='70' width='140' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='94' y='92' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:brain</text><text x='94' y='109' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>onde parei</text><rect x='212' y='70' width='220' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='322' y='92' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>trabalho</text><text x='322' y='109' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>comandos e ritos</text><rect x='480' y='70' width='140' height='52' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='550' y='100.5' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:save</text><rect x='24' y='196' width='160' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='104' y='218' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>STATUS.md</text><text x='104' y='235' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>onde está agora</text><rect x='208' y='196' width='160' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='288' y='218' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>JOURNAL.md</text><text x='288' y='235' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>como chegou</text><rect x='392' y='196' width='160' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='472' y='218' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>LEARNINGS.md</text><text x='472' y='235' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>defeito resolvido</text><rect x='576' y='196' width='160' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='656' y='218' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>decisions/</text><text x='656' y='235' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>ADR</text><text x='112' y='150' font-size='11.5' fill='var(--quiet)' text-anchor='start'>a próxima sessão lê</text></svg><figcaption><b>Figura 7</b> · uma sessão</figcaption></figure></div>
+
+<p><strong>Exercício.</strong> No <code>treino-harness</code>, rode <code>/bkhar:save</code>. Feche a sessão, abra outra e rode
+<code>/bkhar:brain</code>.</p>
+<p><strong>Confira.</strong> O <code>/bkhar:brain</code> da sessão nova responde com o estado que o <code>/bkhar:save</code> gravou.</p>
+<h3>12. Referência rápida</h3>
+<table>
+<thead>
+<tr>
+<th>Comando</th>
+<th>Para quê</th>
+<th>Onde rodar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/bkhar:brain</code></td>
+<td>retomar: panorama ou estado do projeto</td>
+<td>raiz do vault ou do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:new-project</code></td>
+<td>criar projeto</td>
+<td>raiz do vault</td>
+</tr>
+<tr>
+<td><code>/bkhar:ingest</code></td>
+<td>trazer conhecimento para <code>knowledge/</code></td>
+<td>raiz do vault</td>
+</tr>
+<tr>
+<td><code>/bkhar:note</code></td>
+<td>registrar material bruto</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:canonize</code></td>
+<td>consolidar o material</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:prd</code></td>
+<td>gerar o PRD</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:refine</code></td>
+<td>especificar com a equipe</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:spec</code></td>
+<td>especificar direto</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:arch</code></td>
+<td>arquitetura e README</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:loop</code></td>
+<td>implementar uma task</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:review</code></td>
+<td>revisão em painel</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:ask</code></td>
+<td>perguntar a um agente</td>
+<td>qualquer ponto</td>
+</tr>
+<tr>
+<td><code>/bkhar:panel</code></td>
+<td>decidir com dois ou três agentes</td>
+<td>qualquer ponto</td>
+</tr>
+<tr>
+<td><code>/bkhar:save</code></td>
+<td>fechar a sessão</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:maintainability</code></td>
+<td>parecer de manutenibilidade de <code>app/</code></td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:migrate</code></td>
+<td>trazer projeto do kit antigo <code>bks</code></td>
+<td>raiz do projeto</td>
+</tr>
+</tbody>
+</table>
+<p>O detalhe de cada comando, com passo a passo e exemplo, está no manual de comandos.</p>
+<p><strong>Confira.</strong> Você sabe qual comando abre e qual fecha toda sessão: <code>/bkhar:brain</code> e
+<code>/bkhar:save</code>.</p>
+<h2 id="historico-de-versoes">Histórico de versões</h2>
+<table>
+<thead>
+<tr>
+<th>Versão</th>
+<th>Data</th>
+<th>O que mudou</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>2026-10-19</td>
+<td>Primeira versão: instalação pelo repositório público, vault <code>bks-2brains</code>, ciclo, equipe da 0.9.0, LOOP-4 com passo 0 e sessão de trabalho</td>
+</tr>
+</tbody>
+</table>
+</main></body></html>
