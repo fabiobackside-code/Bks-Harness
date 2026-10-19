@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Gera o HTML do Atlas e da Apresentação a partir da fonte em docs/artefatos/.
+"""Gera o HTML do Atlas, da Apresentação e do treinamento a partir da fonte em docs/artefatos/.
 
 Uso:
-  python scripts/build_artefatos.py            gera os dois HTML
+  python scripts/build_artefatos.py            gera os três HTML
   python scripts/build_artefatos.py --check    falha se o HTML versionado estiver defasado
 
 Requer o pacote Python `markdown` (3.x). Saída pronta para imprimir em PDF pelo navegador.
@@ -24,6 +24,9 @@ FIGURES = os.path.join(ART, 'atlas', 'figuras')
 DECK = os.path.join(ART, 'apresentacao')
 ATLAS_HTML = os.path.join(ART, 'atlas', 'atlas-bks-harness.html')
 DECK_HTML = os.path.join(DECK, 'apresentacao-bks-harness.html')
+TRAINING = os.path.join(ART, 'treinamento')
+TRAINING_MD = os.path.join(TRAINING, 'treinamento-bks-harness.md')
+TRAINING_HTML = os.path.join(TRAINING, 'treinamento-bks-harness.html')
 
 FONTS = ('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700'
          '&family=JetBrains+Mono:wght@400;600&display=swap')
@@ -107,10 +110,10 @@ def strip_frontmatter(text):
     return text
 
 
-def load_figures():
+def load_figures(folder):
     figures = {}
-    for name in sorted(os.listdir(FIGURES)):
-        body = read(os.path.join(FIGURES, name))
+    for name in sorted(os.listdir(folder)):
+        body = read(os.path.join(folder, name))
         caption = re.search(r'</b>\s*·\s*(.+?)(?:\s*·\s*comandos|</figcaption>)', body)
         key = re.sub(r'<[^>]+>', '', caption.group(1)).strip()
         figures[key] = re.sub(r'<p class="read">.*?</p>', '', body, flags=re.S).strip()
@@ -136,19 +139,15 @@ def slugify(text):
     return SLUG_RX.sub('-', plain).strip('-')
 
 
-def build_atlas():
-    source = read(ATLAS_MD)
+def render_doc(source, figures_dir, eyebrow, blurb, meta, extra=None):
     title = re.match(r'# (.+)\n', source).group(1)
     version_line = re.search(r'^Versão (\d+\.\d+\.\d+).*$', source, re.M)
     version = version_line.group(1)
     body = source[version_line.end():]
+    if extra:
+        body = extra(body)
 
-    manual = strip_frontmatter(read(MANUAL_MD))
-    manual = re.sub(r'^# .+\n', '', manual, count=1)
-    manual_part = '## Parte X — Manual de comandos\n\n' + demote(manual, 1) + '\n\n'
-    body = body.replace('\n## Apêndices', '\n' + manual_part + '## Apêndices', 1)
-
-    figures = load_figures()
+    figures = load_figures(figures_dir)
     missing = []
 
     def figure(match):
@@ -160,7 +159,8 @@ def build_atlas():
 
     body = FIGURE_RX.sub(figure, body)
     if missing:
-        raise SystemExit('figura sem arquivo em atlas/figuras/: %s' % ', '.join(missing))
+        raise SystemExit('figura sem arquivo em %s: %s' % (
+            os.path.relpath(figures_dir, ROOT), ', '.join(missing)))
 
     numbered = [0]
 
@@ -187,16 +187,36 @@ def build_atlas():
 <title>%(title)s · v%(version)s</title>
 <link rel="stylesheet" href="%(fonts)s">
 <style>%(css)s</style></head><body><main>
-<section class="cover"><div class="eyebrow">FABIO · BKS · BKS HARNESS</div>
-<div><h1>%(main)s</h1><p class="sub">%(sub)s: conceitos, arquitetura, equipe, ritos, aprendizado, comandos com manual de uso, skills e um case de ponta a ponta.</p></div>
-<div class="meta">Versão %(version)s · Claude primeiro, plugável a DeepSeek, Ollama e outros</div></section>
+<section class="cover"><div class="eyebrow">%(eyebrow)s</div>
+<div><h1>%(main)s</h1><p class="sub">%(sub)s: %(blurb)s</p></div>
+<div class="meta">Versão %(version)s · %(meta)s</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol>%(toc)s</ol></nav>
 %(content)s
 </main></body></html>
 """ % {'title': html.escape(title), 'version': version, 'fonts': FONTS, 'css': ATLAS_CSS,
+       'eyebrow': eyebrow, 'blurb': blurb, 'meta': meta,
        'main': html.escape(main_title), 'sub': html.escape(subtitle or 'Manual'),
        'toc': toc_html, 'content': content}
     return page
+
+
+def build_atlas():
+    def with_manual(body):
+        manual = strip_frontmatter(read(MANUAL_MD))
+        manual = re.sub(r'^# .+\n', '', manual, count=1)
+        manual_part = '## Parte X — Manual de comandos\n\n' + demote(manual, 1) + '\n\n'
+        return body.replace('\n## Apêndices', '\n' + manual_part + '## Apêndices', 1)
+
+    return render_doc(read(ATLAS_MD), FIGURES, 'FABIO · BKS · BKS HARNESS',
+                      'conceitos, arquitetura, equipe, ritos, aprendizado, comandos com manual de uso, '
+                      'skills e um case de ponta a ponta.',
+                      'Claude primeiro, plugável a DeepSeek, Ollama e outros', with_manual)
+
+
+def build_training():
+    return render_doc(read(TRAINING_MD), os.path.join(TRAINING, 'figuras'), 'BKS HARNESS · TREINAMENTO',
+                      'do zero à primeira sessão produtiva e a um ciclo completo com a equipe de agentes.',
+                      'para quem instala pelo repositório público')
 
 
 def build_deck():
@@ -219,7 +239,7 @@ def build_deck():
 
 
 def main(argv):
-    outputs = [(ATLAS_HTML, build_atlas()), (DECK_HTML, build_deck())]
+    outputs = [(ATLAS_HTML, build_atlas()), (DECK_HTML, build_deck()), (TRAINING_HTML, build_training())]
     if '--check' in argv:
         stale = [p for p, text in outputs if not os.path.exists(p) or read(p) != text]
         for p in stale:

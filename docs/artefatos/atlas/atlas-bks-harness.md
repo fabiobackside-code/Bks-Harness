@@ -2,13 +2,13 @@
 
 Oct 18, 2026 · @Fabio Magalhaes
 
-Versão 1.7.0, revisada contra o `bkhar` 0.9.0. Ganha a equipe construída na Fase 3: seis agentes, o Gerente como protocolo da sessão principal, os ritos `/bkhar:ask`, `/bkhar:panel` e `/bkhar:refine`, a revisão em painel e o `LEARNINGS.md`. O histórico de versões está no Apêndice F.
+Versão 1.7.1, revisada contra o `bkhar` 0.9.0. A 1.7.0 ganhou a equipe construída na Fase 3: seis agentes, o Gerente como protocolo da sessão principal, os ritos `/bkhar:ask`, `/bkhar:panel` e `/bkhar:refine`, a revisão em painel e o `LEARNINGS.md`. A 1.7.1 aponta para o manual de treinamento, que ensina a instalar e usar. O histórico de versões está no Apêndice F.
 
 ## Prefácio
 
 Este manual descreve o BKS Harness: uma equipe de sete agentes de IA que trabalha com você, conversa com você e faz o seu padrão de desenvolvimento crescer a cada projeto. Ele não é uma ferramenta de vibe coding. O código é consequência de conversas, decisões registradas e verificações executadas.
 
-O harness nasce de dois projetos que já existem. O **2brains** (`${BKS_VAULT}`, template público em `bks-obsidian-2brains-ai-pattern`) é o vault: guarda o que atravessa projetos — quem você é (`workbench/`), o que você aprendeu (`knowledge/`) e os projetos em `repos/{backside|w3|private}/`, cada um com git próprio e memória própria. O **BKS kit** (`bks-sdd-kit`, plugin `bks` 0.7.0) é a ferramenta: 17 skills, 12 comandos `/bks:*`, quatro agentes (planner, builder, reviewer, scribe), guardas executáveis em `hooks/`, nove perfis de projeto e 20 casos de eval.
+O harness nasce de dois projetos que já existem. O **2brains** (`${BKS_VAULT}`, template público em `bks-2brains`) é o vault: guarda o que atravessa projetos — quem você é (`workbench/`), o que você aprendeu (`knowledge/`) e os projetos em `repos/{backside|w3|private}/`, cada um com git próprio e memória própria. O **BKS kit** (`bks-sdd-kit`, plugin `bks` 0.7.0) é a ferramenta: 17 skills, 12 comandos `/bks:*`, quatro agentes (planner, builder, reviewer, scribe), guardas executáveis em `hooks/`, nove perfis de projeto e 20 casos de eval.
 
 O harness não substitui nenhum dos dois: é o kit evoluído, rebatizado `bkhar`, sobre o mesmo vault. Tudo o que já funciona (comandos, fluxo de pesquisa e código, agentes, guardas, a regra de que cada projeto é autossuficiente) continua valendo. O harness acrescenta a equipe ampliada, os ritos, o ciclo de aprendizado, o ciclo de vida das skills e a independência de modelo.
 
@@ -387,7 +387,7 @@ Você aceita as três com `/bkhar:curate`. Na próxima feature, o Segurança já
 
 ## Parte VIII — Implantação
 
-A implantação parte do kit que já funciona e nunca para os projetos em curso. O repositório do harness é público no GitHub, `fabiobackside-code/Bks-Harness`. Neste Atlas, `<harness>` é a pasta onde você o clonou: por exemplo, `C:\dev\bks-harness` no Windows ou `~/dev/bks-harness` no Linux e no macOS. Cada fase já é útil sozinha, e o plugin `bks` continua instalado até o último projeto migrar.
+A implantação parte do kit que já funciona e nunca para os projetos em curso. O repositório do harness é público no GitHub, `fabiobackside-code/Bks-Harness`. Neste Atlas, `<harness>` é a pasta onde você o clonou: por exemplo, `C:\dev\bks-harness` no Windows ou `~/dev/bks-harness` no Linux e no macOS. Cada fase já é útil sozinha, e o plugin `bks` continua instalado até o último projeto migrar. Para instalar e começar a usar, o roteiro passo a passo é o manual de treinamento, em `docs/artefatos/treinamento/treinamento-bks-harness.html`.
 
 ### 31. Fases
 
@@ -691,6 +691,9 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 | Atlas do BKS Harness | 1.2.0 | 2026-10-17 | Comandos em inglês com prefixo `bkhar`, atalho `@<agente>` |
 | Atlas do BKS Harness | 1.1.0 | 2026-10-17 | Parte IX (skills plugáveis), skill registry, apêndices E e F |
 | Atlas do BKS Harness | 1.0.0 | 2026-10-17 | Primeira versão: Partes I a VIII, equipe de sete agentes, ritos, ciclo de aprendizado, case |
+| Treinamento do bks-harness | 1.0.0 | 2026-10-19 | Primeira versão do manual de instalação e uso, para quem instala pelo repositório público |
+| Apresentação BKS Harness | 1.8.1 | 2026-10-19 | Slide de versões com o manual de treinamento |
+| Atlas do BKS Harness | 1.7.1 | 2026-10-19 | Aponta para o manual de treinamento na Parte VIII; o template do vault passa a ser o `bks-2brains` |
 | Apresentação BKS Harness | 1.8.0 | 2026-10-19 | Slides de equipe, ritos, comandos e manual do repo com a equipe da Fase 3; conceitos e roteamento sem os agentes antigos como estado atual |
 | Apresentação BKS Harness | 1.7.1 | 2026-10-19 | Slide do roadmap sem o caminho da máquina do autor |
 | Apresentação BKS Harness | 1.7.0 | 2026-10-18 | Dois slides de manual de uso dos comandos, um para o vault e outro para o repo; mantida no repositório `bks-harness` e gerada em HTML pronto para PDF |

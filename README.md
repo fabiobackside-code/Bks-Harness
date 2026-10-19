@@ -39,6 +39,10 @@ Em uma linha, no Claude Code 2.1.275 ou mais novo:
 
 Para instalar a partir de um clone local: `/plugin marketplace add <pasta-do-clone>` (ex.: `C:\dev\bks-harness`).
 
+O passo a passo completo, do pré-requisito ao primeiro ciclo com a equipe e com o vault opcional,
+está no manual de treinamento: [`docs/artefatos/treinamento/treinamento-bks-harness.html`](docs/artefatos/treinamento/treinamento-bks-harness.html),
+pronto para imprimir em PDF.
+
 ### O que vem no kit
 
 #### Skills

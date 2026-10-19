@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atlas do BKS Harness — Manual da Equipe de Agentes · v1.7.0</title>
+<title>Atlas do BKS Harness — Manual da Equipe de Agentes · v1.7.1</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,11 +39,11 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">FABIO · BKS · BKS HARNESS</div>
 <div><h1>Atlas do BKS Harness</h1><p class="sub">Manual da Equipe de Agentes: conceitos, arquitetura, equipe, ritos, aprendizado, comandos com manual de uso, skills e um case de ponta a ponta.</p></div>
-<div class="meta">Versão 1.7.0 · Claude primeiro, plugável a DeepSeek, Ollama e outros</div></section>
+<div class="meta">Versão 1.7.1 · Claude primeiro, plugável a DeepSeek, Ollama e outros</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#prefacio">Prefácio</a></li><li><a href="#parte-i-fundamentos">Parte I — Fundamentos</a></li><li><a href="#parte-ii-arquitetura">Parte II — Arquitetura</a></li><li><a href="#parte-iii-a-equipe">Parte III — A Equipe</a></li><li><a href="#parte-iv-ritos-e-dialogo">Parte IV — Ritos e diálogo</a></li><li><a href="#parte-v-o-ciclo-de-aprendizado">Parte V — O ciclo de aprendizado</a></li><li><a href="#parte-vi-fluxo-e-comandos">Parte VI — Fluxo e comandos</a></li><li><a href="#parte-vii-case-comprovante-pix">Parte VII — Case: comprovante PIX</a></li><li><a href="#parte-viii-implantacao">Parte VIII — Implantação</a></li><li><a href="#parte-ix-evolucao-skills-plugaveis">Parte IX — Evolução: skills plugáveis</a></li><li><a href="#parte-x-manual-de-comandos">Parte X — Manual de comandos</a></li><li><a href="#apendices">Apêndices</a></li></ol></nav>
 <h2 id="prefacio">Prefácio</h2>
 <p>Este manual descreve o BKS Harness: uma equipe de sete agentes de IA que trabalha com você, conversa com você e faz o seu padrão de desenvolvimento crescer a cada projeto. Ele não é uma ferramenta de vibe coding. O código é consequência de conversas, decisões registradas e verificações executadas.</p>
-<p>O harness nasce de dois projetos que já existem. O <strong>2brains</strong> (<code>${BKS_VAULT}</code>, template público em <code>bks-obsidian-2brains-ai-pattern</code>) é o vault: guarda o que atravessa projetos — quem você é (<code>workbench/</code>), o que você aprendeu (<code>knowledge/</code>) e os projetos em <code>repos/{backside|w3|private}/</code>, cada um com git próprio e memória própria. O <strong>BKS kit</strong> (<code>bks-sdd-kit</code>, plugin <code>bks</code> 0.7.0) é a ferramenta: 17 skills, 12 comandos <code>/bks:*</code>, quatro agentes (planner, builder, reviewer, scribe), guardas executáveis em <code>hooks/</code>, nove perfis de projeto e 20 casos de eval.</p>
+<p>O harness nasce de dois projetos que já existem. O <strong>2brains</strong> (<code>${BKS_VAULT}</code>, template público em <code>bks-2brains</code>) é o vault: guarda o que atravessa projetos — quem você é (<code>workbench/</code>), o que você aprendeu (<code>knowledge/</code>) e os projetos em <code>repos/{backside|w3|private}/</code>, cada um com git próprio e memória própria. O <strong>BKS kit</strong> (<code>bks-sdd-kit</code>, plugin <code>bks</code> 0.7.0) é a ferramenta: 17 skills, 12 comandos <code>/bks:*</code>, quatro agentes (planner, builder, reviewer, scribe), guardas executáveis em <code>hooks/</code>, nove perfis de projeto e 20 casos de eval.</p>
 <p>O harness não substitui nenhum dos dois: é o kit evoluído, rebatizado <code>bkhar</code>, sobre o mesmo vault. Tudo o que já funciona (comandos, fluxo de pesquisa e código, agentes, guardas, a regra de que cada projeto é autossuficiente) continua valendo. O harness acrescenta a equipe ampliada, os ritos, o ciclo de aprendizado, o ciclo de vida das skills e a independência de modelo.</p>
 <p><strong>Para quem é.</strong> Para você, como arquiteto e dono do padrão. E, mais adiante, para a sua equipe de devs júnior e pleno, que podem trabalhar com os mesmos agentes e o mesmo padrão.</p>
 <p><strong>Como ler.</strong> As Partes I e II explicam o porquê e a estrutura. As Partes III a V são o coração: a equipe, como ela dialoga e como ela aprende. A Parte VI é a referência de comandos. A Parte VII mostra tudo funcionando num case. A Parte VIII diz por onde começar. A Parte IX mostra como o harness evolui com skills novas. A Parte X é o manual de uso: cada comando com para que serve, onde rodar, o passo a passo e um exemplo. Os apêndices trazem templates prontos para copiar e o histórico de versões.</p>
@@ -791,7 +791,7 @@ status: pendente
 </ol>
 <p>Você aceita as três com <code>/bkhar:curate</code>. Na próxima feature, o Segurança já pergunta sobre log Debug no refinamento, e o template já pede "Quem pode ver". Você aprovou cinco vezes e não reexplicou nada.</p>
 <h2 id="parte-viii-implantacao">Parte VIII — Implantação</h2>
-<p>A implantação parte do kit que já funciona e nunca para os projetos em curso. O repositório do harness é público no GitHub, <code>fabiobackside-code/Bks-Harness</code>. Neste Atlas, <code>&lt;harness&gt;</code> é a pasta onde você o clonou: por exemplo, <code>C:\dev\bks-harness</code> no Windows ou <code>~/dev/bks-harness</code> no Linux e no macOS. Cada fase já é útil sozinha, e o plugin <code>bks</code> continua instalado até o último projeto migrar.</p>
+<p>A implantação parte do kit que já funciona e nunca para os projetos em curso. O repositório do harness é público no GitHub, <code>fabiobackside-code/Bks-Harness</code>. Neste Atlas, <code>&lt;harness&gt;</code> é a pasta onde você o clonou: por exemplo, <code>C:\dev\bks-harness</code> no Windows ou <code>~/dev/bks-harness</code> no Linux e no macOS. Cada fase já é útil sozinha, e o plugin <code>bks</code> continua instalado até o último projeto migrar. Para instalar e começar a usar, o roteiro passo a passo é o manual de treinamento, em <code>docs/artefatos/treinamento/treinamento-bks-harness.html</code>.</p>
 <h3>31. Fases</h3>
 <table>
 <thead>
@@ -2810,6 +2810,24 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 <td>1.0.0</td>
 <td>2026-10-17</td>
 <td>Primeira versão: Partes I a VIII, equipe de sete agentes, ritos, ciclo de aprendizado, case</td>
+</tr>
+<tr>
+<td>Treinamento do bks-harness</td>
+<td>1.0.0</td>
+<td>2026-10-19</td>
+<td>Primeira versão do manual de instalação e uso, para quem instala pelo repositório público</td>
+</tr>
+<tr>
+<td>Apresentação BKS Harness</td>
+<td>1.8.1</td>
+<td>2026-10-19</td>
+<td>Slide de versões com o manual de treinamento</td>
+</tr>
+<tr>
+<td>Atlas do BKS Harness</td>
+<td>1.7.1</td>
+<td>2026-10-19</td>
+<td>Aponta para o manual de treinamento na Parte VIII; o template do vault passa a ser o <code>bks-2brains</code></td>
 </tr>
 <tr>
 <td>Apresentação BKS Harness</td>

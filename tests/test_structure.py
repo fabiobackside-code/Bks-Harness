@@ -618,12 +618,43 @@ def test_team():
           set(checklists) <= moved, 'faltando: %s' % ', '.join(sorted(set(checklists) - moved)))
 
 
+def test_training():
+    print('\nmanual de treinamento')
+    base = ('docs', 'artefatos', 'treinamento')
+    path = os.path.join(ROOT, *(base + ('treinamento-bks-harness.md',)))
+    check('treinamento-bks-harness.md existe', os.path.isfile(path))
+    text = read(*(base + ('treinamento-bks-harness.md',))) if os.path.isfile(path) else ''
+    check('treinamento tem linha de versão', bool(re.search(r'^Versão \d+\.\d+\.\d+', text, re.M)))
+    chapters = re.split(r'^### (?=\d+\. )', text, flags=re.M)[1:]
+    check('treinamento tem doze capítulos', len(chapters) == 12, 'encontrados: %d' % len(chapters))
+    no_check = [c.split('\n', 1)[0] for c in chapters if '**Confira.**' not in c]
+    check('todo capítulo fecha com Confira', not no_check, 'sem: %s' % '; '.join(no_check))
+    no_ex = [c.split('\n', 1)[0] for c in chapters[6:11] if '**Exercício.**' not in c]
+    check('capítulos de uso têm exercício', not no_ex, 'sem: %s' % '; '.join(no_ex))
+    figs = [f for f in listdir(*(base + ('figuras',))) if f.endswith('.html')]
+    check('treinamento tem sete figuras', len(figs) == 7, 'encontradas: %d' % len(figs))
+    check('treinamento cita a versão testada do Claude Code', 'testado com o Claude Code' in text)
+    check('treinamento instala pelo repositório público',
+          'fabiobackside-code/Bks-Harness' in text and 'bkhar@bks-harness' in text)
+    check('treinamento usa o vault bks-2brains', 'bks-2brains' in text and 'bks-obsidian' not in text)
+    old = [a for a in ('`planner`', '`builder`', '`reviewer`', '/bks:') if a in text]
+    check('treinamento não cita agente nem prefixo antigo', not old, 'cita: %s' % ', '.join(old))
+    check('HTML do treinamento existe',
+          os.path.isfile(os.path.join(ROOT, *(base + ('treinamento-bks-harness.html',)))))
+    check('README aponta para o treinamento', 'treinamento/treinamento-bks-harness' in read('README.md'))
+    if os.path.isfile(os.path.join(ROOT, 'docs', 'artefatos', 'README.md')):
+        check('README dos artefatos lista o treinamento',
+              'treinamento-bks-harness.md' in read('docs', 'artefatos', 'README.md'))
+    check('Atlas cita o treinamento',
+          'treinamento/treinamento-bks-harness' in read('docs', 'artefatos', 'atlas', 'atlas-bks-harness.md'))
+
+
 def main():
     print('suite estrutural do bks-harness')
     for fn in (test_manifests, test_skills, test_commands, test_pointers,
                test_agents,
                test_hooks, test_invariants, test_profiles, test_renderers,
-               test_evals, test_public_hygiene, test_team):
+               test_evals, test_public_hygiene, test_team, test_training):
         fn()
 
     print('\n%d verificacoes, %d falhas' % (checks, len(failures)))
