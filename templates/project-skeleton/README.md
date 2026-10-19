@@ -10,6 +10,7 @@ propósito — sem escopo real, sem stack definida, sem specs preenchidas.
 ├── STATUS.md              onde parei, o que trava, próximo passo
 ├── WORKFLOW.md            o fluxo de comandos deste projeto
 ├── JOURNAL.md             marcos e sessões, do mais recente ao mais antigo
+├── LEARNINGS.md           defeitos resolvidos, com evidência, que o tester lê antes do teste novo
 ├── README.md              o que e o projeto
 ├── CLAUDE.md              contexto que o agente carrega
 ├── .bks-profile.json      perfil, renderer, eixos

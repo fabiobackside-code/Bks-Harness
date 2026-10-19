@@ -97,7 +97,7 @@ Cada perfil declara sua sequência. As comuns:
 | entrada | material bruto entra | `/bkhar:note` |
 | consolidação | vira contexto canônico | `/bkhar:canonize` |
 | produto | vira PRD | `/bkhar:prd` |
-| especificação | vira FEAT e TEST; as TASKs vêm do agente `planner` ou da skill `bks-sdd` | `/bkhar:spec` |
+| especificação | vira FEAT e TEST; as TASKs vêm do agente `architect` ou da skill `bks-sdd` | `/bkhar:spec` |
 | arquitetura | vira ARCH e README | `/bkhar:arch` |
 | implementação | vira código | `/bkhar:loop` |
 | revisão | revisão independente | `/bkhar:review` |

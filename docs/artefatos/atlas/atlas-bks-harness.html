@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atlas do BKS Harness — Manual da Equipe de Agentes · v1.6.1</title>
+<title>Atlas do BKS Harness — Manual da Equipe de Agentes · v1.7.0</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,7 +39,7 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">FABIO · BKS · BKS HARNESS</div>
 <div><h1>Atlas do BKS Harness</h1><p class="sub">Manual da Equipe de Agentes: conceitos, arquitetura, equipe, ritos, aprendizado, comandos com manual de uso, skills e um case de ponta a ponta.</p></div>
-<div class="meta">Versão 1.6.1 · Claude primeiro, plugável a DeepSeek, Ollama e outros</div></section>
+<div class="meta">Versão 1.7.0 · Claude primeiro, plugável a DeepSeek, Ollama e outros</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#prefacio">Prefácio</a></li><li><a href="#parte-i-fundamentos">Parte I — Fundamentos</a></li><li><a href="#parte-ii-arquitetura">Parte II — Arquitetura</a></li><li><a href="#parte-iii-a-equipe">Parte III — A Equipe</a></li><li><a href="#parte-iv-ritos-e-dialogo">Parte IV — Ritos e diálogo</a></li><li><a href="#parte-v-o-ciclo-de-aprendizado">Parte V — O ciclo de aprendizado</a></li><li><a href="#parte-vi-fluxo-e-comandos">Parte VI — Fluxo e comandos</a></li><li><a href="#parte-vii-case-comprovante-pix">Parte VII — Case: comprovante PIX</a></li><li><a href="#parte-viii-implantacao">Parte VIII — Implantação</a></li><li><a href="#parte-ix-evolucao-skills-plugaveis">Parte IX — Evolução: skills plugáveis</a></li><li><a href="#parte-x-manual-de-comandos">Parte X — Manual de comandos</a></li><li><a href="#apendices">Apêndices</a></li></ol></nav>
 <h2 id="prefacio">Prefácio</h2>
 <p>Este manual descreve o BKS Harness: uma equipe de sete agentes de IA que trabalha com você, conversa com você e faz o seu padrão de desenvolvimento crescer a cada projeto. Ele não é uma ferramenta de vibe coding. O código é consequência de conversas, decisões registradas e verificações executadas.</p>
@@ -158,12 +158,12 @@ ul li::marker,ol li::marker{color:var(--accent)}
 <tr>
 <td>Team orchestrator</td>
 <td>Conduz os ritos, dá a vez a cada agente, consolida e cobra suas decisões</td>
-<td>Novo (papel do Gerente)</td>
+<td>Existe (0.9.0): skill <code>bks-team</code>, seguida pela sessão principal</td>
 </tr>
 <tr>
 <td>Agent registry</td>
 <td>Os sete perfis com persona, limites, modelo e fontes</td>
-<td>Evolui <code>agents/</code> do kit (planner, builder, reviewer, scribe)</td>
+<td>Existe (0.9.0): seis agentes em <code>agents/</code>; o Gerente é a skill <code>bks-team</code></td>
 </tr>
 <tr>
 <td>Skill registry</td>
@@ -245,8 +245,8 @@ ul li::marker,ol li::marker{color:var(--accent)}
 <td>Orquestrador</td>
 <td>Conduz os ritos, consolida opiniões, cobra decisões</td>
 <td>O que está pendente de decisão sua?</td>
-<td>Sonnet</td>
-<td>Novo (hoje é a sessão principal)</td>
+<td>a sessão principal</td>
+<td>Novo: skill <code>bks-team</code></td>
 </tr>
 <tr>
 <td>Arquiteto</td>
@@ -298,15 +298,15 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </tr>
 </tbody>
 </table>
-<p>Hoje o kit tem quatro agentes em <code>agents/</code>, com modelo no frontmatter e o tier anunciado na primeira linha: <code>planner</code> (Opus, em medição contra Sonnet), <code>builder</code> (Sonnet), <code>reviewer</code> (Opus, read-only) e <code>scribe</code> (Haiku). A ordem dentro de uma entrega é fixa, <code>planner → builder → reviewer → scribe</code>, nunca em paralelo. A equipe de sete é a evolução deles: o planner se divide em Arquiteto e Testes, o builder vira Dev, o reviewer vira Segurança, o scribe vira Documentador, e Gerente e Qualidade entram como papéis novos. A coluna PBQ diz o tipo do papel no vocabulário da Fase 6 do <code>bks-sdd</code>. As regras duras continuam: o builder não edita zona de contenção nem commita, o reviewer só lê e exige <code>arquivo:linha</code>, e o scribe nunca afirma teste sem evidência.</p>
+<p>No <code>bkhar</code> 0.9.0 a equipe existe. Seis papéis são subagentes em <code>agents/</code>, com modelo no frontmatter e o tier anunciado na primeira linha: <code>architect</code> (Opus), <code>tester</code> (Sonnet), <code>developer</code> (Sonnet), <code>security</code> (Opus, só leitura), <code>quality</code> (Sonnet, só leitura) e <code>scribe</code> (Haiku). O Gerente é a sessão principal seguindo a skill <code>bks-team</code>, porque subagente do Claude Code não conversa com você no meio do trabalho nem chama outro subagente. A equipe evoluiu dos quatro agentes do kit: o planner se dividiu em Arquiteto e Testes, o builder virou Dev, o reviewer virou Segurança, o scribe virou Documentador, e Gerente e Qualidade entraram como papéis novos. O plugin <code>bks</code> segue com os quatro antigos nos projetos não migrados. A coluna PBQ diz o tipo do papel no vocabulário da Fase 6 do <code>bks-sdd</code>. As regras duras continuam: o Dev não edita zona de contenção nem commita, a Segurança só lê e exige <code>arquivo:linha</code>, e o Documentador nunca afirma teste sem evidência.</p>
 <h3>12. Os perfis</h3>
-<p><strong>Gerente.</strong> É o mestre de cerimônias. Abre cada rito, decide quem fala, impede que a conversa avance sem uma resposta sua e resume os trade-offs em opções numeradas. Não opina sobre técnica: quando há conflito entre agentes, ele expõe o conflito, não o resolve. Fontes: PRD, PLAN, <code>.states</code>, decisões pendentes.</p>
+<p><strong>Gerente.</strong> É o mestre de cerimônias. Abre cada rito, decide quem fala, impede que a conversa avance sem uma resposta sua e resume os trade-offs em opções numeradas. Não opina sobre técnica: quando há conflito entre agentes, ele expõe o conflito, não o resolve. No <code>bkhar</code>, o Gerente é a sessão principal seguindo a skill <code>bks-team</code>. Fontes: PRD, PLAN, <code>.states</code>, decisões pendentes.</p>
 <p><strong>Arquiteto.</strong> Guarda o seu padrão: Hexagonal, DDD tático, Pipeline com TXC, Result Pattern, SEDA quando cabe. Toda recomendação cita a regra ou a página da wiki que a sustenta. Quando uma decisão contradiz o padrão, ele exige um ADR. Fontes: skill <code>bks-standards</code>, <code>brain/engineering/</code> do projeto, <code>knowledge/wiki/architecture/</code>, ADRs do projeto, skills <code>bks-dotnet-solutions</code>, <code>bks-typescript-solutions</code>, <code>bks-go-solutions</code> e <code>bks-arch</code>.</p>
 <p><strong>Dev.</strong> Implementa as tasks sob LOOP-4. Diferente de um vibe coder, ele explica: qual abordagem escolheu, qual descartou e por quê. Quando a spec é ambígua, ele para e pergunta antes de codificar. Fontes: FEAT, TEST, TASK, skills de stack.</p>
-<p><strong>Testes.</strong> Pensa como quem quer quebrar o sistema. Questiona a FEAT no refinamento (casos de borda, respostas que vazam informação) e escreve os testes RED antes do Dev. Roda em fornecedor diferente do Dev. Fontes: TEST, critérios de aceite, histórico de bugs.</p>
+<p><strong>Testes.</strong> Pensa como quem quer quebrar o sistema. Questiona a FEAT no refinamento (casos de borda, respostas que vazam informação) e escreve os testes RED no passo 0 do <code>/bkhar:loop</code>, antes do Dev. Não revisa os próprios testes. A meta é rodar em fornecedor diferente do Dev, a partir da Fase 4. Fontes: TEST, critérios de aceite e os casos do <code>LEARNINGS.md</code> da área da task.</p>
 <p><strong>Segurança.</strong> Analisa cada FEAT e cada diff pelo ângulo de dado sensível, autorização, log, segredo e conformidade. Confere mascaramento, uso do CyberArk e se a zona do manifesto foi respeitada. Também roda em fornecedor diferente do Dev. Fontes: manifesto, checklist de segurança, normas aplicáveis.</p>
-<p><strong>Qualidade.</strong> Revisa legibilidade, nomes, tamanho de função, comentários desnecessários e smells, sempre balanceando com custo real de performance. Pensa na sua equipe júnior e pleno como leitora do código. Fontes: bks-clean-code, Object Calisthenics, catálogo de refactoring.</p>
-<p><strong>Documentador.</strong> Transforma decisões em ADR, mantém diagramas C4, atualiza o estado do projeto e, principalmente, conduz a retrospectiva: recolhe o que cada agente aprendeu e transforma em propostas para o seu cérebro. Fontes: tudo o que foi decidido na sessão.</p>
+<p><strong>Qualidade.</strong> Revisa legibilidade, nomes, tamanho de função, comentários desnecessários e smells, sempre balanceando com custo real de performance. Pensa na sua equipe júnior e pleno como leitora do código. Julga também os testes que o Testes escreveu e os resultados da execução, e devolve o defeito resolvido como caso para o <code>LEARNINGS.md</code>. Fontes: bks-clean-code, Object Calisthenics, catálogo de refactoring.</p>
+<p><strong>Documentador.</strong> Transforma decisões em ADR, mantém diagramas C4, atualiza o estado do projeto e grava o ADR de cada painel. Na fase da retrospectiva, ainda proposta, conduz o rito: recolhe o que cada agente aprendeu e transforma em propostas para o seu cérebro. Fontes: tudo o que foi decidido na sessão.</p>
 <h3>13. Regras de convivência</h3>
 <ol>
 <li><strong>Toda opinião cita uma fonte.</strong> Sua wiki, suas premissas ou uma referência primária. Opinião sem fonte vem marcada como tal.</li>
@@ -360,15 +360,16 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </tr>
 </tbody>
 </table>
+<p>Quatro ritos têm comando desde a 0.9.0: <code>/bkhar:refine</code>, <code>/bkhar:panel</code>, <code>/bkhar:ask</code> e <code>/bkhar:review</code>. A retrospectiva é proposta. Nenhum rito grava <code>STATUS.md</code> nem <code>JOURNAL.md</code>: no fim, o Gerente lista o que o <code>/bkhar:save</code> grava. A exceção é o ADR do painel, que o Documentador grava logo depois da sua escolha.</p>
 <h3>14. Refinamento</h3>
-<p>O Gerente apresenta o pedido. Cada agente faz até três perguntas pelo seu ângulo. O Gerente agrupa as perguntas, você responde, e só então o Arquiteto e o Testes escrevem FEAT e TEST com as suas respostas dentro. Uma FEAT que nasce sem refinamento é exceção registrada.</p>
+<p>O Gerente apresenta o pedido. Cada agente faz até três perguntas pelo seu ângulo. O Gerente agrupa as perguntas, você responde, e só então o Arquiteto e o Testes escrevem FEAT e TEST com as suas respostas dentro. Uma FEAT que nasce sem refinamento, pelo <code>/bkhar:spec</code>, é exceção registrada no cabeçalho: <code>Refinamento: não (exceção)</code>.</p>
 <h3>15. Painel</h3>
 <p>Você faz uma pergunta aberta ("CQRS ou leitura direta aqui?"). Dois ou três agentes respondem de forma independente, sem ver a resposta um do outro. O Gerente apresenta as posições lado a lado, com prós, contras e fontes, numeradas como opções. Você escolhe, e o Documentador registra a decisão em ADR, com as opções descartadas.</p>
 <h3>16. Pergunta direta</h3>
-<p>Use <code>@agente</code> para falar com um papel específico: <code>@seguranca preciso mascarar esse campo no log?</code> A resposta segue o perfil: cita a fonte e diz quando é opinião.</p>
-<p>O atalho <code>@&lt;agente&gt;</code> equivale ao comando <code>/bkhar:ask &lt;agent&gt; &lt;question&gt;</code>.</p>
+<p>Use <code>/bkhar:ask &lt;agente&gt; &lt;pergunta&gt;</code> para falar com um papel específico: <code>/bkhar:ask seguranca preciso mascarar esse campo no log?</code> O nome vale em inglês ou português. A resposta segue o perfil: cita a fonte e diz quando é opinião.</p>
+<p>O atalho com arroba, previsto nas primeiras versões deste Atlas, não existe: no Claude Code, a arroba é menção de arquivo.</p>
 <h3>17. Revisão em painel</h3>
-<p>Depois que os gates passam, três revisores leem o diff em invocações separadas: Testes, Segurança e Qualidade. O Arquiteto entra quando o diff toca uma fronteira de contexto ou uma premissa. Cada achado vira um de três tipos: bloqueante (nova task), sugestão (você decide) ou aprendizado (vai para a retrospectiva).</p>
+<p>Depois que os gates passam, três revisores leem o diff em invocações separadas: Testes, Segurança e Qualidade. O Arquiteto entra quando o diff toca uma fronteira de contexto ou uma premissa. O Testes confere se cada cenário está coberto; a força dos testes é julgada pela Qualidade, porque quem escreveu o teste não o revisa. Cada achado vira um de três tipos: bloqueante (proposta de task, escrita depois do seu ok), sugestão (você decide) ou aprendizado. Defeito resolvido, com evidência, vai para o <code>LEARNINGS.md</code> do projeto, que o Testes lê antes de escrever teste novo; o resto espera a retrospectiva.</p>
 <h3>18. Retrospectiva</h3>
 <p>O Documentador pergunta a cada agente: o que funcionou, o que travou, o que vale virar padrão. O resultado não é um relatório, mas propostas concretas para o seu cérebro (Parte V).</p>
 <h3>19. O time também te provoca</h3>
@@ -408,7 +409,7 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </tr>
 <tr>
 <td>Regra de checklist</td>
-<td><code>agents/references/</code> do agente</td>
+<td><code>skills/bks-team/references/</code></td>
 <td>Segurança: verificar log em nível Debug</td>
 </tr>
 <tr>
@@ -446,7 +447,7 @@ status: pendente
 # Máscara de CPF na camada de domínio
 
 **O que muda:** CPF passa a ser um value object que só expõe a versão mascarada.
-**Por quê:** o reviewer encontrou CPF completo em log de Debug.
+**Por quê:** a Segurança encontrou CPF completo em log de Debug.
 **Onde se aplica:** todo projeto com zona de dados pessoais.
 </code></pre>
 <h2 id="parte-vi-fluxo-e-comandos">Parte VI — Fluxo e comandos</h2>
@@ -608,8 +609,8 @@ status: pendente
 <td><code>/bkhar:spec</code></td>
 <td><code>/bks:spec</code></td>
 <td>Repo</td>
-<td>Entrevista → FEAT → TEST</td>
-<td>Existe, ganha o rito de refinamento</td>
+<td>Entrevista → FEAT → TEST, sem rito</td>
+<td>Existe; exceção ao <code>/bkhar:refine</code></td>
 </tr>
 <tr>
 <td><code>/bkhar:arch</code></td>
@@ -622,15 +623,15 @@ status: pendente
 <td><code>/bkhar:loop</code></td>
 <td><code>/bks:loop</code></td>
 <td>Repo</td>
-<td>LOOP-4 com G1–G4 ou <code>BLOQUEIO-*.md</code></td>
-<td>Existe, ganha model router</td>
+<td>Passo 0 com o RED do Testes; LOOP-4 com o Dev, G1–G4 ou <code>BLOQUEIO-*.md</code></td>
+<td>Existe (0.9.0); ganha model router na Fase 4</td>
 </tr>
 <tr>
 <td><code>/bkhar:review</code></td>
 <td><code>/bks:review</code></td>
 <td>Repo</td>
-<td>Revisão independente read-only</td>
-<td>Existe, vira painel</td>
+<td>Revisão em painel: Testes, Qualidade e, em área sensível, Segurança</td>
+<td>Existe, em painel (0.9.0)</td>
 </tr>
 <tr>
 <td><code>/bkhar:maintainability</code></td>
@@ -664,15 +665,15 @@ status: pendente
 <td><code>/bkhar:refine</code></td>
 <td>—</td>
 <td>Repo</td>
-<td>Abre o rito de refinamento</td>
-<td>Proposto</td>
+<td>Rito de refinamento: perguntas da equipe, FEAT com <code>Refinamento: sim</code>, TEST</td>
+<td>Existe (0.9.0)</td>
 </tr>
 <tr>
 <td><code>/bkhar:panel</code></td>
 <td>—</td>
-<td>Qualquer pasta</td>
-<td>Painel com 2 ou 3 agentes</td>
-<td>Proposto</td>
+<td>Repo</td>
+<td>Painel com 2 ou 3 agentes independentes; ADR com as opções descartadas</td>
+<td>Existe (0.9.0)</td>
 </tr>
 <tr>
 <td><code>/bkhar:brainstorm</code></td>
@@ -684,9 +685,9 @@ status: pendente
 <tr>
 <td><code>/bkhar:ask &lt;agent&gt;</code></td>
 <td>—</td>
-<td>Qualquer pasta</td>
-<td>Pergunta direta a um papel; atalho <code>@&lt;agente&gt;</code></td>
-<td>Proposto</td>
+<td>Repo</td>
+<td>Pergunta direta a um papel, com resposta que cita a fonte</td>
+<td>Existe (0.9.0)</td>
 </tr>
 <tr>
 <td><code>/bkhar:retro</code></td>
@@ -822,8 +823,8 @@ status: pendente
 </tr>
 <tr>
 <td>3. Equipe e ritos</td>
-<td>Gerente, Testes e Qualidade; <code>/bkhar:refine</code>, <code>panel</code>, <code>retro</code>, <code>curate</code>; <code>inbox/proposals/</code></td>
-<td>Uma FEAT real com refinamento, painel e retro</td>
+<td>Seis agentes e o Gerente (skill <code>bks-team</code>); <code>/bkhar:ask</code>, <code>panel</code>, <code>refine</code>; <code>review</code> em painel; <code>LEARNINGS.md</code>. <code>retro</code>, <code>curate</code> e <code>inbox/proposals/</code> ficaram para a fase da retrospectiva</td>
+<td>Uma FEAT real com refinamento e painel</td>
 <td>Nenhum até um projeto migrar</td>
 </tr>
 <tr>
@@ -881,12 +882,13 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 <ul>
 <li>[x] Criar <code>&lt;harness&gt;</code> com git local e o plano de migração</li>
 <li>[ ] Fechar as decisões: nomenclatura A, histórico do kit, merge da <code>feat/maintainability</code>, projeto piloto</li>
-<li>[ ] Registrar o ADR-001 (nomenclatura) em <code>&lt;harness&gt;\decisions\</code></li>
-<li>[ ] Importar o <code>prj-bks-kit</code> com histórico e renomear o plugin para <code>bkhar</code></li>
+<li>[x] Registrar o ADR-001 (nomenclatura) em <code>&lt;harness&gt;\decisions\</code></li>
+<li>[x] Importar o <code>prj-bks-kit</code> com histórico e renomear o plugin para <code>bkhar</code></li>
 <li>[x] Escrever o <code>/bkhar:migrate</code></li>
 <li>[ ] Dar <code>.bks-profile.json</code> ao <code>nquantic</code> e ao <code>layan</code> (o <code>/bkhar:migrate</code> pergunta o perfil)</li>
-<li>[ ] Instalar <code>bkhar</code> ao lado do <code>bks</code> com <code>/plugin marketplace add &lt;harness&gt;</code> (ex.: <code>C:\dev\bks-harness</code>)</li>
-<li>[ ] Escrever Gerente, Testes e Qualidade e os ritos <code>/bkhar:refine</code>, <code>panel</code>, <code>retro</code>, <code>curate</code></li>
+<li>[x] Instalar <code>bkhar</code> ao lado do <code>bks</code> com <code>/plugin marketplace add &lt;harness&gt;</code> (ex.: <code>C:\dev\bks-harness</code>)</li>
+<li>[x] Escrever a equipe, o Gerente e os ritos <code>/bkhar:ask</code>, <code>panel</code>, <code>refine</code> (0.9.0)</li>
+<li>[ ] Escrever a retrospectiva e a curadoria: <code>/bkhar:retro</code>, <code>curate</code></li>
 <li>[ ] Migrar o piloto (<code>mcp-sql</code> ou <code>bks-motor-sdk</code>) e usar uma semana</li>
 <li>[ ] Rodar a baseline das evals quando houver crédito</li>
 </ul>
@@ -1097,12 +1099,17 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 </tr>
 <tr>
 <td>Especificação e arquitetura</td>
-<td><code>spec</code>, <code>arch</code></td>
+<td><code>refine</code>, <code>spec</code>, <code>arch</code></td>
 <td>raiz do repo</td>
 </tr>
 <tr>
 <td>Execução e qualidade</td>
 <td><code>loop</code>, <code>review</code>, <code>maintainability</code></td>
+<td>raiz do repo</td>
+</tr>
+<tr>
+<td>A equipe e os ritos</td>
+<td><code>ask</code>, <code>panel</code></td>
 <td>raiz do repo</td>
 </tr>
 <tr>
@@ -1196,9 +1203,9 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 </tr>
 <tr>
 <td>6</td>
-<td><code>/bkhar:spec</code></td>
+<td><code>/bkhar:refine</code></td>
 <td>repo</td>
-<td>entrevista gera a <code>FEAT</code> e, após aprovação, o <code>TEST</code></td>
+<td>a equipe pergunta antes; o <code>architect</code> escreve a <code>FEAT</code> e o <code>tester</code>, o <code>TEST</code></td>
 </tr>
 <tr>
 <td>7</td>
@@ -1210,13 +1217,13 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 <td>8</td>
 <td><code>/bkhar:loop</code></td>
 <td>repo</td>
-<td>implementa uma task sob goals verificáveis, no máximo 4 tentativas</td>
+<td>o <code>tester</code> escreve o teste que falha, o <code>developer</code> implementa; no máximo 4 tentativas</td>
 </tr>
 <tr>
 <td>9</td>
 <td><code>/bkhar:review</code></td>
 <td>repo</td>
-<td>revisão independente, read-only</td>
+<td>revisão em painel: <code>tester</code>, <code>quality</code> e, em área sensível, <code>security</code></td>
 </tr>
 <tr>
 <td>10</td>
@@ -1233,8 +1240,8 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 </tbody>
 </table>
 <p>Projeto que veio do kit antigo passa uma vez pelo <code>/bkhar:migrate</code> antes de entrar no ciclo com <code>/bkhar:*</code>.</p>
-<p>O <code>/bkhar:ingest</code> fica fora da sequência: alimenta a base de conhecimento do vault a qualquer momento.</p>
-<p>Três artefatos aparecem em todo o manual. A FEAT (especificação da feature) diz o que construir. O TEST (cenários de teste) diz como verificar. A TASK (tarefa executável) é a unidade que o <code>/bkhar:loop</code> implementa.</p>
+<p>O <code>/bkhar:ingest</code> fica fora da sequência: alimenta a base de conhecimento do vault a qualquer momento. O <code>/bkhar:spec</code> é o caminho direto, sem a equipe perguntando, para quando o refinamento não se paga. O <code>/bkhar:ask</code> e o <code>/bkhar:panel</code> entram em qualquer ponto em que surja uma dúvida ou uma decisão.</p>
+<p>Três artefatos aparecem em todo o manual. A FEAT (especificação da feature) diz o que construir. O TEST (cenários de teste) diz como verificar. A TASK (tarefa executável) é a unidade que o <code>/bkhar:loop</code> implementa. O RED (teste escrito antes do código, ainda falhando) é o que o <code>tester</code> entrega no passo 0 do loop.</p>
 <hr />
 <h3>2. Entrada e vault</h3>
 <h4><code>/bkhar:brain</code></h4>
@@ -1652,18 +1659,65 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 </ul>
 <hr />
 <h3>4. Especificação e arquitetura</h3>
+<h4><code>/bkhar:refine</code></h4>
+<p><strong>Para que serve.</strong> Abre o rito de refinamento: antes de qualquer FEAT, o <code>architect</code>, o <code>tester</code> e o <code>security</code> fazem até três perguntas cada, pelo seu ângulo. Com as suas respostas, o <code>architect</code> escreve a FEAT e, aprovada, o <code>tester</code> escreve o TEST.</p>
+<p><strong>Onde rodar.</strong> Raiz do repo do projeto.</p>
+<p><strong>Quando usar.</strong> É o caminho padrão para especificar uma feature. O <code>/bkhar:spec</code> fica para a exceção, quando a feature é pequena e você já sabe tudo que a equipe perguntaria.</p>
+<p><strong>Pré-requisito.</strong> O PRD ou o <code>CONTEXT.md</code> em <code>docs/canonical/</code>.</p>
+<p><strong>Argumentos.</strong> O pedido, em uma frase: <code>/bkhar:refine emitir comprovante de Pix liquidado</code>.</p>
+<p><strong>O que ele faz, passo a passo.</strong></p>
+<ol>
+<li>Chama <code>architect</code>, <code>tester</code> e <code>security</code> em invocações separadas e paralelas. Nenhum vê as perguntas do outro.</li>
+<li>Agrupa as perguntas por tema, numera e diz quem fez cada uma. Pergunta repetida aparece uma vez, com os dois nomes.</li>
+<li>Espera as suas respostas. Pergunta sem resposta fica como decisão pendente; se ela bloqueia a FEAT, o rito para.</li>
+<li>Chama o <code>architect</code>, que escreve a FEAT com as respostas dentro e o cabeçalho <code>Refinamento: sim</code>.</li>
+<li>Pergunta se a FEAT está aprovada. Ajuste volta ao <code>architect</code>.</li>
+<li>Aprovada, chama o <code>tester</code>, que escreve o TEST.</li>
+<li>Lista o que o <code>/bkhar:save</code> vai gravar: decisões pendentes e aprendizados dos agentes.</li>
+</ol>
+<p><strong>O que produz.</strong></p>
+<ul>
+<li><code>specs/features/FEAT-[nome].md</code>, com <code>Refinamento: sim</code></li>
+<li><code>specs/tests/TEST-[nome].md</code>, depois da aprovação da FEAT</li>
+</ul>
+<p><strong>Exemplo.</strong></p>
+<pre><code>cd ${BKS_VAULT}/repos/backside/pix-comprovante
+/bkhar:refine emitir comprovante de Pix liquidado
+→ Gerente: falam architect, tester e security; no fim, uma FEAT para você aprovar.
+
+  Arquitetura
+  1. (architect) A emissão mora no contexto de Pagamentos ou num contexto próprio?
+  2. (architect) O comprovante é imutável depois de emitido?
+  Teste
+  3. (tester) O que acontece se o evento de liquidação chegar duas vezes?
+  4. (tester, security) Quem pode consultar o comprovante, e o que a resposta diz a quem não pode?
+  Segurança
+  5. (security) Quais dados do pagador aparecem no comprovante, e mascarados como?
+
+→ Suas respostas? — 1 contexto próprio; 2 sim; 3 devolve o mesmo comprovante;
+  4 só o titular, 404 para os outros; 5 CPF mascarado, nome completo
+→ architect: gerado specs/features/FEAT-emissao-comprovante.md (Refinamento: sim). Aprova? — sim
+→ tester: gerado specs/tests/TEST-emissao-comprovante.md
+→ Para o /bkhar:save: nenhuma decisão pendente; 1 aprendizado do security.
+</code></pre>
+<p><strong>Cuidados.</strong></p>
+<ul>
+<li>O comando nunca implementa.</li>
+<li>O rito não grava <code>STATUS.md</code> nem <code>JOURNAL.md</code>. Quem grava é o <code>/bkhar:save</code>.</li>
+<li>O Gerente agrupa e numera, mas não responde pelos agentes nem escolhe entre eles.</li>
+</ul>
 <h4><code>/bkhar:spec</code></h4>
-<p><strong>Para que serve.</strong> Entrevista você sobre um bounded context e gera a FEAT. Depois da aprovação, gera o TEST.</p>
+<p><strong>Para que serve.</strong> Caminho direto, sem rito: entrevista você sobre um bounded context, e o <code>architect</code> gera a FEAT. Depois da aprovação, o <code>tester</code> gera o TEST.</p>
 <p><strong>Onde rodar.</strong> Raiz do repo do projeto. Não na raiz do vault.</p>
-<p><strong>Quando usar.</strong> Para especificar uma feature que você já entende, num projeto que já existe. Uma feature por vez.</p>
+<p><strong>Quando usar.</strong> Como exceção ao <code>/bkhar:refine</code>: feature pequena, que você já entende, num projeto que já existe. Uma feature por vez.</p>
 <p><strong>Pré-requisito.</strong> O PRD ou o <code>CONTEXT.md</code> em <code>docs/canonical/</code>.</p>
 <p><strong>O que ele faz, passo a passo.</strong></p>
 <ol>
 <li>Entrevista sobre o bounded context: objetivos, entidades, operações, integrações e critérios de aceite verificáveis.</li>
 <li>Pergunta sobre integrações específicas: TCP, filas, SEDA (Staged Event-Driven Architecture).</li>
-<li>Gera a FEAT em <code>specs/features/</code> a partir do template <code>FEAT.md</code>.</li>
+<li>Chama o <code>architect</code>, que gera a FEAT em <code>specs/features/</code> a partir do template <code>FEAT.md</code>, com o cabeçalho <code>Refinamento: não (exceção)</code>.</li>
 <li>Espera a sua aprovação.</li>
-<li>Gera o TEST em <code>specs/tests/</code>.</li>
+<li>Chama o <code>tester</code>, que gera o TEST em <code>specs/tests/</code>.</li>
 </ol>
 <p>O template é resolvido nesta ordem: <code>{repo}/.bks/templates/</code>, <code>${BKS_VAULT}/workbench/templates/</code> e, por fim, o plugin.</p>
 <p><strong>O que produz.</strong></p>
@@ -1726,7 +1780,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 <hr />
 <h3>5. Execução e qualidade</h3>
 <h4><code>/bkhar:loop</code></h4>
-<p><strong>Para que serve.</strong> Implementa uma task sob o protocolo LOOP-4: goals verificáveis, no máximo 4 tentativas.</p>
+<p><strong>Para que serve.</strong> Implementa uma task sob o protocolo LOOP-4: goals verificáveis, no máximo 4 tentativas. O <code>tester</code> escreve o RED antes da primeira tentativa, e o <code>developer</code> implementa cada tentativa. A sessão conduz o loop e fala com você.</p>
 <p><strong>Onde rodar.</strong> Raiz do repo do projeto.</p>
 <p><strong>Quando usar.</strong> Na fase de código, uma task por vez.</p>
 <p><strong>Pré-requisito.</strong> FEAT e TEST aprovados.</p>
@@ -1759,24 +1813,28 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 </table>
 <p><strong>O que ele faz, passo a passo.</strong></p>
 <ol>
-<li>Implementa ou corrige a task atual.</li>
-<li>Roda <code>dotnet build</code> e <code>dotnet test</code>.</li>
-<li>Audita <code>G3</code> e <code>G4</code> explicitamente.</li>
+<li><strong>Passo 0.</strong> Chama o <code>tester</code> com a TASK, o TEST e as entradas do <code>LEARNINGS.md</code> cujas tags batem com a área da task. Ele escreve os testes dos cenários e roda.</li>
+<li><strong>Portão "RED confirmado".</strong> Os testes precisam compilar e falhar pelo motivo certo, com a saída colada. Teste que já passa volta ao <code>tester</code>. Sem o portão aberto, não há tentativa.</li>
+<li>Em cada tentativa, chama o <code>developer</code> com a TASK, a FEAT, o TEST, os testes RED e o registro das tentativas anteriores.</li>
+<li>Confere na sessão: <code>dotnet build</code> e <code>dotnet test</code>. Audita <code>G3</code> e <code>G4</code> explicitamente.</li>
 <li>Se todos os goals passaram: marca a task como concluída em <code>specs/tasks/TASK-[feature].md</code>, roda o <code>/bkhar:save</code>, reporta e para.</li>
-<li>Se algum falhou: registra o erro e a hipótese de correção na seção "Tentativas" da task, em <code>specs/tasks/TASK-[feature].md</code>, e começa a próxima tentativa.</li>
+<li>Se algum falhou: registra o erro e a hipótese de correção na seção "Tentativas" da task e começa a próxima tentativa.</li>
 <li>Depois da quarta tentativa sem sucesso: para e gera o registro de bloqueio.</li>
 </ol>
 <p><strong>O que produz.</strong></p>
 <ul>
-<li>código e testes em <code>app/</code>, com o <code>/bkhar:save</code> no fim</li>
+<li>testes em código, do <code>tester</code>, e o código de produção, do <code>developer</code>, em <code>app/</code></li>
 <li>ou <code>outputs/BLOQUEIO-[task].md</code>, com o goal que falhou, o erro exato, o que foi tentado e a pergunta que você precisa responder</li>
 </ul>
 <p><strong>Exemplo.</strong></p>
 <pre><code>cd ${BKS_VAULT}/repos/backside/pix-comprovante
 /bkhar:loop
-→ Tentativa 1: implementa EmitirComprovanteUseCase; build ok; test ok;
-  G3 falha: cenário &quot;segunda emissão devolve o mesmo comprovante&quot; sem teste.
-→ Tentativa 2: acrescenta o teste e a verificação de idempotência; G1 a G4 passam.
+→ Passo 0 · tester · Sonnet: 4 testes dos cenários de TEST-emissao-comprovante.md.
+  LEARNINGS.md, tag &quot;idempotencia&quot;: evento duplicado gerava dois registros (caso de 2026-10-02).
+  dotnet test: 4 falhas, todas por EmitirComprovanteUseCase inexistente. RED confirmado.
+→ Tentativa 1 · developer · Sonnet: implementa o use case; build ok;
+  G2 falha: &quot;evento duplicado devolve o mesmo comprovante&quot;.
+→ Tentativa 2 · developer: constraint única no identificador fim a fim; G1 a G4 passam.
 → Concluído. Rodando /bkhar:save.
 </code></pre>
 <p>Caso de bloqueio:</p>
@@ -1786,48 +1844,90 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 </code></pre>
 <p><strong>Cuidados.</strong></p>
 <ul>
-<li>Proibido: quinta tentativa, relaxar o goal ou marcar como concluído com teste falhando.</li>
+<li>Proibido: quinta tentativa, relaxar o goal, marcar como concluído com teste falhando, pular o passo 0 ou o <code>developer</code> editar o teste do <code>tester</code>.</li>
+<li>Decisão que foge da FEAT volta do <code>developer</code> para a sessão, que pergunta a você antes da próxima tentativa.</li>
 <li>Os goals padrão são de .NET. Em outra stack, ajuste <code>G1</code> e <code>G2</code> na task.</li>
 <li>O registro de cada tentativa fica na própria task, não em arquivo solto: quem retoma o trabalho lê a task e vê o que já foi tentado.</li>
 </ul>
 <h4><code>/bkhar:review</code></h4>
-<p><strong>Para que serve.</strong> Dispara o agente <code>reviewer</code> numa invocação separada e read-only, para uma revisão independente de segurança e conformidade. Quem escreveu o código não revisa a si mesmo.</p>
+<p><strong>Para que serve.</strong> Revisão em painel. Cada agente revisa a entrega em invocação separada e read-only, sem ver a resposta dos outros. Quem escreveu o código não revisa a si mesmo.</p>
 <p><strong>Onde rodar.</strong> Raiz do repo do projeto.</p>
-<p><strong>Quando usar.</strong> Antes de aprovar uma entrega que toca uma área sensível declarada no manifesto. Também quando a mudança toca documentação viva.</p>
-<p><strong>Pré-requisito.</strong> O manifesto em <code>{repo}/.claude/multiagente.md</code>. Sem ele, o comando para e orienta a criar a partir do template <code>manifesto-projeto.md</code>.</p>
+<p><strong>Quando usar.</strong> Antes de aprovar uma entrega com código. Também quando a mudança toca documentação viva.</p>
+<p><strong>Quem roda.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Agente</th>
+<th>Quando</th>
+<th>O que revisa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tester</code></td>
+<td>sempre que há diff de código</td>
+<td>se cada cenário do TEST está coberto no código</td>
+</tr>
+<tr>
+<td><code>quality</code></td>
+<td>sempre que há diff de código</td>
+<td>legibilidade, os arquivos de teste, os resultados da execução</td>
+</tr>
+<tr>
+<td><code>security</code></td>
+<td>quando o diff toca área sensível do manifesto</td>
+<td>dado sensível, autorização, log, segredo, zona de contenção</td>
+</tr>
+<tr>
+<td><code>architect</code></td>
+<td>quando o diff cruza fronteira de contexto ou premissa</td>
+<td>fronteira, contrato, padrão</td>
+</tr>
+</tbody>
+</table>
+<p>O <code>tester</code> não revisa os próprios testes. A força das asserções e a fragilidade são do <code>quality</code>.</p>
+<p><strong>Pré-requisito.</strong> O manifesto em <code>{repo}/.claude/multiagente.md</code>. Sem ele, <code>tester</code> e <code>quality</code> rodam, o <code>security</code> não, e o comando orienta a criar o manifesto a partir do template <code>manifesto-projeto.md</code>.</p>
 <p><strong>Argumentos.</strong> O repo a revisar, <code>${BKS_VAULT}/repos/{categoria}/{projeto}</code>. Sem argumento, o comando pergunta. Ele nunca adivinha o projeto ativo.</p>
 <p><strong>O que ele faz, passo a passo.</strong></p>
 <ol>
-<li>Confere o manifesto. Sem manifesto, para.</li>
-<li>Confere se a mudança toca alguma área sensível do manifesto. Se não toca, a revisão é opcional.</li>
-<li>Monta o contexto do <code>reviewer</code>: a checklist de revisão crítica, as invariantes e áreas sensíveis do manifesto, <code>decisions/</code> e o diff da entrega.</li>
-<li>Dispara o <code>reviewer</code> em invocação separada.</li>
-<li>Devolve os achados, ou a declaração do escopo verificado se nada foi encontrado.</li>
-<li>Achado crítico bloqueia a entrega, é registrado em <code>decisions/</code> e volta ao <code>builder</code> em outra invocação.</li>
+<li>Confere o manifesto e se a mudança toca área sensível. Isso decide se o <code>security</code> roda.</li>
+<li>Monta o contexto de cada agente: o diff da entrega, o TEST, as invariantes e áreas sensíveis do manifesto, <code>decisions/</code>.</li>
+<li>Chama os agentes em invocações separadas e paralelas.</li>
+<li>Junta os achados, cada um com <code>arquivo:linha</code>, e classifica:</li>
+<li><strong>bloqueante</strong>: vira proposta de task, que o <code>architect</code> só escreve depois do seu ok. Crítica do <code>security</code> é sempre bloqueante.</li>
+<li><strong>sugestão</strong>: você decide.</li>
+<li><strong>aprendizado</strong>: defeito resolvido, com evidência, que o <code>quality</code> devolve como caso para o <code>LEARNINGS.md</code>.</li>
+<li>Revisão sem achado declara o escopo verificado por agente. A correção volta ao <code>developer</code>, em outra invocação.</li>
 </ol>
-<p>Revisão de escrita, quando a mudança toca <code>README.md</code>, <code>ARCHITECTURE.md</code>, cânone, spec ou material de treinamento. Ela roda na própria sessão, sem o <code>reviewer</code> e mesmo sem manifesto:</p>
+<p>Revisão de escrita, quando a mudança toca <code>README.md</code>, <code>ARCHITECTURE.md</code>, cânone, spec ou material de treinamento. Ela roda na própria sessão, sem agente e mesmo sem manifesto:</p>
 <ol>
 <li>Roda <code>python ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/writing_guard.py &lt;arquivos .md&gt;</code> e cola a saída.</li>
 <li>Lê cada arquivo pela checklist da skill <code>bks-writing</code> e reporta a nota por dimensão e o total. Abaixo de 45, diz o que revisar.</li>
 </ol>
-<p><strong>O que produz.</strong> Uma lista de achados no formato <code>arquivo:linha</code>, problema, exploração e severidade. Achado crítico também vira registro em <code>decisions/</code>.</p>
+<p><strong>O que produz.</strong> Achados no formato <code>arquivo:linha</code>, agrupados por classificação; propostas de task para os bloqueantes; casos para o <code>LEARNINGS.md</code>, que o <code>/bkhar:save</code> grava.</p>
 <p><strong>Exemplo.</strong></p>
 <pre><code>cd ${BKS_VAULT}/repos/backside/pix-comprovante
 /bkhar:review ${BKS_VAULT}/repos/backside/pix-comprovante
-→ Manifesto: .claude/multiagente.md
-→ Área sensível tocada: &quot;dado de transação de cliente&quot;.
-→ reviewer · Opus · Read, Grep, Glob
+→ Manifesto: .claude/multiagente.md · área sensível tocada: &quot;dado de transação de cliente&quot;.
+→ Gerente: revisam tester, quality e security, cada um sem ver os outros.
 
-→ app/PixComprovante.Api/Adapters/Inbound/ComprovanteEndpoints.cs:42
-   Problema: a consulta por identificador fim a fim não confere o titular.
-   Exploração: um cliente autenticado lê o comprovante de outro cliente.
-   Severidade: crítica
-→ Entrega bloqueada. Achado registrado em decisions/; correção volta ao builder.
+Bloqueante
+1. (security) app/PixComprovante.Api/Adapters/Inbound/ComprovanteEndpoints.cs:42
+   A consulta por identificador fim a fim não confere o titular: um cliente lê o comprovante
+   de outro. Severidade: crítica. Proposta de task: conferir o titular antes da consulta.
+Sugestão
+2. (quality) app/PixComprovante.Tests/EmitirComprovanteTests.cs:31
+   O teste confere só o status 200, não o conteúdo do comprovante.
+Aprendizado
+3. (quality) evento duplicado tratado por constraint única; evidência: commit a1b2c3d.
+Cobertura (tester): os 4 cenários do TEST estão cobertos.
+
+→ Aprova a proposta de task 1?
 </code></pre>
 <p><strong>Cuidados.</strong></p>
 <ul>
-<li>Não gaste o <code>reviewer</code>, que roda em Opus, com mudança só de documentação. Para isso existe a revisão de escrita.</li>
-<li>O <code>reviewer</code> recebe o diff ou os arquivos da entrega, não o repo inteiro.</li>
+<li>Não gaste o <code>security</code>, que roda em Opus, com mudança só de documentação. Para isso existe a revisão de escrita.</li>
+<li>Os agentes recebem o diff ou os arquivos da entrega, não o repo inteiro.</li>
 <li>Achado já decidido e aceito em <code>decisions/</code> não volta como novo.</li>
 </ul>
 <h4><code>/bkhar:maintainability</code></h4>
@@ -1887,7 +1987,8 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 <li>Escreve os ADRs, numerados a partir do maior existente, e as specs.</li>
 <li>Se existe <code>docs/canonical/CONTEXT.md</code>, procura specs e decisões mais novas que ele. Havendo, o canônico está defasado.</li>
 <li>Reescreve o <code>STATUS.md</code> por inteiro. Defasagem do canônico entra na seção do que trava.</li>
-<li>Acrescenta ao topo do <code>JOURNAL.md</code> a entrada com data, título e duas a quatro linhas do que mudou.</li>
+<li>Acrescenta ao topo do <code>JOURNAL.md</code> a entrada com data, título e duas a quatro linhas do que mudou. Os aprendizados que os agentes devolveram nos ritos entram na mesma entrada, sob <code>### Aprendizados</code>.
+   Os casos de defeito resolvido que o <code>quality</code> devolveu vão para o <code>LEARNINGS.md</code>, um por caso. Caso sem evidência fica de fora, e o comando diz isso em uma linha.</li>
 <li>Mede o consumo da sessão pelo <code>session_cost.py</code>. Sem o script, diz em uma linha que pulou.</li>
 <li>Confirma em até cinco linhas, uma por arquivo gravado.</li>
 </ol>
@@ -2078,54 +2179,168 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 </blockquote>
 <p>Os projetos em curso usam o <code>/bkhar:spec</code> com <code>specs/</code> no repo. Nenhum deles tem <code>workspace-*</code>.</p>
 <hr />
-<h3>8. Agentes</h3>
-<p>Cada agente tem as ferramentas do seu papel, e só elas. A restrição é o desenho.</p>
+<h3>8. A equipe e os ritos</h3>
+<p>A equipe tem sete papéis. Seis são subagentes; o Gerente é a própria sessão, seguindo a skill <code>bks-team</code>, porque subagente não conversa com você no meio do trabalho nem chama outro subagente. Cada papel tem as ferramentas do seu trabalho, e só elas.</p>
 <table>
 <thead>
 <tr>
-<th>Agente</th>
 <th>Papel</th>
+<th>Tipo</th>
 <th>Modelo</th>
 <th>Ferramentas</th>
+<th>Faz</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>planner</code></td>
-<td>escopo vira FEAT, TEST e TASK; nunca código de produção</td>
-<td>Opus</td>
-<td>Read, Write, Grep, Glob</td>
+<td>Gerente</td>
+<td>orquestrador</td>
+<td>a sessão</td>
+<td>as da sessão</td>
+<td>conduz os ritos, numera as opções, para antes de gerar artefato; não opina sobre técnica</td>
 </tr>
 <tr>
-<td><code>builder</code></td>
-<td>implementa sob LOOP-4, dentro dos limites da FEAT aprovada</td>
+<td><code>architect</code></td>
+<td>consultivo</td>
+<td>Opus</td>
+<td>Read, Write, Edit, Grep, Glob</td>
+<td>padrão, FEAT, TASK e ADR; nunca código de produção</td>
+</tr>
+<tr>
+<td><code>tester</code></td>
+<td>validador</td>
 <td>Sonnet</td>
 <td>Read, Write, Edit, Grep, Glob, Bash</td>
+<td>TEST e o RED em código; confere a cobertura dos cenários</td>
 </tr>
 <tr>
-<td><code>reviewer</code></td>
-<td>revisão de segurança independente, só leitura</td>
+<td><code>developer</code></td>
+<td>implementador</td>
+<td>Sonnet</td>
+<td>Read, Write, Edit, Grep, Glob, Bash</td>
+<td>implementa uma tentativa do loop por vez; não commita</td>
+</tr>
+<tr>
+<td><code>security</code></td>
+<td>validador</td>
 <td>Opus</td>
 <td>Read, Grep, Glob</td>
+<td>revisão de segurança, todo achado com <code>arquivo:linha</code></td>
+</tr>
+<tr>
+<td><code>quality</code></td>
+<td>validador</td>
+<td>Sonnet</td>
+<td>Read, Grep, Glob</td>
+<td>legibilidade, arquivos de teste, resultados; casos para o <code>LEARNINGS.md</code></td>
 </tr>
 <tr>
 <td><code>scribe</code></td>
-<td>registra só o que foi confirmado com evidência</td>
+<td>consultivo</td>
 <td>Haiku</td>
 <td>Read, Write, Edit, Grep, Glob</td>
+<td>ADR de painel e registro do que foi confirmado</td>
 </tr>
 </tbody>
 </table>
-<p>Invoque pelo nome com o prefixo do plugin: <code>bkhar:planner</code>, <code>bkhar:builder</code>, <code>bkhar:reviewer</code>, <code>bkhar:scribe</code>. No plugin antigo, <code>bks:reviewer</code> e equivalentes.</p>
-<p>O <code>/bkhar:review</code> dispara o <code>reviewer</code> com o contexto certo. Prefira o comando à invocação direta.</p>
 <p>Ao iniciar, cada agente diz em uma linha o nome, o modelo e as ferramentas, para você saber que tier está pagando:</p>
-<pre><code>reviewer - Opus - Read, Grep, Glob
+<pre><code>security - Opus - Read, Grep, Glob
 </code></pre>
-<p>Três consequências do arranjo:</p>
+<p>Os ritos seguem a mesma forma: o Gerente diz quem fala, chama cada agente em invocação separada, junta sem reescrever, mostra o conflito lado a lado e para antes de gerar qualquer artefato. Rito não grava <code>STATUS.md</code> nem <code>JOURNAL.md</code>; no fim, o Gerente lista o que o <code>/bkhar:save</code> vai gravar.</p>
+<table>
+<thead>
+<tr>
+<th>Rito</th>
+<th>Comando</th>
+<th>Seção</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pergunta direta</td>
+<td><code>/bkhar:ask</code></td>
+<td>abaixo</td>
+</tr>
+<tr>
+<td>Painel</td>
+<td><code>/bkhar:panel</code></td>
+<td>abaixo</td>
+</tr>
+<tr>
+<td>Refinamento</td>
+<td><code>/bkhar:refine</code></td>
+<td>4. Especificação e arquitetura</td>
+</tr>
+<tr>
+<td>Revisão em painel</td>
+<td><code>/bkhar:review</code></td>
+<td>5. Execução e qualidade</td>
+</tr>
+</tbody>
+</table>
+<p>No plugin <code>bks</code>, que segue nos projetos não migrados, os agentes são os quatro antigos: <code>planner</code>, <code>builder</code>, <code>reviewer</code> e <code>scribe</code>.</p>
+<h4><code>/bkhar:ask</code></h4>
+<p><strong>Para que serve.</strong> Leva uma pergunta direta a um agente da equipe. Ele responde pelo seu perfil e cita a fonte; resposta sem fonte vem marcada como opinião.</p>
+<p><strong>Onde rodar.</strong> Raiz do repo do projeto, para o agente ler os arquivos dele.</p>
+<p><strong>Quando usar.</strong> Dúvida de um ângulo só: "isso expõe dado sensível?", "esse teste prova o cenário?".</p>
+<p><strong>Argumentos.</strong> <code>/bkhar:ask &lt;agente&gt; &lt;pergunta&gt;</code>. O nome vale em inglês ou português: <code>architect</code> ou <code>arquiteto</code>, <code>tester</code> ou <code>testes</code>, <code>developer</code> ou <code>dev</code>, <code>security</code> ou <code>segurança</code>, <code>quality</code> ou <code>qualidade</code>, <code>scribe</code> ou <code>documentador</code>.</p>
+<p><strong>O que ele faz, passo a passo.</strong></p>
+<ol>
+<li>Sem agente ou sem pergunta, pede o que falta. Nome fora da lista: mostra a lista e para.</li>
+<li>Chama o agente em invocação separada, com a pergunta e os arquivos que ela cita.</li>
+<li>Devolve a resposta como veio, com as fontes.</li>
+<li>Se a resposta pede uma decisão, mostra as opções numeradas e pergunta. Não gera artefato sem a sua resposta.</li>
+<li>Lista o aprendizado que o agente devolveu, para o <code>/bkhar:save</code>.</li>
+</ol>
+<p><strong>O que produz.</strong> A resposta, só na conversa.</p>
+<p><strong>Exemplo.</strong></p>
+<pre><code>cd ${BKS_VAULT}/repos/backside/pix-comprovante
+/bkhar:ask security o log de erro da emissão pode levar o CPF do pagador?
+→ security - Opus - Read, Grep, Glob
+→ Sim. app/PixComprovante.Api/Adapters/Outbound/ComprovanteRepository.cs:57 loga a
+  entidade inteira em nível Error, e a entidade tem o CPF sem máscara.
+  Fonte: skills/bks-standards/references/checklist-revisao-critica.md, item de log.
+→ Aprendizado para o /bkhar:save: nenhum.
+</code></pre>
+<p><strong>Cuidados.</strong></p>
 <ul>
-<li><strong>A revisão é independente porque não pode agir.</strong> Sem <code>Write</code>, o <code>reviewer</code> não transforma achado em correção silenciosa.</li>
-<li><strong>O modelo acompanha o julgamento.</strong> Opus onde se julga, Sonnet onde se executa spec aprovada, Haiku onde se transcreve evidência.</li>
-<li><strong>O papel é invocado, não assumido.</strong> O <code>reviewer</code> roda sem o estado da sessão que produziu o código.</li>
+<li>O <code>@agente</code> no prompt não chama agente: no Claude Code, <code>@</code> é menção de arquivo. O caminho é este comando.</li>
+<li>Pergunta que pede decisão entre caminhos rende mais no <code>/bkhar:panel</code>, com dois ou três ângulos.</li>
+</ul>
+<h4><code>/bkhar:panel</code></h4>
+<p><strong>Para que serve.</strong> Painel de decisão. Dois ou três agentes respondem à mesma pergunta sem ver os outros, o Gerente numera as posições, você escolhe e o <code>scribe</code> grava o ADR com as opções descartadas.</p>
+<p><strong>Onde rodar.</strong> Raiz do repo do projeto. O ADR vai para <code>decisions/</code> dele.</p>
+<p><strong>Quando usar.</strong> Decisão com mais de um caminho razoável, em que o porquê precisa ficar registrado.</p>
+<p><strong>Argumentos.</strong> <code>/bkhar:panel &lt;pergunta&gt;</code>, ou com os agentes escolhidos: <code>/bkhar:panel architect,security &lt;pergunta&gt;</code>. Sem agentes, o Gerente escolhe pelo assunto, diz quais e aceita a troca.</p>
+<p><strong>O que ele faz, passo a passo.</strong></p>
+<ol>
+<li>Escolhe 2 ou 3 agentes e diz por quê, em uma linha.</li>
+<li>Chama todos em paralelo, com a mesma pergunta e o mesmo contexto. Nenhum recebe a resposta do outro.</li>
+<li>Mostra as posições numeradas, cada uma com quem defende, a favor, contra e fonte. Conflito aparece lado a lado.</li>
+<li>Pergunta qual opção você escolhe. Nada é gravado antes.</li>
+<li>Com a escolha, chama o <code>scribe</code>, que grava o ADR em <code>decisions/</code> pelo template <code>ADR.md</code>, com as opções descartadas e quem defendeu cada uma.</li>
+<li>Lista o que o <code>/bkhar:save</code> grava.</li>
+</ol>
+<p><strong>O que produz.</strong> <code>decisions/ADR-NNN-[slug].md</code>. Sem escolha, nenhum ADR: a pergunta fica como decisão pendente no <code>STATUS.md</code>.</p>
+<p><strong>Exemplo.</strong></p>
+<pre><code>cd ${BKS_VAULT}/repos/backside/pix-comprovante
+/bkhar:panel o comprovante é gerado na hora da consulta ou guardado na emissão?
+→ Gerente: falam architect, security e quality, porque a pergunta toca contrato e dado guardado.
+
+1. Guardar na emissão — defendida por architect, security
+   A favor: o comprovante é imutável e auditável.   Contra: armazena dado do pagador.
+   Fonte: FEAT-emissao-comprovante.md, regra 2; manifesto, &quot;dado de transação de cliente&quot;.
+2. Gerar na consulta — defendida por quality
+   A favor: menos estado e nada para migrar.   Contra: o texto muda se a regra mudar.
+   Fonte: opinião.
+
+→ Qual opção você escolhe? — 1
+→ scribe: gravado decisions/ADR-004-comprovante-guardado-na-emissao.md, com a opção 2 descartada.
+</code></pre>
+<p><strong>Cuidados.</strong></p>
+<ul>
+<li>O Gerente não escolhe por você, nem quando os agentes concordam.</li>
+<li>Posição sem fonte aparece como opinião, e conta como tal.</li>
 </ul>
 <hr />
 <h3>9. Guardas</h3>
@@ -2219,10 +2434,16 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 <td><code>docs/canonical/PRD-{projeto}.md</code></td>
 </tr>
 <tr>
+<td><code>/bkhar:refine</code></td>
+<td>raiz do repo</td>
+<td>PRD ou <code>CONTEXT.md</code></td>
+<td>perguntas da equipe, <code>FEAT-*.md</code> com <code>Refinamento: sim</code>, depois <code>TEST-*.md</code></td>
+</tr>
+<tr>
 <td><code>/bkhar:spec</code></td>
 <td>raiz do repo</td>
 <td>PRD ou <code>CONTEXT.md</code></td>
-<td><code>specs/features/FEAT-*.md</code>, depois <code>specs/tests/TEST-*.md</code></td>
+<td><code>specs/features/FEAT-*.md</code> com <code>Refinamento: não (exceção)</code>, depois <code>specs/tests/TEST-*.md</code></td>
 </tr>
 <tr>
 <td><code>/bkhar:arch</code></td>
@@ -2234,13 +2455,25 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 <td><code>/bkhar:loop</code></td>
 <td>raiz do repo</td>
 <td>FEAT e TEST aprovados</td>
-<td>código com testes, ou <code>outputs/BLOQUEIO-[task].md</code></td>
+<td>RED do <code>tester</code>, código do <code>developer</code>, ou <code>outputs/BLOQUEIO-[task].md</code></td>
 </tr>
 <tr>
 <td><code>/bkhar:review</code></td>
 <td>raiz do repo</td>
-<td><code>.claude/multiagente.md</code></td>
-<td>achados de segurança e conformidade</td>
+<td>diff da entrega; manifesto para o <code>security</code></td>
+<td>achados classificados, propostas de task, casos para o <code>LEARNINGS.md</code></td>
+</tr>
+<tr>
+<td><code>/bkhar:ask</code></td>
+<td>raiz do repo</td>
+<td>nenhum</td>
+<td>resposta de um agente, com fonte</td>
+</tr>
+<tr>
+<td><code>/bkhar:panel</code></td>
+<td>raiz do repo</td>
+<td>nenhum</td>
+<td><code>decisions/ADR-NNN-*.md</code> com as opções descartadas</td>
 </tr>
 <tr>
 <td><code>/bkhar:maintainability</code></td>
@@ -2252,7 +2485,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 <td><code>/bkhar:save</code></td>
 <td>raiz do repo</td>
 <td><code>STATUS.md</code></td>
-<td><code>STATUS.md</code> reescrito, <code>JOURNAL.md</code> acrescido, ADRs, specs e consumo</td>
+<td><code>STATUS.md</code> reescrito, <code>JOURNAL.md</code> acrescido, <code>LEARNINGS.md</code>, ADRs, specs e consumo</td>
 </tr>
 <tr>
 <td><code>/bkhar:migrate</code></td>
@@ -2277,27 +2510,9 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 </thead>
 <tbody>
 <tr>
-<td><code>/bkhar:refine</code></td>
-<td>repo</td>
-<td>abre o rito de refinamento</td>
-<td><em>proposto</em></td>
-</tr>
-<tr>
-<td><code>/bkhar:panel</code></td>
-<td>qualquer pasta</td>
-<td>painel com 2 ou 3 agentes</td>
-<td><em>proposto</em></td>
-</tr>
-<tr>
 <td><code>/bkhar:brainstorm</code></td>
 <td>qualquer pasta</td>
 <td>rito de brainstorming com a skill de mesmo nome</td>
-<td><em>proposto</em></td>
-</tr>
-<tr>
-<td><code>/bkhar:ask &lt;agent&gt;</code></td>
-<td>qualquer pasta</td>
-<td>pergunta direta a um papel, com atalho <code>@&lt;agente&gt;</code></td>
 <td><em>proposto</em></td>
 </tr>
 <tr>
@@ -2328,58 +2543,62 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 </table>
 <h2 id="apendices">Apêndices</h2>
 <h3>A. Template de perfil de agente</h3>
-<p>Exemplo do agente de Segurança, que evolui o <code>reviewer</code> atual. No kit, os agentes já vivem em <code>agents/</code> como subagentes do Claude Code, com frontmatter e o tier anunciado na primeira linha. O campo <code>skills</code> abaixo é o acréscimo do harness.</p>
+<p>O formato real dos agentes do <code>bkhar</code>, aqui com a Segurança, resumida de <code>agents/security.md</code>. O frontmatter tem só as quatro chaves que o Claude Code lê; as skills que o papel carrega ficam numa seção do corpo, para não depender de chave que a plataforma não conhece. A primeira linha do corpo anuncia o tier, e as sete seções são as mesmas em todo perfil.</p>
 <pre><code class="language-markdown">---
 name: security
-description: Analista de segurança e conformidade. Use no refinamento de toda FEAT e na revisão de todo diff que toque zona sensível do manifesto.
-model: opus   # hoje igual ao reviewer; meta: fornecedor diferente do Dev
+description: Segurança da equipe. Analisa FEAT e diff pelo ângulo de dado sensível, autorização, log e segredo. Só lê; todo achado com arquivo:linha.
+model: opus
 tools: Read, Grep, Glob
-skills: [security-audit@^1, bks-standards@^1]   # lido pelo harness
 ---
-# Persona
+
+&gt; Ao iniciar, diga em uma linha: `security - Opus - Read, Grep, Glob`.
+
+# Agente — security
+
+## Persona
 Analista de AppSec com experiência em sistemas bancários brasileiros.
 Direto, cético, nunca aprova por cortesia.
 
-# Responsabilidades
-- Questionar a FEAT pelo ângulo de dado sensível, autorização e log
-- Revisar o diff: mascaramento, segredos, zona do manifesto
+## Responsabilidades
+- No refinamento, até três perguntas pelo ângulo da segurança
+- Na revisão em painel, o diff que toca área sensível do manifesto
 - Classificar cada achado: bloqueante, sugestão ou aprendizado
 
-# Limites
-- Não escreve código de produção
-- Não aprova o que não leu
-- Opinião sem fonte vem marcada como opinião
+## Limites
+- Só lê; todo achado tem arquivo:linha
+- Crítica bloqueia a entrega
 
-# Fontes obrigatórias
+## Fontes obrigatórias
 - manifesto do projeto
-- references/checklist-seguranca.md
-- regras de segurança em skills/bks-standards/ e o brain/engineering/ do projeto
+- skills/bks-standards/references/checklist-revisao-critica.md
+- skills/bks-team/references/code-review-checklist.md
 
-# Perguntas obrigatórias
+## Perguntas obrigatórias
 1. Que dado sensível passa por aqui?
 2. Quem pode ver este dado, e como isso é verificado?
 3. Algum log, mensagem de erro ou trace expõe o dado?
-4. Algum segredo aparece fora do CyberArk?
-5. A resposta revela a existência de um recurso a quem não deveria?
 
-# Aprendizado
-Ao fim de cada revisão, anote em até 3 linhas o que vale virar regra
-de checklist ou premissa. O Documentador transforma em proposta.
+## Skills que carrega
+`security-audit` e `bks-standards`.
+
+## Aprendizado
+Ao fim da revisão, devolva ao Gerente, em até 3 linhas, o que vale
+virar regra de checklist ou premissa. O /bkhar:save registra.
 </code></pre>
 <h3>B. routing.yaml de referência</h3>
 <p>O ponto de partida são os modelos que os agentes do kit já usam. Trocas, como o DeepSeek no Dev, só entram depois das evals da Fase 7.</p>
 <pre><code class="language-yaml">agents:
-  manager:   { model: claude-sonnet }   # novo
-  architect: { model: claude-opus }     # planner hoje, em medição contra sonnet
-  developer: { model: claude-sonnet }   # builder hoje; candidato: deepseek em projeto poc
+  manager:   { model: session }         # a sessão principal, skill bks-team
+  architect: { model: claude-opus }     # era o planner; em medição contra sonnet
+  developer: { model: claude-sonnet }   # era o builder; candidato: deepseek em projeto poc
   tester:    { model: claude-sonnet }   # novo; meta: fornecedor diferente do developer
-  security:  { model: claude-opus }     # reviewer hoje (read-only)
+  security:  { model: claude-opus }     # era o reviewer (read-only)
   quality:   { model: claude-sonnet }   # novo
   scribe:    { model: claude-haiku }    # scribe hoje
 
 rules:
   - order: [manager, architect, tester, developer, security, quality, scribe]
-  - reviewer.vendor != developer.vendor   # meta da Fase 4
+  - security.vendor != developer.vendor   # meta da Fase 4
   - loop.max_attempts: 4
 
 zones:
@@ -2540,6 +2759,12 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 <tbody>
 <tr>
 <td>Atlas do BKS Harness</td>
+<td>1.7.0</td>
+<td>2026-10-19</td>
+<td>Partes III e IV ajustadas à equipe construída na Fase 3: seis agentes, Gerente como skill <code>bks-team</code>, <code>/bkhar:ask</code>, <code>panel</code> e <code>refine</code> existentes, revisão em painel, <code>LEARNINGS.md</code>, sem o atalho com arroba; Apêndice A no formato real do perfil</td>
+</tr>
+<tr>
+<td>Atlas do BKS Harness</td>
 <td>1.6.1</td>
 <td>2026-10-19</td>
 <td>Caminhos da máquina do autor trocados por <code>&lt;harness&gt;</code>, com exemplo de pasta; o repositório passa a constar como público no GitHub</td>
@@ -2585,6 +2810,12 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 <td>1.0.0</td>
 <td>2026-10-17</td>
 <td>Primeira versão: Partes I a VIII, equipe de sete agentes, ritos, ciclo de aprendizado, case</td>
+</tr>
+<tr>
+<td>Apresentação BKS Harness</td>
+<td>1.8.0</td>
+<td>2026-10-19</td>
+<td>Slides de equipe, ritos, comandos e manual do repo com a equipe da Fase 3; conceitos e roteamento sem os agentes antigos como estado atual</td>
 </tr>
 <tr>
 <td>Apresentação BKS Harness</td>

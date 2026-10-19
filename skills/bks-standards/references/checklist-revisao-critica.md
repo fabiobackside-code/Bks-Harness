@@ -1,6 +1,6 @@
-# Checklist do portão de revisão — reviewer
+# Checklist do portão de revisão — security
 
-Usado pelo agente `reviewer`. Ler quando a mudança toca área declarada sensível no manifesto do
+Usado pelo agente `security`. Ler quando a mudança toca área declarada sensível no manifesto do
 projeto (`{repo}/.claude/multiagente.md`). Cada item exige `arquivo:linha`, não "parece ok".
 
 ## Núcleo (qualquer domínio)
@@ -39,7 +39,7 @@ Problema: <uma frase>
 Exploração: <entrada concreta → efeito concreto>
 Severidade: crítica | alta | média | baixa
 ```
-Crítica bloqueia entrega. Reviewer não propõe refatoração ampla — aponta o problema e o menor
-caminho de correção; quem corrige é o `builder`, em invocação separada.
+Crítica bloqueia entrega. O `security` não propõe refatoração ampla — aponta o problema e o menor
+caminho de correção; quem corrige é o `developer`, em invocação separada.
 
 Fonte: adaptado de github.com/DiegoAmorimDev/bks-multiagent-skill (MIT) para o vocabulário BKS.

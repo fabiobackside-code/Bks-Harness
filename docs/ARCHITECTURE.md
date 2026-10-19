@@ -100,17 +100,19 @@ modo panorama, que percorre `repos/`, e `/bkhar:new-project`, que cria dentro de
 
 ### Separação de papéis entre agentes
 
-Quatro agentes com ferramentas e modelos distintos, não um agente genérico:
+Seis subagentes com ferramentas e modelos distintos, não um agente genérico. A separação vale
+desde o kit original, que tinha quatro agentes; a equipe da Fase 3 a estendeu (seção "A equipe
+conversa, e quem decide é o usuário").
 
-- `reviewer` e read-only e roda em invocação separada. Quem escreveu o código não revisa a própria
-  segurança — o vies de quem implementou e saber que o filtro está la porque o pos nos outros
-  três.
-- `scribe` roda em Haiku e só registra o que foi confirmado com evidência. Documentação que
-  infere resultado e pior que documentação ausente.
-- `planner` não tem Bash nem Edit de código de produção. Separar quem específica de quem
+- `security` e `quality` são read-only e rodam em invocação separada. Quem escreveu o código não
+  revisa a própria segurança: o viés de quem implementou é saber que o filtro está lá porque o pôs
+  nos outros três.
+- `scribe` roda em Haiku e só registra o que foi confirmado com evidência. Documentação que infere
+  resultado é pior que documentação ausente.
+- `architect` não tem Bash nem escreve código de produção. Separar quem especifica de quem
   implementa evita spec escrita para caber no que já foi codado.
-- `builder` opera sob LOOP-4 — no máximo quatro tentativas contra goals verificáveis (build
-  limpo, testes verdes, cenários da `TEST` cobertos).
+- `developer` implementa uma tentativa do LOOP-4 por vez, contra goals verificáveis (build limpo,
+  testes verdes, cenários de teste cobertos).
 
 ### Regra precisa de guarda executável
 
@@ -184,7 +186,7 @@ alerta nenhum: nem todo projeto usa o fluxo canônico, e alertar sobre ausência
 opcional treina o leitor a ignorar o aviso.
 
 A revisão foi considerada como lugar da detecção e descartada. O `/bkhar:review` dispensa mudança que
-não toca área sensível — documentação, justamente — e o agente `reviewer` é read-only, em
+não toca área sensível — documentação, justamente — e o agente de revisão é read-only, em
 invocação separada, sem o estado da sessão que aprovou a FEAT. Divergência de canônico também não
 é achado de segurança em `arquivo:linha`, e diluir o contrato do agente enfraquece o que ele já
 faz bem.
@@ -270,7 +272,7 @@ mudou.
 ### O tier do modelo e visivel, e o subagente entra na conta
 
 Os quatro agentes ja escolhiam modelo por perfil no frontmatter, mas a escolha era invisivel em
-execucao: so quem abrisse o arquivo sabia que o `reviewer` custa Opus. O tier passou a ser
+execucao: so quem abrisse o arquivo sabia que o agente de revisao custava Opus. O tier passou a ser
 anunciado na primeira linha de cada agente.
 
 A medicao tinha um buraco maior. O `session_cost.py` le o bloco `usage` do transcript, e o
@@ -287,7 +289,7 @@ numero com aparencia de medida e fundamento de suposicao.
 
 ### Como comparar um tier contra outro
 
-O `planner` subiu para Opus em 2026-09-15, para medicao. A pergunta que isso abre — Opus paga o
+O agente de especificacao (hoje o `architect`) subiu para Opus em 2026-09-15, para medicao. A pergunta que isso abre — Opus paga o
 proprio preco na especificacao? — nao se responde lendo duas specs e escolhendo a que soa melhor.
 Isso e julgamento, nao medida, e e o mesmo vicio do eval sem delta.
 
@@ -296,8 +298,8 @@ fluxo e sao contaveis:
 
 | Sinal | Onde | O que denuncia |
 |---|---|---|
-| Tentativas do LOOP-4 | o `/bkhar:loop` registra | spec ambigua faz o builder errar e repetir |
-| Achados do `reviewer` | `/bkhar:review` produz | spec que nao fechou invariante vira achado |
+| Tentativas do LOOP-4 | o `/bkhar:loop` registra | spec ambigua faz o `developer` errar e repetir |
+| Achados do `security` e do `quality` | `/bkhar:review` produz | spec que nao fechou invariante vira achado |
 | FEAT alterada apos aprovada | git | spec que nao aguentou o contato com o codigo |
 
 Compara-se um periodo, nao uma spec: dez FEATs num tier contra dez no outro. O custo aparece no
@@ -329,7 +331,7 @@ código. Frase longa e sigla sem definição têm falso positivo, e um bloqueio 
 travaria a edição de documento legado. Depois da escrita, o hook devolve ao agente os achados do
 trecho escrito e não do arquivo inteiro, e mostra ao usuário o lembrete de rodar o `/bkhar:review`.
 O `/bkhar:review` passou a conferir a escrita sempre que a mudança toca documentação viva, sem o
-agente `reviewer`: roda a guarda nos arquivos tocados e dá a nota por dimensão da skill.
+agente de revisão: roda a guarda nos arquivos tocados e dá a nota por dimensão da skill.
 
 O mesmo script roda como linha de comando sobre o arquivo inteiro, e é assim que entra na DoD. A
 contagem bate com a da guarda em PowerShell do projeto de origem: 75 achados no documento antes da
@@ -344,7 +346,7 @@ serve, e o comentário não precisa apontar para ele. O `doc-writer`, o `bks-dot
 
 O `/bkhar:maintainability` avalia cada aplicação de `app/` e gera o documento de fundamentação do
 projeto, pela skill `bks-maintainability-review`. Ele não entrou no `/bkhar:review` por três
-diferenças. O agente `reviewer` só lê, e o parecer grava HTML. A revisão olha o diff de uma entrega
+diferenças. O agente `security` só lê, e o parecer grava HTML. A revisão olha o diff de uma entrega
 que toca área sensível, e a manutenibilidade olha o `app/` inteiro. Achado crítico da revisão
 bloqueia a entrega, e a nota de manutenibilidade orienta a evolução sem bloquear nada.
 
@@ -366,6 +368,52 @@ rubrica, com confiança baixa. Cofre de credenciais e OpenShift saíram do núcl
 
 O `/bkhar:canonize` sugere o comando no fim quando `app/` tem código. Antes disso, não há aplicação
 para avaliar, e a sugestão seria ruído.
+
+### A equipe conversa, e quem decide é o usuário
+
+Até a 0.8.0, o `bkhar` tinha quatro executores: recebiam uma tarefa e devolviam um resultado. A
+0.9.0 troca isso por uma equipe que pergunta pelo seu ângulo, discorda com fonte e não anda sem a
+resposta do usuário. O objetivo é diálogo, não vibe coding.
+
+**Seis papéis no lugar de quatro.** O `planner` se dividiu em `architect` (especificação, tarefas e
+decisões) e `tester` (cenários e o teste em código); o `builder` virou `developer`; o `reviewer` virou `security`;
+o `quality` é novo. O `scribe` ficou, com o perfil ampliado. O plugin `bks` segue com os agentes
+antigos, para não mudar projeto que não migrou.
+
+**O Gerente é protocolo da sessão principal, não subagente.** Subagente do Claude Code não conversa
+com o usuário no meio do trabalho nem chama outro subagente, e quem conduz um rito precisa das duas
+coisas. A skill `bks-team` diz o que a sessão principal faz em todo rito: abrir, chamar, juntar sem
+reescrever, expor o conflito, parar antes de gerar artefato e fechar.
+
+**O painel é independente.** Cada agente recebe a mesma pergunta em invocação separada e paralela,
+e nenhum lê a resposta do outro. Posição que viu a outra deixa de ser posição e vira concordância.
+A escolha do usuário vira ADR com as opções descartadas, que é o que impede a mesma discussão de
+voltar no mês seguinte.
+
+**Rito não grava estado.** Durante um rito, ninguém escreve no `STATUS.md` nem no `JOURNAL.md`; o
+Gerente lista o que precisa ser registrado e o `/bkhar:save` grava. A exceção é o ADR do painel,
+gravado pelo `scribe` logo depois da escolha, porque decisão não pode esperar o fim da sessão.
+
+**O `tester` é dono do RED (teste escrito antes do código, ainda falhando), e o loop delega ao
+`developer`.** O refinamento termina num documento
+de cenários; sem dono, o teste em código seria escrito por quem implementa, e a regra de quem
+escreve o teste não ser quem o faz passar ficaria só no texto. Por isso o `/bkhar:loop` tem um
+passo 0, com o portão "RED confirmado". A sessão principal continua conduzindo o loop (goals,
+tentativas, `save`, `BLOQUEIO`) e chama o `developer` uma vez por tentativa: o diálogo com o
+usuário fica onde ele é possível, e o tier anunciado no `developer` é o que se paga.
+
+**O `tester` não revisa os próprios testes.** Na revisão ele confere a cobertura dos cenários; a
+força das asserções, a fragilidade e os resultados são do `quality`.
+
+**`LEARNINGS.md` mínimo, sem curadoria.** Defeito detectado e resolvido, com evidência, vira caso
+no projeto, e o `tester` lê os casos da área antes de escrever teste novo. Fundir, aposentar e
+promover caso ao kit é curadoria e fica para a fase da retrospectiva: sem ela o arquivo cresce, e o
+filtro por tags segura o custo até lá.
+
+**Sem atalho `@agente`.** No Claude Code, `@` é menção de arquivo. O caminho é o `/bkhar:ask`.
+
+**Checklists fora de `agents/`.** Arquivo dentro de `agents/` aparece como subagente, e os
+checklists apareciam como `bkhar:references:*`. Eles moram em `skills/bks-team/references/`.
 
 ### O público recebe uma lista, não uma cópia
 

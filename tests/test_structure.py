@@ -487,12 +487,143 @@ def test_public_hygiene():
         check('sem %s' % label, not hits, 'em: %s' % ', '.join(sorted(hits)))
 
 
+old_agent_re = re.compile(r'`(?:bkhar:)?(?:planner|builder|reviewer)`|\|\s*(?:planner|builder|reviewer)\s*\|')
+
+
+def test_team():
+    print('\nequipe (Fase 3)')
+    path = os.path.join(ROOT, 'skills', 'bks-team', 'SKILL.md')
+    check('skills/bks-team/SKILL.md existe', os.path.isfile(path))
+    team = read('skills', 'bks-team', 'SKILL.md') if os.path.isfile(path) else ''
+    roles = ('architect', 'tester', 'developer', 'security', 'quality', 'scribe')
+    absent = [r for r in roles if '`%s`' % r not in team]
+    check('bks-team cita os seis papéis', not absent, 'faltando: %s' % ', '.join(absent))
+    check('bks-team exige invocação separada e independente no painel',
+          'invocação separada' in team and 'independente' in team)
+    check('bks-team proíbe o Gerente de opinar sobre técnica', 'não opina sobre técnica' in team)
+    check('bks-team: rito não grava estado', 'não grava estado' in team)
+    check('bks-team para antes de gerar artefato', 'antes de qualquer passo que gere artefato' in team)
+
+    sections = ('## Persona', '## Responsabilidades', '## Limites', '## Fontes obrigatórias',
+                '## Perguntas obrigatórias', '## Skills que carrega', '## Aprendizado')
+    profiles = {
+        'architect': ('nunca escreve código de produção', 'adr'),
+        'tester': ('red confirmado', 'learnings.md', 'não revisa os próprios testes'),
+        'scribe': ('nunca afirma', 'evidência'),
+        'developer': ('zona de contenção', 'nunca commita', 'nunca revisa o próprio código', 'red'),
+        'security': ('arquivo:linha', 'crítica bloqueia', 'só lê'),
+        'quality': ('learnings.md', 'só lê', 'arquivos de teste', 'linter'),
+    }
+    for role, musts in sorted(profiles.items()):
+        path = os.path.join(ROOT, 'agents', role + '.md')
+        check('agents/%s.md existe' % role, os.path.isfile(path))
+        text = read('agents', role + '.md') if os.path.isfile(path) else ''
+        missing = [s for s in sections if s not in text]
+        check('%s: tem as sete seções do perfil' % role, not missing, 'faltando: %s' % ', '.join(missing))
+        body = text.split('---', 2)[-1].lstrip()
+        check('%s: primeira linha anuncia tier e ferramentas' % role,
+              body.startswith('> Ao iniciar, diga em uma linha: `%s - ' % role))
+        absent = [m for m in musts if m not in text.lower()]
+        check('%s: regras duras do papel' % role, not absent, 'faltando: %s' % ', '.join(absent))
+
+    commands = {
+        'loop': ('passo 0', 'red confirmado', '`tester`', '`developer`', 'bloqueio-'),
+        'review': ('`tester`', '`security`', '`quality`', 'não revisa os próprios testes',
+                   'proposta de task'),
+        'spec': ('`architect`', '`tester`', 'refinamento: não (exceção)'),
+        'ask': ('architect', 'arquiteto', 'tester', 'testes', 'developer', 'dev', 'security',
+                'seguranca', 'quality', 'qualidade', 'scribe', 'documentador', 'opinião'),
+        'panel': ('independente', 'adr', 'descartadas', '`scribe`', 'invocação separada'),
+        'refine': ('`architect`', '`tester`', '`security`', 'até três perguntas',
+                   'refinamento: sim'),
+    }
+    for cmd in ('ask', 'panel', 'refine'):
+        check('commands/%s.md existe' % cmd, os.path.isfile(os.path.join(ROOT, 'commands', cmd + '.md')))
+    for cmd, musts in sorted(commands.items()):
+        path = os.path.join(ROOT, 'commands', cmd + '.md')
+        text = read('commands', cmd + '.md').lower() if os.path.isfile(path) else ''
+        absent = [m for m in musts if m not in text]
+        check('/bkhar:%s chama os papéis novos' % cmd, not absent, 'faltando: %s' % ', '.join(absent))
+        old = [a for a in ('`planner`', '`builder`', '`reviewer`') if a in text]
+        check('/bkhar:%s não cita agente antigo' % cmd, not old, 'cita: %s' % ', '.join(old))
+
+    manual = read('docs', 'artefatos', 'manual', 'manual-comandos.md')
+    cmds = set(os.path.splitext(f)[0] for f in listdir('commands') if f.endswith('.md'))
+    no_block = sorted(c for c in cmds if '### `/bkhar:%s`' % c not in manual)
+    check('o manual tem um bloco por comando', not no_block, 'sem bloco: %s' % ', '.join(no_block))
+
+    atlas = read('docs', 'artefatos', 'atlas', 'atlas-bks-harness.md')
+    body = atlas.split('### F. Histórico de versões')[0]
+    check('Atlas não promete o atalho @agente', '`@<agente>`' not in body and '`@agente`' not in body.replace('O `@agente` no prompt não chama agente', ''))
+    check('Atlas aponta os checklists para skills/bks-team/', 'agents/references/' not in body)
+    proposed = [c for c in ('refine', 'panel', 'ask')
+                if re.search(r'\|\s*`/bkhar:%s[^|]*\|.*\|\s*Proposto\s*\|' % c, body)]
+    check('Atlas dá ask, panel e refine como existentes', not proposed, 'ainda propostos: %s' % ', '.join(proposed))
+
+    slides = ('docs', 'artefatos', 'apresentacao', 'slides')
+    cmds_slide = read(*(slides + ('comandos.html',)))
+    rite_row = re.search(r'<tr>(?:(?!</tr>).)*/bkhar:refine(?:(?!</tr>).)*</tr>', cmds_slide)
+    check('slide comandos dá os ritos como existentes',
+          bool(rite_row) and 'Proposto' not in rite_row.group(0) and ':ask' in rite_row.group(0))
+    repo_slide = read(*(slides + ('manual-repo.html',)))
+    absent = [c for c in ('/bkhar:refine', '/bkhar:ask', ':panel') if c not in repo_slide]
+    check('slide manual-repo cita os comandos de rito', not absent, 'faltando: %s' % ', '.join(absent))
+    stale = [f for f in ('roteamento.html', 'conceitos.html', 'equipe.html')
+             if re.search(r'planner hoje|reviewer hoje|reviewer\.vendor|reviewer sempre roda', read(*(slides + (f,))))]
+    check('slides sem os agentes antigos como estado atual', not stale, 'em: %s' % ', '.join(stale))
+
+    readme = read('README.md')
+    check('README lista a skill bks-team', '| `bks-team` |' in readme)
+    check('README não cita agente antigo', not old_agent_re.search(readme))
+    arch = read('docs', 'ARCHITECTURE.md')
+    check('ARCHITECTURE registra a equipe da Fase 3',
+          '### A equipe conversa' in arch and 'protocolo da sessão principal' in arch)
+    for manifest in ('plugin.json', 'marketplace.json'):
+        check('%s em 0.9.0' % manifest, '"version": "0.9.0"' in read('.claude-plugin', manifest))
+
+    left = [a for a in ('planner', 'builder', 'reviewer')
+            if os.path.isfile(os.path.join(ROOT, 'agents', a + '.md'))]
+    check('agentes antigos removidos de agents/', not left, 'ainda existem: %s' % ', '.join(left))
+    roles = set(('architect', 'tester', 'developer', 'security', 'quality', 'scribe'))
+    present = set(os.path.splitext(f)[0] for f in listdir('agents') if f.endswith('.md'))
+    check('agents/ tem só os seis papéis', present == roles, 'encontrados: %s' % ', '.join(sorted(present)))
+
+    cites = []
+    for top in ('templates', 'profiles', 'skills'):
+        for base, _, files in os.walk(os.path.join(ROOT, top)):
+            for f in files:
+                if f.endswith('.md'):
+                    rel = os.path.relpath(os.path.join(base, f), ROOT).replace(BS, '/')
+                    with io.open(os.path.join(base, f), encoding='utf-8') as fh:
+                        if old_agent_re.search(fh.read()):
+                            cites.append(rel)
+    check('templates, perfis e skills não citam agente antigo', not cites, 'em: %s' % ', '.join(sorted(cites)))
+
+    learn = os.path.join(ROOT, 'templates', 'project-skeleton', 'LEARNINGS.md')
+    check('template LEARNINGS.md existe', os.path.isfile(learn))
+    learn_text = read('templates', 'project-skeleton', 'LEARNINGS.md').lower() if os.path.isfile(learn) else ''
+    fields = ('tags', 'sintoma', 'causa', 'teste que teria pegado', 'evidência')
+    absent = [f for f in fields if f not in learn_text]
+    check('LEARNINGS.md tem os campos do caso', not absent, 'faltando: %s' % ', '.join(absent))
+    save = read('commands', 'save.md').lower()
+    absent = [m for m in ('learnings.md', '### aprendizados', 'sem evidência') if m not in save]
+    check('/bkhar:save grava aprendizados e LEARNINGS.md', not absent, 'faltando: %s' % ', '.join(absent))
+    check('template FEAT.md tem o campo Refinamento', 'Refinamento:' in read('templates', 'FEAT.md'))
+
+    checklists = ('planning-checklist.md', 'planning-anti-patterns.md',
+                  'code-review-checklist.md', 'code-review-anti-patterns.md')
+    check('agents/references/ não existe', not os.path.isdir(os.path.join(ROOT, 'agents', 'references')))
+    moved = set(listdir('skills', 'bks-team', 'references'))
+    check('os quatro checklists estão em skills/bks-team/references/',
+          set(checklists) <= moved, 'faltando: %s' % ', '.join(sorted(set(checklists) - moved)))
+
+
 def main():
     print('suite estrutural do bks-harness')
     for fn in (test_manifests, test_skills, test_commands, test_pointers,
                test_agents,
                test_hooks, test_invariants, test_profiles, test_renderers,
-               test_evals, test_public_hygiene):
+               test_evals, test_public_hygiene, test_team):
         fn()
 
     print('\n%d verificacoes, %d falhas' % (checks, len(failures)))
