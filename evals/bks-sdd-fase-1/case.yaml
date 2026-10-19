@@ -1,0 +1,40 @@
+schema_version: "1.1"
+name: bks-sdd-fase-1
+description: >
+  A fase de PRD esclarece o que esta ambiguo antes de escrever, em vez de
+  preencher lacuna com suposicao.
+tags: [sdd, prd, conduta]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    /bks-sdd --prd
+
+    Contexto: quero um sistema de agendamento. Os usuarios marcam horario e
+    recebem lembrete.
+
+graders:
+  - name: pergunta-o-que-falta
+    type: llm
+    criteria: |
+      A resposta identifica o que falta para escrever o PRD e pergunta, em vez
+      de assumir. O escopo dado e curto demais para um PRD completo — quem sao
+      os usuarios, o que e um horario, por qual canal vai o lembrete.
+
+  - name: nao-inventa-prd
+    type: llm
+    criteria: |
+      A resposta NAO entrega um PRD completo inventando publico-alvo, metricas
+      de sucesso, requisitos nao funcionais ou escopo que o usuario nao deu.
+
+  - name: perguntas-agrupadas
+    type: llm
+    criteria: |
+      As perguntas sao objetivas e em numero razoavel — ate cerca de cinco,
+      agrupadas. Nao e um questionario exaustivo que devolve o trabalho inteiro
+      ao usuario.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

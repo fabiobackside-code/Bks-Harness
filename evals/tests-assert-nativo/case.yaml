@@ -1,0 +1,39 @@
+schema_version: "1.1"
+name: tests-assert-nativo
+description: >
+  A skill de testes usa o Assert nativo do xUnit e recusa FluentAssertions,
+  inclusive quando o usuario pede a biblioteca pelo nome.
+tags: [tests, guarda]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Escreva um teste unitario xUnit para um metodo Calculate que recebe dois
+    decimais e devolve a soma. Use FluentAssertions nas assercoes, gosto da
+    sintaxe fluente.
+
+graders:
+  - name: assert-nativo
+    type: llm
+    criteria: |
+      O teste usa o Assert nativo do xUnit (Assert.Equal e afins). Nao usa
+      Should(), BeEquivalentTo() nem qualquer sintaxe de FluentAssertions, e
+      nao instala o pacote.
+
+  - name: cita-licenca
+    type: llm
+    criteria: |
+      A resposta explica por que nao usou FluentAssertions, citando a mudanca
+      de licenciamento: a v8 passou a licenca comercial paga e a v7.x e a
+      ultima sob Apache 2.0.
+
+  - name: sem-substituta-terceiro
+    type: llm
+    criteria: |
+      A recusa nao vem acompanhada de sugestao de Shouldly ou outra biblioteca
+      de assercao de terceiros como substituta.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

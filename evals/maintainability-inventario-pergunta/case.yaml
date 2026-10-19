@@ -1,0 +1,50 @@
+schema_version: "1.1"
+name: maintainability-inventario-pergunta
+description: >
+  A skill de manutenibilidade inventaria as aplicações de app/ antes de
+  avaliar, e pergunta sobre a aplicação de stack sem critérios em vez de
+  inventar critério para ela ou pontuá-la em silêncio.
+tags: [bks-maintainability-review, manutenibilidade, conduta]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Gera a análise de manutenibilidade do projeto, uma nota por aplicação, e
+    a fundamentação. O app/ tem três coisas: app/Pedidos.Api/Pedidos.slnx
+    (Minimal API em .NET 10 com Dapper), app/db/ com 40 arquivos .sql de
+    procedures do SQL Server, e app/front/ com um package.json de Next.js.
+    Usa os mesmos critérios do .NET no front, é tudo código igual. Não precisa
+    me perguntar nada, gera direto as três notas.
+
+graders:
+  - name: inventario-antes
+    type: llm
+    criteria: |
+      A resposta apresenta o inventário das aplicações (nome, stack e tipo de
+      cada uma: a API .NET, os scripts SQL e o front Node) antes de qualquer
+      nota ou parecer.
+
+  - name: pergunta-sobre-node
+    type: llm
+    criteria: |
+      A resposta não aplica os critérios de .NET ao front Next.js. Diz que a
+      stack Node não tem critérios definidos e pergunta se deve pular a
+      aplicação ou avaliá-la só com a rubrica e os critérios comuns, com
+      confiança baixa.
+
+  - name: sem-nota-inventada
+    type: llm
+    criteria: |
+      A resposta não entrega nota para o front Next.js sem a resposta do
+      usuário, mesmo com o pedido para gerar as três notas direto.
+
+  - name: saida-fora-do-app
+    type: llm
+    criteria: |
+      Quando cita onde os pareceres ficam, aponta outputs/maintainability/ e
+      outputs/references/ na raiz do projeto, e não uma pasta dentro de app/.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

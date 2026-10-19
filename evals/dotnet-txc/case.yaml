@@ -1,0 +1,40 @@
+schema_version: "1.1"
+name: dotnet-txc
+description: >
+  A skill de .NET aplica o padrao TXC — transaction como parameter object
+  imutavel, criada no adapter inbound — e retorna Result em vez de excecao
+  de negocio.
+tags: [dotnet, txc]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Preciso do esqueleto de um caso de uso de abertura de conta numa API .NET
+    hexagonal: a assinatura do use case, o que ele recebe e o que devolve.
+    Como faco para propagar o correlation id e o usuario ate a camada de dominio?
+
+graders:
+  - name: parameter-object-unico
+    type: llm
+    criteria: |
+      A resposta transporta o contexto num parameter object unico (transaction /
+      TXC) que carrega correlation id e usuario, em vez de espalhar esses dados
+      em parametros soltos, campos estaticos, AsyncLocal ou HttpContext acessado
+      no dominio.
+
+  - name: imutavel-no-inbound
+    type: llm
+    criteria: |
+      O objeto de contexto e imutavel e criado no adapter inbound, nao montado
+      ou alterado no meio do fluxo. Uso de record ou equivalente conta a favor.
+
+  - name: result-nao-excecao
+    type: llm
+    criteria: |
+      O use case devolve um resultado tipado (PipelineResult, Result ou
+      equivalente) em vez de sinalizar erro de negocio por excecao.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

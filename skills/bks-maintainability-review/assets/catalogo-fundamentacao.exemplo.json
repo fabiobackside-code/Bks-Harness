@@ -1,0 +1,39 @@
+{
+  "solucao": "farmacia",
+  "versao_atual": 2,
+  "arquivo_atual": "farmacia_fundamentacao_v2_2026-10-15.html",
+  "projetos": [
+    { "id": "pedidos-api", "nome": "Farmacia.Pedidos.Api", "tipo": "api", "ultima_verificacao": "2026-10-15" },
+    { "id": "credenciais", "nome": "Farmacia.Credenciais", "tipo": "componente", "ultima_verificacao": "2026-10-01" }
+  ],
+  "decisoes": [
+    {
+      "id": "D01",
+      "titulo": "Acesso a dados com Dapper e SQL explícito",
+      "status": "vigente",
+      "substituida_por": null,
+      "origem": "spec",
+      "conceitos": ["repository", "data-mapper", "sql-parametrizado"],
+      "onde": ["Farmacia.Pedidos.Api/Infra/Persistencia"],
+      "desde": 1
+    }
+  ],
+  "conceitos": [
+    {
+      "id": "hexagonal",
+      "nome": "Arquitetura Hexagonal (Ports & Adapters)",
+      "categoria": "estilo-arquitetural",
+      "aplicacao": { "pedidos-api": "aplicado", "credenciais": "parcial" },
+      "nivel": "base",
+      "referencias": ["Alistair Cockburn, \"Hexagonal Architecture\""],
+      "decisoes": ["D01"],
+      "status": "ativo",
+      "desde": 1,
+      "alteracoes": [{ "versao": 2, "descricao": "Componente de credenciais passou a expor port ICredentialProvider" }]
+    }
+  ],
+  "historico": [
+    { "versao": 1, "data": "2026-10-01", "entrou": ["hexagonal", "D01"], "mudou": [], "saiu": [], "projetos_verificados": ["pedidos-api", "credenciais"] },
+    { "versao": 2, "data": "2026-10-15", "entrou": [], "mudou": ["hexagonal"], "saiu": [], "projetos_verificados": ["pedidos-api"] }
+  ]
+}

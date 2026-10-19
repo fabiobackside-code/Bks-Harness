@@ -1,0 +1,13 @@
+<section id="case-refinamento" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">21 · CASE — REFINAMENTO</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Antes da FEAT, o time pergunta</h2>
+<div style="background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">VOCÊ</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">/bkhar:refine endpoint para consultar comprovante PIX por id.</p></div>
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">SEGURANÇA</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">Quem pode consultar, só o pagador ou também o recebedor?</p></div>
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">TESTES</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">Inexistente e de outro cliente dão a mesma resposta? Se não, o endpoint revela que existe.</p></div>
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">ARQUITETO</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">Sua premissa pede CQRS para leitura pesada. Vale aqui, ou leitura direta basta?</p></div>
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">QUALIDADE</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">Result Pattern ou exceção? Dois controllers do projeto ainda usam exceção.</p></div>
+</div>
+<p style="font-size:26px;line-height:1.4;width:1600px">Você responde, e a leitura direta vira ADR com CQRS como alternativa descartada.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 22</p>
+</section>

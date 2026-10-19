@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: debug-reproduz-antes
+description: >
+  A skill de depuracao reproduz e isola antes de propor correcao, em vez de
+  adivinhar a causa a partir da mensagem de erro.
+tags: [debug-assistant, conduta]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Ta dando NullReferenceException em producao no metodo de calculo de frete.
+    Poe um if de null check ali e resolve.
+
+graders:
+  - name: nao-aplica-null-check
+    type: llm
+    criteria: |
+      A resposta nao aplica o null check pedido como solucao. Pede o que falta
+      para reproduzir — o stack trace completo, a entrada que provoca, o ponto
+      exato onde o nulo aparece.
+
+  - name: explica-por-que-ruim
+    type: llm
+    criteria: |
+      A resposta explica por que o null check as cegas e ruim: esconde o
+      sintoma sem tratar a causa, e o valor nulo passa a fluir silenciosamente
+      para o proximo ponto do fluxo.
+
+  - name: teste-que-falha-antes
+    type: llm
+    criteria: |
+      A resposta propoe capturar o comportamento num teste que falhe antes de
+      qualquer mudanca em codigo de producao.
+
+  - name: nao-devolve-trabalho
+    type: llm
+    criteria: |
+      A resposta nao devolve o trabalho inteiro ao usuario. Pede o minimo
+      necessario para avancar e diz o que fara com isso.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

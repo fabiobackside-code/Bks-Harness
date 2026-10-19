@@ -1,0 +1,15 @@
+{
+  "_comment": "Precos em USD por 1.000.000 de tokens. Atualize quando a tabela oficial mudar. cache_write_5m = write de cache efemero 5min; cache_write_1h = write de cache 1h; cache_read = leitura de cache.",
+  "_updated": "2026-08-28",
+  "models": {
+    "claude-opus-5":            { "input": 5.00,  "output": 25.00, "cache_write_5m": 6.25,  "cache_write_1h": 10.00, "cache_read": 0.50 },
+    "claude-sonnet-5":          { "input": 3.00,  "output": 15.00, "cache_write_5m": 3.75,  "cache_write_1h": 6.00,  "cache_read": 0.30 },
+    "claude-fable-5":           { "input": 1.00,  "output": 5.00,  "cache_write_5m": 1.25,  "cache_write_1h": 2.00,  "cache_read": 0.10 },
+    "claude-haiku-4-5-20251001":{ "input": 1.00,  "output": 5.00,  "cache_write_5m": 1.25,  "cache_write_1h": 2.00,  "cache_read": 0.10 }
+  },
+  "aliases": {
+    "claude-opus-4-5": "claude-opus-5",
+    "claude-sonnet-4-5": "claude-sonnet-5",
+    "claude-haiku-4-5": "claude-haiku-4-5-20251001"
+  }
+}

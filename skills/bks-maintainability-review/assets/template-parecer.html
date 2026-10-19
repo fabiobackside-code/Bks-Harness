@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  TEMPLATE DO PARECER DE MANUTENIBILIDADE — bks-maintainability-review
+  Regras de preenchimento:
+  - Substitua todo {{MARCADOR}}. Remova blocos marcados como OPCIONAL quando não se aplicarem.
+  - Arquivo autocontido: nenhum CSS, JS, fonte ou imagem externa.
+  - Repita linhas de tabela (<tr>) quantas vezes for necessário.
+  - Classe de severidade: sev-alta | sev-media | sev-baixa
+  - Classe de premissa: ok | nok | na (não avaliado / não se aplica)
+  - Barra do eixo: style="--v:{{NOTA_1_A_5}}"
+  - Classe da faixa: faixa-excelente | faixa-bom | faixa-atencao | faixa-critico
+-->
+<title>Parecer de Manutenibilidade — {{NOME_DO_PROJETO}} — {{DATA}}</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --surface: #ffffff; --text: #1d1d1f; --muted: #5f6368; --border: #dcdcd8;
+    --accent: #1f5fa8; --ok: #1e7b3c; --warn: #b26a00; --bad: #b3261e;
+    --ok-bg: #e6f4ea; --warn-bg: #fff4e0; --bad-bg: #fce8e6; --na-bg: #eeeeec;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121214; --surface: #1c1c1f; --text: #ececec; --muted: #a0a0a6; --border: #333338;
+      --accent: #7fb0ec; --ok: #6fcf8f; --warn: #f0b45a; --bad: #f28b82;
+      --ok-bg: #16301f; --warn-bg: #352812; --bad-bg: #3a1a18; --na-bg: #2a2a2e;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 1.7rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.05rem; margin: 24px 0 8px; }
+  .meta { color: var(--muted); font-size: .9rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+  .resumo { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: center; margin-top: 20px; }
+  @media (max-width: 700px) { .resumo { grid-template-columns: 1fr; } }
+  .nota { text-align: center; }
+  .nota .valor { font-size: 3.4rem; font-weight: 700; line-height: 1; }
+  .nota .faixa { display: inline-block; margin-top: 8px; padding: 3px 12px; border-radius: 99px; font-weight: 600; font-size: .9rem; }
+  .faixa-excelente { background: var(--ok-bg); color: var(--ok); }
+  .faixa-bom { background: var(--ok-bg); color: var(--ok); }
+  .faixa-atencao { background: var(--warn-bg); color: var(--warn); }
+  .faixa-critico { background: var(--bad-bg); color: var(--bad); }
+  .tbl { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: .92rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--na-bg); font-weight: 600; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .86em;
+         background: var(--na-bg); padding: 1px 5px; border-radius: 4px; }
+  .barra { position: relative; height: 10px; width: 120px; background: var(--na-bg); border-radius: 5px; }
+  .barra::after { content: ""; position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--accent);
+                  width: calc((var(--v) / 5) * 100%); }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: .8rem; font-weight: 600; }
+  .ok { background: var(--ok-bg); color: var(--ok); }
+  .nok { background: var(--bad-bg); color: var(--bad); }
+  .na { background: var(--na-bg); color: var(--muted); }
+  .sev-alta { background: var(--bad-bg); color: var(--bad); }
+  .sev-media { background: var(--warn-bg); color: var(--warn); }
+  .sev-baixa { background: var(--na-bg); color: var(--muted); }
+  .calc { font-family: ui-monospace, Consolas, monospace; white-space: pre-wrap; font-size: .9rem; }
+  ul { padding-left: 20px; }
+  footer { margin-top: 48px; color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>Parecer de Manutenibilidade — {{NOME_DO_PROJETO}}</h1>
+  <div class="meta">
+    Tipo: <strong>{{API | Worker | Biblioteca/SDK/componente}}</strong> ·
+    Data: <strong>{{AAAA-MM-DD}}</strong> ·
+    Versão analisada: <code>{{tag, commit ou pasta}}</code> ·
+    Modelo: {{modelo usado}} ·
+    Unidade analisada: {{fatia vertical / ciclo / superfície pública}}
+  </div>
+  <div class="meta">Código ignorado: {{obj/, bin/, migrations, clients gerados…}}</div>
+</header>
+
+<!-- 1. RESUMO -->
+<section>
+  <div class="card resumo">
+    <div class="nota">
+      <div class="valor">{{NOTA_FINAL}}</div>
+      <div class="meta">de 100</div>
+      <div class="faixa {{CLASSE_FAIXA}}">{{Excelente | Bom | Atenção | Crítico}}</div>
+      <div class="meta" style="margin-top:8px">Confiança: <strong>{{Alta | Média | Baixa}}</strong></div>
+    </div>
+    <div>
+      <p><strong>{{Leitura da faixa: ex. "Um dev do time assume com revisão pontual de um sênior."}}</strong></p>
+      <p>Principais causas da nota:</p>
+      <ol>
+        <li>{{causa 1 com eixo e evidência}}</li>
+        <li>{{causa 2}}</li>
+        <li>{{causa 3}}</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- 2. PREMISSAS -->
+<section>
+  <h2>1. Premissas</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>ID</th><th>Premissa</th><th>Situação</th><th>Evidência</th></tr></thead>
+    <tbody>
+      <tr><td>{{P01}}</td><td>{{descrição curta}}</td><td><span class="tag {{ok|nok|na}}">{{Atende | Não atende | Não avaliado | Não se aplica}}</span></td><td><code>{{arquivo:linha}}</code> {{observação}}</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 3. EIXOS -->
+<section>
+  <h2>2. Eixos</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Eixo</th><th class="num">Peso</th><th class="num">Nota</th><th></th><th>Âncora mais próxima</th><th>Medido / estimado</th><th>Evidência principal</th></tr></thead>
+    <tbody>
+      <tr><td>{{A1. Nomes e linguagem do domínio}}</td><td class="num">{{10}}</td><td class="num">{{3}}</td><td><div class="barra" style="--v:{{3}}"></div></td><td>{{texto da âncora}}</td><td>{{Medido | Estimado}}</td><td><code>{{arquivo:linha}}</code> {{observação}}</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 4. CÁLCULO -->
+<section>
+  <h2>3. Cálculo da nota</h2>
+  <div class="card calc">{{Base = Σ peso × (nota − 1) / 4
+= 10×(3−1)/4 + 10×(4−1)/4 + …
+= XX,X
+
+Premissas críticas violadas: nenhuma | Pxx → limite 40
+Demais premissas violadas: Pxx, Pyy → −10
+Pesos redistribuídos (eixos não avaliados): …
+
+Nota final = XX}}</div>
+</section>
+
+<!-- 5. CENÁRIOS DE MUDANÇA -->
+<section>
+  <h2>4. Cenários de mudança</h2>
+  <h3>{{Cenário 1 — descrição}} <span class="tag na">{{informado pelo usuário | proposto pelo avaliador}}</span></h3>
+  <ul>
+    <li><strong>Arquivos afetados ({{N}}):</strong> <code>{{arquivo}}</code>, <code>{{arquivo}}</code></li>
+    <li><strong>Caminho de leitura ({{N}} saltos):</strong> {{Endpoint → Handler → …}}</li>
+    <li><strong>Fora do repertório no caminho:</strong> {{construções ou "nenhuma"}}</li>
+    <li><strong>Riscos de regressão:</strong> {{riscos}}</li>
+  </ul>
+</section>
+
+<!-- 6. ACHADOS -->
+<section>
+  <h2>5. Achados</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>ID</th><th>Eixo</th><th>Severidade</th><th>Evidência</th><th>Princípio e referência</th><th>Sugestão</th></tr></thead>
+    <tbody>
+      <tr><td>{{F01}}</td><td>{{A3}}</td><td><span class="tag {{sev-alta|sev-media|sev-baixa}}">{{Alta | Média | Baixa}}</span></td><td><code>{{arquivo:linha}}</code> {{descrição}}</td><td>{{ex.: Módulo raso — Ousterhout, A Philosophy of Software Design}}</td><td>{{ação concreta}}</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 7. PLANO DE MELHORIA -->
+<section>
+  <h2>6. Plano de melhoria</h2>
+  <p class="meta">Ordenado por ganho estimado ÷ esforço. Cada nível num eixo vale peso ÷ 4 pontos.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Ação</th><th>Achados</th><th>Eixo / premissa</th><th class="num">Ganho (pts)</th><th>Esforço</th><th class="num">Nota projetada</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>{{ação}}</td><td>{{F01, F04}}</td><td>{{A3, P02}}</td><td class="num">{{+6}}</td><td>{{Baixo | Médio | Alto}}</td><td class="num">{{68}}</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 8. PONTOS FORTES -->
+<section>
+  <h2>7. Pontos fortes (preservar na próxima versão)</h2>
+  <ul>
+    <li>{{ponto forte com evidência}}</li>
+  </ul>
+</section>
+
+<!-- 9. DECISÕES QUESTIONÁVEIS — OPCIONAL -->
+<section>
+  <h2>8. Decisões registradas que merecem revisão</h2>
+  <p class="meta">Não penalizadas na nota, por estarem justificadas.</p>
+  <ul>
+    <li>{{decisão, onde está registrada e por que vale rever}}</li>
+  </ul>
+</section>
+
+<!-- 10. COMPARAÇÃO — OPCIONAL (dois ou mais projetos, ou versão anterior) -->
+<section>
+  <h2>9. Comparação</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Eixo</th><th class="num">{{Este projeto / versão atual}}</th><th class="num">{{Outro projeto / versão anterior}}</th><th class="num">Delta</th><th>Observação</th></tr></thead>
+    <tbody>
+      <tr><td>{{A1}}</td><td class="num">{{4}}</td><td class="num">{{3}}</td><td class="num">{{+1}}</td><td>{{o que mudou ou o que um faz melhor}}</td></tr>
+      <tr><th>Nota final</th><th class="num">{{XX}}</th><th class="num">{{YY}}</th><th class="num">{{±Z}}</th><th></th></tr>
+    </tbody>
+  </table></div>
+  <h3>Padrões recorrentes</h3>
+  <ul><li>{{problema presente nos dois projetos e provável causa sistêmica}}</li></ul>
+  <h3>Ações do plano anterior</h3>
+  <ul><li>{{ação}} — {{aplicada | parcial | não aplicada}}</li></ul>
+  <p class="meta">{{Aviso se modelo, fatia ou rubrica mudaram entre as análises.}}</p>
+</section>
+
+<footer>
+  Gerado pela skill bks-maintainability-review · Rubrica: eixos A1–A12, premissas P01–P18 · Persona: dev pleno (3–5 anos)
+</footer>
+
+</main>
+</body>
+</html>

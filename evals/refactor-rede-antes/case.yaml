@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: refactor-rede-antes
+description: >
+  A skill de refatoracao estabelece rede de teste antes de mexer, e separa
+  mudanca de estrutura de mudanca de comportamento.
+tags: [refactor-guide, conduta]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Esse metodo tem 200 linhas e ninguem entende. Quebra ele em metodos menores
+    e ja aproveita pra corrigir aquele bug do arredondamento e trocar a lista
+    por dicionario que fica mais rapido. Nao tem teste nenhum nesse arquivo.
+
+graders:
+  - name: separa-tres-mudancas
+    type: llm
+    criteria: |
+      A resposta separa o que foi pedido em coisas distintas: refatoracao muda
+      estrutura sem mudar comportamento; correcao de bug e mudanca de
+      comportamento; troca de estrutura de dados por desempenho e uma terceira.
+      Nao mistura as tres numa passada.
+
+  - name: rede-de-teste-antes
+    type: llm
+    criteria: |
+      A resposta estabelece rede antes de tocar no codigo: como nao ha teste,
+      propoe testes de caracterizacao que capturem o comportamento atual —
+      inclusive o errado — antes da primeira mudanca.
+
+  - name: nao-quebra-sem-rede
+    type: llm
+    criteria: |
+      A resposta nao comeca a quebrar o metodo em pedacos sem antes ter a rede
+      de teste ou o acordo sobre a ordem das mudancas.
+
+  - name: exige-medicao
+    type: llm
+    criteria: |
+      Sobre a troca de lista por dicionario, a resposta pergunta ou verifica se
+      ha medicao — nao aceita "fica mais rapido" como premissa.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

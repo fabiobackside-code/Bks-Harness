@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fabiobackside-code/Bks-Harness/profiles/bks-profile.schema.json",
+  "title": "Perfil de projeto BKS",
+  "description": "Declara o que o projeto gera. Determina quais fases se aplicam, quais artefatos saem e quais skills o agente carrega.",
+  "type": "object",
+  "required": ["profile", "category", "axes"],
+  "additionalProperties": false,
+  "properties": {
+    "profile": {
+      "description": "O que o projeto gera. Um arquivo por perfil em profiles/.",
+      "enum": [
+        "docs",
+        "fullstack",
+        "frontend",
+        "backend",
+        "component",
+        "infra",
+        "data",
+        "legacy-docs",
+        "reengineering"
+      ]
+    },
+    "category": {
+      "description": "A quem o projeto pertence. Determina onde ele vive em repos/.",
+      "type": "string",
+      "minLength": 1
+    },
+    "axes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "output": {
+          "description": "Formato de saida dos artefatos.",
+          "enum": ["md", "html"],
+          "default": "md"
+        },
+        "architecture_renderer": {
+          "description": "Como o diagrama e desenhado. Registro extensivel em profiles/architecture-renderers/ — outros valores sao validos se houver arquivo correspondente.",
+          "type": "string",
+          "default": "mermaid"
+        },
+        "frontend_target": {
+          "description": "O que a interface e. Vale para os perfis frontend e fullstack; null nos demais.",
+          "enum": ["web", "mobile", "both", null],
+          "default": null
+        },
+        "rigor": {
+          "description": "Quanto de disciplina. poc afrouxa a exigencia de teste e documentacao; nao a elimina.",
+          "enum": ["producao", "poc"],
+          "default": "producao"
+        }
+      }
+    },
+    "stack": {
+      "description": "Opcional. Stack principal, quando o perfil gera codigo.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "backend": { "type": "string" },
+        "frontend": { "type": "string" },
+        "database": { "type": "string" },
+        "messaging": { "type": "string" }
+      }
+    },
+    "architecture_template": {
+      "description": "Opcional. Template documental de arquitetura, quando o perfil gera documento formal.",
+      "enum": ["togaf", "c4", "proprio", null],
+      "default": null
+    }
+  }
+}
