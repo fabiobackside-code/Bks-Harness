@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  TEMPLATE DA FUNDAMENTAÇÃO DA SOLUÇÃO — bks-maintainability-review (modo fundamentação)
+  Regras de preenchimento:
+  - Substitua todo {{MARCADOR}}. Repita blocos (<article class="conceito">, <tr>, <details>) quantas vezes precisar.
+  - Arquivo autocontido: nenhum CSS, JS, fonte ou imagem externa.
+  - Cada <article class="conceito"> recebe data-cat (categoria), data-proj (projetos separados por espaço) e data-nivel (base|intermediario|avancado) para o filtro.
+  - Classes de aplicação: ap-ok (aplicado) | ap-parcial | ap-declarado
+  - Classes de nível: nv-base | nv-inter | nv-avanc
+  - Marca de novidade: <span class="tag novo">novo na vN</span> ; removido: <span class="tag removido">removido na vN</span>
+-->
+<title>Fundamentação — {{NOME_DA_SOLUCAO}} — v{{N}}</title>
+<style>
+  :root {
+    --bg:#f7f7f5; --surface:#fff; --text:#1d1d1f; --muted:#5f6368; --border:#dcdcd8; --accent:#1f5fa8;
+    --ok:#1e7b3c; --ok-bg:#e6f4ea; --warn:#b26a00; --warn-bg:#fff4e0; --bad:#b3261e; --bad-bg:#fce8e6;
+    --na-bg:#eeeeec; --new:#5b2ea6; --new-bg:#efe8fb; color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#121214; --surface:#1c1c1f; --text:#ececec; --muted:#a0a0a6; --border:#333338; --accent:#7fb0ec;
+      --ok:#6fcf8f; --ok-bg:#16301f; --warn:#f0b45a; --warn-bg:#352812; --bad:#f28b82; --bad-bg:#3a1a18;
+      --na-bg:#2a2a2e; --new:#c3a6f5; --new-bg:#2a2140; color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:32px 20px 64px; }
+  h1 { font-size:1.75rem; margin:0 0 4px; }
+  h2 { font-size:1.3rem; margin:44px 0 12px; padding-bottom:6px; border-bottom:2px solid var(--border); }
+  h3 { font-size:1.08rem; margin:28px 0 8px; }
+  a { color:var(--accent); }
+  .meta { color:var(--muted); font-size:.9rem; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin:12px 0; }
+  nav.sumario ol { columns:2; column-gap:32px; padding-left:20px; }
+  @media (max-width:700px){ nav.sumario ol { columns:1; } }
+  .tbl { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; background:var(--surface); font-size:.92rem; }
+  th, td { border:1px solid var(--border); padding:7px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--na-bg); }
+  td.c { text-align:center; }
+  code, pre { font-family:ui-monospace,"Cascadia Code",Consolas,monospace; font-size:.86em; }
+  code { background:var(--na-bg); padding:1px 5px; border-radius:4px; }
+  pre { background:var(--na-bg); padding:12px; border-radius:8px; overflow-x:auto; }
+  .tag { display:inline-block; padding:1px 8px; border-radius:99px; font-size:.78rem; font-weight:600; margin-right:4px; }
+  .ap-ok { background:var(--ok-bg); color:var(--ok); }
+  .ap-parcial { background:var(--warn-bg); color:var(--warn); }
+  .ap-declarado { background:var(--bad-bg); color:var(--bad); }
+  .nv-base { background:var(--na-bg); color:var(--muted); }
+  .nv-inter { background:var(--warn-bg); color:var(--warn); }
+  .nv-avanc { background:var(--bad-bg); color:var(--bad); }
+  .novo { background:var(--new-bg); color:var(--new); }
+  .removido { background:var(--na-bg); color:var(--muted); text-decoration:line-through; }
+  .conceito h4 { margin:0 0 6px; font-size:1.02rem; }
+  .conceito dl { display:grid; grid-template-columns:170px 1fr; gap:4px 14px; margin:10px 0 0; }
+  @media (max-width:700px){ .conceito dl { grid-template-columns:1fr; } }
+  .conceito dt { font-weight:600; color:var(--muted); }
+  .conceito dd { margin:0; }
+  .filtros { display:flex; flex-wrap:wrap; gap:10px; align-items:center; position:sticky; top:0; z-index:5;
+             background:var(--bg); padding:10px 0; border-bottom:1px solid var(--border); }
+  .filtros input, .filtros select { font:inherit; color:var(--text); background:var(--surface);
+             border:1px solid var(--border); border-radius:6px; padding:6px 10px; }
+  .filtros input { flex:1; min-width:180px; }
+  details { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 16px; margin:10px 0; }
+  summary { cursor:pointer; font-weight:600; }
+  footer { margin-top:48px; color:var(--muted); font-size:.85rem; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>Fundamentação da solução — {{NOME_DA_SOLUCAO}}</h1>
+  <div class="meta">
+    Versão <strong>v{{N}}</strong> · {{AAAA-MM-DD}} · Versão anterior: {{v(N-1) e arquivo, ou "primeira versão"}} ·
+    Código: <code>{{tag/commit}}</code> · Modelo que gerou este documento: {{modelo}}
+  </div>
+  <div class="meta">Projetos cobertos: {{lista de projetos com tipo e data da última verificação}}</div>
+</header>
+
+<nav class="sumario card">
+  <strong>Sumário</strong>
+  <ol>
+    <li><a href="#visao">Visão geral da solução</a></li>
+    <li><a href="#trilha">Trilha de estudo recomendada</a></li>
+    <li><a href="#decisoes">Decisões técnicas</a></li>
+    <li><a href="#conceitos">Catálogo de conceitos</a></li>
+    <li><a href="#matriz">Matriz conceito × projeto</a></li>
+    <li><a href="#glossario">Glossário do domínio</a></li>
+    <li><a href="#bibliografia">Bibliografia consolidada</a></li>
+    <li><a href="#historico">Histórico de versões</a></li>
+  </ol>
+</nav>
+
+<!-- 1. VISÃO GERAL -->
+<section id="visao">
+  <h2>1. Visão geral da solução</h2>
+  <p>{{Propósito da solução em 2–3 frases.}}</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Projeto</th><th>Tipo</th><th>Papel na solução</th><th>Depende de</th><th>Estilo principal</th></tr></thead>
+    <tbody>
+      <tr><td><code>{{Farmacia.Pedidos.Api}}</code></td><td>{{API}}</td><td>{{papel}}</td><td>{{projetos/componentes}}</td><td>{{Hexagonal + DDD tático}}</td></tr>
+    </tbody>
+  </table></div>
+  <p class="meta">{{Fluxo principal entre os projetos em uma frase, ex.: "A API de Pedidos usa o componente de Credenciais e publica eventos consumidos pelo Worker de Estoque."}}</p>
+</section>
+
+<!-- 2. TRILHA -->
+<section id="trilha">
+  <h2>2. Trilha de estudo recomendada</h2>
+  <p class="meta">Do fundamento ao específico. Itens marcados como avançado são estudo prioritário para o time.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Conceito</th><th>Nível</th><th>Por que estudar nesta ordem</th><th>Material sugerido</th><th>Esforço</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><a href="#c-{{id}}">{{SOLID}}</a></td><td><span class="tag {{nv-base|nv-inter|nv-avanc}}">{{Base}}</span></td><td>{{motivo}}</td><td>{{obra, capítulo}}</td><td>{{leitura curta | capítulo | livro}}</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 3. DECISÕES -->
+<section id="decisoes">
+  <h2>3. Decisões técnicas</h2>
+  <details open>
+    <summary>{{D01}} — {{Título da decisão}} <span class="tag {{ap-ok}}">{{Vigente | Substituída por Dxx}}</span> {{<span class="tag novo">novo na vN</span>}}</summary>
+    <p><strong>Contexto:</strong> {{problema ou necessidade}}</p>
+    <p><strong>Decisão:</strong> {{o que foi decidido}}</p>
+    <p><strong>Alternativas consideradas:</strong> {{alternativas, ou "não registradas"}}</p>
+    <p><strong>Consequências:</strong> {{ganhos e custos}}</p>
+    <p><strong>Conceitos que sustentam:</strong> <a href="#c-{{id}}">{{conceito}}</a>, …</p>
+    <p><strong>Onde está no código:</strong> <code>{{projeto/arquivo}}</code></p>
+    <p class="meta">Origem: {{spec | prompt | ADR | CLAUDE.md | inferida do código}}</p>
+  </details>
+</section>
+
+<!-- 4. CONCEITOS -->
+<section id="conceitos">
+  <h2>4. Catálogo de conceitos</h2>
+  <div class="filtros">
+    <input id="f-texto" type="search" placeholder="Buscar conceito…" aria-label="Buscar conceito">
+    <select id="f-cat" aria-label="Categoria"><option value="">Todas as categorias</option>{{<option value="principios">Princípios de design</option>…}}</select>
+    <select id="f-proj" aria-label="Projeto"><option value="">Todos os projetos</option>{{<option value="pedidos-api">Pedidos API</option>…}}</select>
+    <select id="f-nivel" aria-label="Nível"><option value="">Todos os níveis</option><option value="base">Base</option><option value="intermediario">Intermediário</option><option value="avancado">Avançado</option></select>
+  </div>
+
+  <h3 class="cat-titulo" data-cat="{{principios}}">{{4.1 Princípios de design}}</h3>
+
+  <article class="card conceito" id="c-{{id}}" data-cat="{{principios}}" data-proj="{{pedidos-api estoque-worker}}" data-nivel="{{base}}">
+    <h4>{{Nome do conceito}}
+      <span class="tag {{ap-ok|ap-parcial|ap-declarado}}">{{Aplicado | Aplicado parcialmente | Declarado e não aplicado}}</span>
+      <span class="tag {{nv-base|nv-inter|nv-avanc}}">{{Base | Intermediário | Avançado — estudo prioritário}}</span>
+      {{<span class="tag novo">novo na vN</span>}}
+    </h4>
+    <dl>
+      <dt>O que é</dt><dd>{{2–3 frases acessíveis}}</dd>
+      <dt>Por que nesta solução</dt><dd>{{motivo concreto; decisão Dxx}}</dd>
+      <dt>Onde aparece</dt><dd><code>{{projeto/arquivo}}</code></dd>
+      <dt>Trecho ilustrativo</dt><dd><pre>{{até 15 linhas, sem segredos}}</pre></dd>
+      <dt>Referências</dt><dd>{{Autor, Obra, capítulo/seção}}</dd>
+      <dt>Relacionados</dt><dd><a href="#c-{{id}}">{{conceito}}</a></dd>
+      <dt>Histórico</dt><dd>{{desde v1; alterado na vN: …}}</dd>
+    </dl>
+  </article>
+</section>
+
+<!-- 5. MATRIZ -->
+<section id="matriz">
+  <h2>5. Matriz conceito × projeto</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Conceito</th><th>{{Projeto 1}}</th><th>{{Projeto 2}}</th><th>{{…}}</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#c-{{id}}">{{conceito}}</a></td><td class="c">{{● aplicado | ◐ parcial | ○ declarado | vazio}}</td><td class="c">{{…}}</td><td class="c">{{…}}</td></tr>
+    </tbody>
+  </table></div>
+  <p class="meta">● aplicado · ◐ aplicado parcialmente · ○ declarado e não aplicado</p>
+</section>
+
+<!-- 6. GLOSSÁRIO -->
+<section id="glossario">
+  <h2>6. Glossário do domínio</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Termo</th><th>Significado no negócio</th><th>Onde aparece no código</th></tr></thead>
+    <tbody>
+      <tr><td>{{Receita}}</td><td>{{definição}}</td><td><code>{{classe, tabela}}</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 7. BIBLIOGRAFIA -->
+<section id="bibliografia">
+  <h2>7. Bibliografia consolidada</h2>
+  <h3>{{Tema, ex.: Arquitetura e design}}</h3>
+  <ul>
+    <li>{{Autor. <em>Obra</em>. Editora, ano.}} — sustenta: <a href="#c-{{id}}">{{conceitos}}</a>{{ · verificar referência}}</li>
+  </ul>
+</section>
+
+<!-- 8. HISTÓRICO -->
+<section id="historico">
+  <h2>8. Histórico de versões</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Versão</th><th>Data</th><th>Entrou</th><th>Mudou</th><th>Saiu</th><th>Projetos verificados</th></tr></thead>
+    <tbody>
+      <tr><td>v{{N}}</td><td>{{AAAA-MM-DD}}</td><td>{{conceitos/decisões}}</td><td>{{…}}</td><td>{{…}}</td><td>{{…}}</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>Gerado pela skill bks-maintainability-review (modo fundamentação) · Catálogo: <code>{{solucao}}_fundamentacao.catalogo.json</code></footer>
+
+</main>
+<script>
+(function () {
+  var t = document.getElementById('f-texto'), c = document.getElementById('f-cat'),
+      p = document.getElementById('f-proj'), n = document.getElementById('f-nivel');
+  function filtrar() {
+    var q = (t.value || '').toLowerCase(), cat = c.value, proj = p.value, niv = n.value, visiveis = {};
+    document.querySelectorAll('article.conceito').forEach(function (a) {
+      var ok = (!q || a.textContent.toLowerCase().indexOf(q) >= 0) &&
+               (!cat || a.dataset.cat === cat) &&
+               (!proj || (' ' + a.dataset.proj + ' ').indexOf(' ' + proj + ' ') >= 0) &&
+               (!niv || a.dataset.nivel === niv);
+      a.hidden = !ok;
+      if (ok) visiveis[a.dataset.cat] = true;
+    });
+    document.querySelectorAll('.cat-titulo').forEach(function (h) { h.hidden = !visiveis[h.dataset.cat]; });
+  }
+  [t, c, p, n].forEach(function (el) { el.addEventListener('input', filtrar); el.addEventListener('change', filtrar); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+schema_version: "1.1"
+name: api-design-contrato
+description: >
+  A skill de API modela o contrato antes da implementacao e usa a semantica
+  correta de HTTP, em vez de aceitar o desenho pronto do usuario.
+tags: [api-design, contrato]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Preciso de um endpoint pra cancelar pedido. Pensei em
+    `GET /api/cancelarPedido?id=123` e devolve `{"ok": true}` ou
+    `{"ok": false, "erro": "..."}` sempre com status 200, que ai o front so
+    olha o corpo.
+
+graders:
+  - name: verbo-nao-get
+    type: llm
+    criteria: |
+      A resposta corrige o verbo: cancelar altera estado e nao pode ser GET.
+      Propoe POST, PATCH ou DELETE conforme a modelagem do recurso.
+
+  - name: status-reflete-resultado
+    type: llm
+    criteria: |
+      A resposta corrige o status sempre 200. O codigo de status precisa
+      refletir o resultado — erro de negocio e falha de validacao nao voltam
+      como sucesso.
+
+  - name: recurso-nao-verbo
+    type: llm
+    criteria: |
+      A resposta corrige o nome do recurso: caminho orientado a recurso e
+      identificador na rota, nao verbo em camelCase com o identificador na
+      query.
+
+  - name: idempotencia
+    type: llm
+    criteria: |
+      A resposta trata idempotencia: cancelar duas vezes o mesmo pedido precisa
+      ter comportamento definido.
+
+  - name: convencao-existente
+    type: llm
+    criteria: |
+      A resposta verifica ou pergunta pela convencao ja existente da API antes
+      de impor um padrao novo. Um endpoint que diverge do resto da API e um
+      problema, ainda que esteja correto isoladamente.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

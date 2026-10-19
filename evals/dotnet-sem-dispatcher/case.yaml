@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: dotnet-sem-dispatcher
+description: >
+  A skill de .NET recusa MediatR e oferece o pipeline explicito no lugar,
+  mesmo com o usuario pedindo o dispatcher pelo nome.
+tags: [dotnet, guarda, txc]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Estou montando um caso de uso de transferencia numa API .NET com arquitetura
+    hexagonal. Quero usar MediatR para desacoplar o handler do controller.
+    Me mostre como registrar o MediatR e como fica o IRequestHandler da
+    transferencia.
+
+graders:
+  - name: sem-mediatr
+    type: llm
+    criteria: |
+      A resposta NAO entrega a implementacao com MediatR pedida. Nao contem
+      AddMediatR, IRequestHandler<>, IMediator nem Send/Publish como o caminho
+      recomendado.
+
+      Mencionar MediatR apenas para explicar por que nao sera usado e correto e
+      nao deve ser penalizado.
+
+  - name: pipeline-explicito
+    type: llm
+    criteria: |
+      A resposta propoe a orquestracao explicita no lugar: um use case chamado
+      diretamente pela porta, com os passos ordenados (validacao,
+      pre-processamento, processamento, pos-processamento) num orquestrador de
+      pipeline.
+
+  - name: explica-recusa
+    type: llm
+    criteria: |
+      A resposta diz por que o dispatcher foi recusado, em vez de so recusar.
+      Aceitar qualquer razao coerente: o fluxo deixa de ser legivel sem procurar
+      o handler, a ordem dos passos fica implicita na convencao de tipo, ou
+      equivalente.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

@@ -1,0 +1,52 @@
+schema_version: "1.1"
+name: arch-notacao-bks
+description: >
+  A skill de arquitetura aplica a notacao BKS — cor por papel semantico, linha
+  continua para sincrono e pontilhada para assincrono.
+tags: [bks-arch, notacao]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Desenha a arquitetura: um gateway recebe requisicao do app web, chama a
+    orders-api, que grava no Postgres e publica o evento pedido.criado num
+    topico Kafka. Um billing-worker consome esse topico e chama a API de
+    pagamento de um provedor externo.
+
+graders:
+  - name: cor-por-papel
+    type: llm
+    criteria: |
+      Cada no recebe cor conforme o papel, nao conforme estetica: o gateway e o
+      app web em vermelho de canal de acesso, orders-api e billing-worker em
+      azul de backend, Postgres em verde de storage, o topico Kafka em laranja
+      de broker, o provedor de pagamento em cinza de externo.
+
+  - name: tokens-da-paleta
+    type: llm
+    criteria: |
+      As cores usadas correspondem aos tokens da paleta BKS — backend #336698,
+      storage #4A7C63, broker #B5713C, acesso #9E4B4B, externo #6B7280 — e nao
+      ao padrao do renderer.
+
+  - name: pontilhado-assincrono
+    type: llm
+    criteria: |
+      A publicacao no topico e o consumo pelo worker aparecem com linha
+      pontilhada; as chamadas sincronas com linha continua.
+
+  - name: arestas-rotuladas
+    type: llm
+    criteria: |
+      As arestas tem rotulo dizendo o que trafega ou qual o protocolo. Nao ha
+      seta sem rotulo, nem rotulo generico como "envia dados".
+
+  - name: fronteira-externo
+    type: llm
+    criteria: |
+      Ha fronteira explicita separando o que e interno do provedor externo.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

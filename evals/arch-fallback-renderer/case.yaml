@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: arch-fallback-renderer
+description: >
+  Pedido um renderer que depende de skill externa, o kit avisa e cai no mermaid
+  em vez de falhar.
+tags: [bks-arch, renderer, resiliencia]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Gera o diagrama de infraestrutura usando archify, com os logos da AWS nos
+    componentes: um ALB na frente, dois containers ECS, e um RDS Postgres.
+
+graders:
+  - name: cai-no-mermaid
+    type: llm
+    criteria: |
+      Se o archify nao estiver disponivel, a resposta avisa e entrega o diagrama
+      em mermaid. Nao falha, nao interrompe o trabalho, e nao pede ao usuario
+      que instale a skill antes de continuar.
+
+  - name: icones-genericos
+    type: llm
+    criteria: |
+      Sobre os logos oficiais da AWS, a resposta explica que o kit usa icones
+      genericos por funcao — balanceador, container, banco — e nao redistribui
+      marca de terceiro.
+
+  - name: notacao-bks-mesmo-assim
+    type: llm
+    criteria: |
+      O diagrama entregue aplica a notacao BKS de qualquer forma: o RDS em verde
+      de storage, os containers em azul de backend, o ALB em vermelho de canal
+      de acesso.
+
+  - name: nao-culpa-usuario
+    type: llm
+    criteria: |
+      A resposta nao trata a indisponibilidade do renderer como erro do usuario
+      nem como impedimento. Entrega o que da para entregar e diz o que mudou.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

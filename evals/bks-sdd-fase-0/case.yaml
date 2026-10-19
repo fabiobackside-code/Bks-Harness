@@ -1,0 +1,34 @@
+schema_version: "1.1"
+name: bks-sdd-fase-0
+description: >
+  A fase 0 confirma antes de criar o workspace, e nao inventa nome nem
+  estrutura sem passar pelo usuario.
+tags: [sdd, fase-0, conduta]
+runs: 3
+
+execution:
+  max_turns: 5
+  prompt: |
+    /bks-sdd
+
+graders:
+  - name: pergunta-nome
+    type: llm
+    criteria: |
+      A resposta pergunta o nome do workspace antes de criar qualquer coisa.
+      Nao assume um nome a partir do diretorio atual nem inventa um.
+
+  - name: nao-cria-nada
+    type: llm
+    criteria: |
+      Nenhum diretorio ou arquivo foi criado nesta resposta. A fase para no
+      ponto de confirmacao e espera o usuario.
+
+  - name: portugues-brasil
+    type: llm
+    criteria: |
+      A resposta esta em portugues do Brasil.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

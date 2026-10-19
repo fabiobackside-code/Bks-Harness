@@ -1,0 +1,25 @@
+{
+  "name": "bkhar",
+  "version": "0.8.0",
+  "description": "Kit BKS de Spec-Driven Development para Claude Code: skills de SDD, arquitetura hexagonal .NET, TypeScript e Go, comandos de workbench e agentes especializados.",
+  "author": {
+    "name": "Fabio Magalhaes",
+    "url": "https://github.com/fabiobackside-code"
+  },
+  "homepage": "https://github.com/fabiobackside-code/Bks-Harness",
+  "repository": "https://github.com/fabiobackside-code/Bks-Harness",
+  "license": "MIT",
+  "keywords": [
+    "sdd",
+    "spec-driven-development",
+    "hexagonal-architecture",
+    "ddd",
+    "dotnet",
+    "typescript",
+    "go",
+    "claude-code"
+  ],
+  "experimental": {
+    "evals": "evals/"
+  }
+}

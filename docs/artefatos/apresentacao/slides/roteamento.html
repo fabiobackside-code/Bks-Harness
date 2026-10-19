@@ -1,0 +1,17 @@
+<section id="roteamento" style="background:#13202E;color:#F5F2EB;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">09 · ROTEAMENTO E POLÍTICA</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">routing.yaml: suas regras de trabalho viram configuração</h2>
+<div style="display:flex;gap:40px">
+<div style="flex:1;background:#0C1620;border:1px solid #2D4257;border-radius:16px;padding:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;color:#C9D3DC"><span style="color:#F0904F">agents:</span><br>&nbsp;&nbsp;arquiteto: <span style="color:#F5F2EB">claude-opus</span> <span style="color:#8FA0B0"># planner hoje</span><br>&nbsp;&nbsp;dev: <span style="color:#F5F2EB">claude-sonnet</span> <span style="color:#8FA0B0"># deepseek após evals</span><br>&nbsp;&nbsp;testes: <span style="color:#F5F2EB">claude-sonnet</span><br>&nbsp;&nbsp;seguranca: <span style="color:#F5F2EB">claude-opus</span> <span style="color:#8FA0B0"># reviewer hoje</span><br><span style="color:#F0904F">rules:</span><br>&nbsp;&nbsp;reviewer.vendor != dev.vendor<br>&nbsp;&nbsp;loop.max_attempts: 4<br><span style="color:#F0904F">zones:</span><br>&nbsp;&nbsp;sensitive:<br>&nbsp;&nbsp;&nbsp;&nbsp;allowed: [anthropic, ollama-local]</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Quem decide usa o mais forte.</span> Arquiteto e Gerente erram caro.</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Quem executa pode usar o mais barato.</span> Os gates protegem o Dev.</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Quem revisa usa outro fornecedor.</span> Testes e Segurança erram de forma diferente do Dev.</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Zona sensível não sai.</span> O policy engine troca o provedor sem depender de lembrar.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8FA0B0;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 10 · nomes de modelo são exemplos</p>
+<aside>A API hospedada do DeepSeek armazena dados fora do Brasil. Por isso, no contexto bancário, zonas sensíveis só usam provedor aprovado ou pesos abertos rodando localmente.</aside>
+</section>

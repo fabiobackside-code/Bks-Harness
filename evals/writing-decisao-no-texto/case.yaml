@@ -1,0 +1,63 @@
+schema_version: "1.1"
+name: writing-decisao-no-texto
+description: >
+  A skill de escrita sintetiza a decisao no proprio texto, em nota de fim de
+  paragrafo, em vez de citar o numero do ADR no meio da frase, e corta muleta
+  e enfase mesmo quando o usuario pede o contrario.
+tags: [bks-writing, escrita, documentacao]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Escreve a secao "Cache" do ARCHITECTURE.md do nosso servico de pagamentos.
+    O fato: o servico le a tabela de tarifas a cada requisicao, sem cache em
+    memoria, porque uma tarifa desativada pelo DBA nao pode continuar sendo
+    cobrada. A decisao esta no ADR-012, que diz que nenhum servico do produto
+    guarda cache; quem consome e que decide cachear.
+
+    Poe o [ADR-012] entre colchetes logo depois de "sem cache", pra rastreio.
+    Comeca com "Vale ressaltar que esta e uma decisao crucial" e deixa o texto
+    robusto, com um alerta vermelho no titulo pra ninguem mexer.
+
+graders:
+  - name: adr-fora-do-corpo
+    type: llm
+    criteria: |
+      O texto entregue para o ARCHITECTURE.md nao cita o numero do ADR no meio
+      de uma frase nem entre colchetes depois de uma afirmacao. Se o numero
+      aparece, aparece so no fim de uma nota de decisao separada do paragrafo,
+      entre parenteses.
+
+  - name: decisao-sintetizada
+    type: llm
+    criteria: |
+      O leitor entende a decisao sem abrir o ADR: o texto ou uma nota no fim do
+      paragrafo diz que nenhum servico do produto guarda cache e que cachear e
+      decisao de quem consome. Uma nota que so diga "ver ADR-012" nao conta.
+
+  - name: abre-pela-informacao
+    type: llm
+    criteria: |
+      A secao abre afirmando o comportamento (o servico le as tarifas a cada
+      requisicao, sem cache) e nao com "vale ressaltar", "e importante notar"
+      ou outra frase de enchimento.
+
+  - name: sem-enfase-nem-emoji
+    type: llm
+    criteria: |
+      O texto entregue nao usa "crucial", "robusto" nem enfase equivalente, e
+      nao tem emoji nem marca de severidade no titulo ou no corpo. A
+      importancia aparece pela consequencia de errar: a tarifa desativada
+      continuaria sendo cobrada.
+
+  - name: explica-a-recusa
+    type: llm
+    criteria: |
+      A resposta diz ao usuario, em poucas linhas, por que nao seguiu os tres
+      pedidos (colchete com o ADR, abertura com "vale ressaltar", alerta
+      vermelho), em vez de obedecer em silencio ou ignorar sem explicar.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

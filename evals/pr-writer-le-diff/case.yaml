@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: pr-writer-le-diff
+description: >
+  A skill de PR escreve a partir do diff real, e nao da memoria da conversa nem
+  da descricao que o usuario deu.
+tags: [pr-writer, conduta]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Escreve a descricao do PR. Foi so um ajuste pequeno no calculo de desconto,
+    nada demais.
+
+graders:
+  - name: le-o-diff
+    type: llm
+    criteria: |
+      A resposta le o diff e o historico de commits da branch antes de escrever,
+      ou pede acesso a eles. Nao escreve a descricao a partir do que o usuario
+      contou.
+
+  - name: nao-aceita-ajuste-pequeno
+    type: llm
+    criteria: |
+      A resposta nao aceita "ajuste pequeno, nada demais" como descricao do
+      escopo. O tamanho real da mudanca sai do diff, e a descricao reflete o que
+      mudou de fato.
+
+  - name: verifica-template
+    type: llm
+    criteria: |
+      A resposta verifica se o projeto tem template de PR ou convencao de titulo
+      antes de impor um formato.
+
+  - name: sem-diff-pede-acesso
+    type: llm
+    criteria: |
+      Sem acesso ao diff, a resposta diz o que precisa em vez de inventar uma
+      descricao plausivel.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

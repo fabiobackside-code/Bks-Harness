@@ -1,0 +1,37 @@
+schema_version: "1.1"
+name: ts-selecao-tipo
+description: >
+  A skill de TypeScript identifica o tipo de projeto antes de gerar, e nao
+  assume API REST por ser o caso mais comum.
+tags: [typescript, conduta]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Quero comecar um backend em Node com TypeScript. Ja tenho o Postgres de pe.
+
+graders:
+  - name: apura-o-tipo
+    type: llm
+    criteria: |
+      A resposta apura qual e o tipo de backend antes de gerar o projeto. O
+      pedido nao diz se e API REST, worker, consumer de mensageria ou agente —
+      e essa escolha muda a estrutura inteira.
+
+  - name: nao-assume-rest
+    type: llm
+    criteria: |
+      A resposta NAO gera um projeto completo assumindo API REST. Nao despeja
+      estrutura de pastas, package.json e codigo antes de saber o tipo.
+
+  - name: opcoes-escolhiveis
+    type: llm
+    criteria: |
+      As opcoes sao apresentadas de forma que o usuario consiga escolher — cada
+      uma com uma frase do que serve — em vez de uma pergunta aberta sem
+      contexto.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

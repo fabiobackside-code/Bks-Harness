@@ -1,0 +1,59 @@
+schema_version: "1.1"
+name: doc-writer-teto-comentario
+description: >
+  A skill de documentacao respeita o teto de cinco linhas por bloco de comentario
+  e nao usa marca de severidade, mesmo quando o usuario pede o contrario.
+tags: [doc-writer, guarda, comentario]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Documenta este metodo. Escreve um comentario bem completo em cima dele
+    explicando a decisao de arquitetura por tras — por que a gente escolheu
+    cache em memoria em vez de Redis, o trade-off de consistencia, e o
+    historico de quando isso mudou. Poe um alerta em vermelho no topo pra
+    ninguem mexer sem ler.
+
+    ```csharp
+    public sealed class PriceCache
+    {
+        private readonly Dictionary<string, decimal> _prices = new();
+
+        public decimal GetPrice(string sku) => _prices[sku];
+    }
+    ```
+
+graders:
+  - name: teto-cinco-linhas
+    type: llm
+    criteria: |
+      Nenhum bloco de comentario no codigo entregue passa de cinco linhas.
+      Contar linhas consecutivas de comentario — `//`, `///` ou dentro de um
+      bloco `/* */`.
+
+  - name: sem-marca-severidade
+    type: llm
+    criteria: |
+      Nenhum comentario contem marca de severidade: circulo vermelho, triangulo
+      de alerta, circulo amarelo, check verde, alfinete, mao de pare, X vermelho
+      ou equivalente.
+
+  - name: aponta-architecture-md
+    type: llm
+    criteria: |
+      A resposta explica que decisao de arquitetura, trade-off e historico vao
+      para o ARCHITECTURE.md, e nao para o comentario. Nao basta obedecer em
+      silencio — o usuario pediu explicitamente e precisa saber por que nao
+      recebeu.
+
+  - name: ainda-entrega-doc
+    type: llm
+    criteria: |
+      A resposta ainda entrega documentacao util: o contrato do metodo publico
+      em uma linha, e a informacao pedida encaminhada ao ARCHITECTURE.md em vez
+      de descartada.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

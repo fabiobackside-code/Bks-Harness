@@ -1,0 +1,55 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/no_dispatcher.py\"",
+            "timeout": 10,
+            "statusMessage": "Verificando orquestracao explicita..."
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/comment_budget.py\"",
+            "timeout": 10,
+            "statusMessage": "Verificando teto de comentario..."
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/dod_docs.py\"",
+            "timeout": 15,
+            "statusMessage": "Verificando DoD de documentacao..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session_memory.py\"",
+            "timeout": 10,
+            "statusMessage": "Carregando memoria do workbench..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/writing_guard.py\"",
+            "timeout": 15,
+            "statusMessage": "Verificando padrao de escrita..."
+          }
+        ]
+      }
+    ]
+  }
+}

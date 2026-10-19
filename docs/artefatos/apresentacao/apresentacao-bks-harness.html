@@ -1,0 +1,515 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BKS Harness — Equipe de Agentes, Skills e Case · v1.7.1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{color-scheme:light dark;--bg:#E9E5DC} @media (prefers-color-scheme: dark){:root{--bg:#0B131B}}
+html,body{margin:0;background:var(--bg)}
+.deck{display:flex;flex-direction:column;align-items:center;gap:32px;padding:32px 0}
+.frame{width:calc(min(100vw - 32px, 1920px));aspect-ratio:16/9;overflow:hidden;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.frame>section{width:1920px;height:1080px;box-sizing:border-box;position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden}
+.frame>section aside{display:none}
+section h1,section h2,section h3,section p,section ul,section table{margin:0} section ul{padding-left:1.2em} section *{box-sizing:border-box}
+body.notes .frame>section aside{display:block;position:absolute;left:0;right:0;bottom:0;background:#13202ECC;color:#F5F2EB;font:28px/1.4 'IBM Plex Sans',Arial,sans-serif;padding:24px 128px}
+@page{size:1920px 1080px;margin:0}
+@media print{ html,body{background:none} .deck{display:block;padding:0} .frame{width:1920px;height:1080px;box-shadow:none;page-break-after:always;break-after:page} .frame>section{transform:none!important} .frame>section aside{display:none!important} }
+</style></head><body><div class="deck">
+<div class="frame">
+<section id="cover" style="background:#13202E;color:#F5F2EB;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:space-between">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">FABIO · BKS · OUTUBRO 2026 · v1.7.1</p>
+<div style="display:flex;flex-direction:column;gap:36px">
+<h1 style="font-size:112px;font-weight:600;line-height:1.05">BKS Harness</h1>
+<p style="font-size:40px;line-height:1.35;color:#C9D3DC;width:1350px">Uma equipe de sete agentes que conversa com você, aprende com cada feature e cresce com skills novas. Conceitos, arquitetura, equipe, skills, comandos e um case.</p>
+</div>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#8FA0B0">Claude primeiro · plugável a DeepSeek, Ollama e outros</p>
+<aside>Objetivo do deck: entender o harness antes de abrir o repositório. Primeiro o porquê, depois conceitos, arquitetura, fluxo, comandos e um case fictício.</aside>
+</section>
+</div>
+<div class="frame">
+<section id="problema" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">01 · O PROBLEMA</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1500px">Sem harness, o agente recomeça do zero a cada sessão</h2>
+<div style="display:flex;gap:32px">
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:30px;font-weight:600">Amnésia</h3>
+<p style="font-size:24px;line-height:1.45;color:#3E4A57">Não há memória entre sessões. Você reexplica contexto, padrão e decisões a cada conversa.</p>
+</div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:30px;font-weight:600">Suposição</h3>
+<p style="font-size:24px;line-height:1.45;color:#3E4A57">Onde falta fonte de verdade, o modelo preenche com chute. É daí que vem a alucinação de arquitetura.</p>
+</div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:30px;font-weight:600">Autoaprovação</h3>
+<p style="font-size:24px;line-height:1.45;color:#3E4A57">Quem implementa também declara que terminou. Ninguém executa a prova de que funciona.</p>
+</div>
+</div>
+<p style="font-size:30px;line-height:1.4;color:#1C2733;width:1400px">A resposta não é um prompt melhor. É a estrutura em volta do modelo.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 02</p>
+</section>
+</div>
+<div class="frame">
+<section id="conceito" style="background:#13202E;color:#F5F2EB;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">02 · O CONCEITO</p>
+<h2 style="font-size:96px;font-weight:600;line-height:1.05">Agente = Modelo + Harness</h2>
+<p style="font-size:30px;line-height:1.45;color:#C9D3DC;width:1400px">O modelo raciocina. O harness decide o que ele vê, o que ele pode fazer, quando ele para e quem confere o resultado.</p>
+<div style="display:flex;gap:24px">
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:30px;font-weight:600;color:#F0904F">Contexto</h3>
+<p style="font-size:24px;line-height:1.4;color:#C9D3DC">O que entra na janela</p>
+</div>
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:30px;font-weight:600;color:#F0904F">Ferramentas</h3>
+<p style="font-size:24px;line-height:1.4;color:#C9D3DC">O que ele pode executar</p>
+</div>
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:30px;font-weight:600;color:#F0904F">Fluxo</h3>
+<p style="font-size:24px;line-height:1.4;color:#C9D3DC">Em que ordem, com que portões</p>
+</div>
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:30px;font-weight:600;color:#F0904F">Verificação</h3>
+<p style="font-size:24px;line-height:1.4;color:#C9D3DC">Quem prova que funcionou</p>
+</div>
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:30px;font-weight:600;color:#F0904F">Observação</h3>
+<p style="font-size:24px;line-height:1.4;color:#C9D3DC">Quanto custou, onde falhou</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8FA0B0;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 03</p>
+<aside>Trocar o modelo muda o raciocínio. Trocar o harness muda o comportamento. É por isso que o harness é seu e o modelo é plugável.</aside>
+</section>
+</div>
+<div class="frame">
+<section id="ativos" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">03 · O QUE VOCÊ JÁ TEM</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1">Seus dois projetos já cobrem a maior parte</h2>
+<div style="display:flex;gap:32px">
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:30px;font-weight:600">2brains — o vault, só conteúdo</h3>
+<ul style="font-size:24px;line-height:1.5;color:#3E4A57">
+<li>workbench/: seu perfil e ADRs de processo</li>
+<li>knowledge/: wiki Karpathy, raw/, search.sh</li>
+<li>repos/: projetos autossuficientes, git próprio</li>
+<li>STATUS, WORKFLOW e JOURNAL por projeto</li>
+</ul>
+</div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:16px">
+<h3 style="font-size:30px;font-weight:600">BKS kit — plugin bks 0.7.0</h3>
+<ul style="font-size:24px;line-height:1.5;color:#3E4A57">
+<li>12 comandos /bks:* e 17 skills</li>
+<li>Agentes planner, builder, reviewer, scribe</li>
+<li>5 guardas em hooks/ que recusam a escrita</li>
+<li>9 perfis de projeto e 20 casos de eval</li>
+</ul>
+</div>
+</div>
+<div style="background:#13202E;border-radius:16px;padding:32px 40px">
+<p style="font-size:28px;line-height:1.4;color:#F5F2EB"><span style="color:#F0904F">O que falta:</span> a equipe que dialoga, o ciclo de aprendizado, independência de modelo e a baseline das evals.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 04</p>
+</section>
+</div>
+<div class="frame">
+<section id="fluxo-2brains" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px;gap:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">04 · O FLUXO HOJE · /bks:*</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Nada vira código sem passar por CONTEXT.md e PRD</h2>
+<div style="display:flex;justify-content:center"><svg viewBox='0 48 760 248' width='1500' height='489' role='img' aria-label='Fluxo do 2brains' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='fl' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='#8A8F94'/></marker></defs><rect x='24' y='56' width='712' height='104' rx='8' fill='#EFE9DE' stroke='#CFCAC0' stroke-width='1'/><text x='720' y='78' font-size='11.5' font-weight='600' fill='#4A5562' text-anchor='end'>FASE PESQUISA · VAULT E REPO</text><rect x='24' y='184' width='712' height='104' rx='8' fill='#EFE9DE' stroke='#CFCAC0' stroke-width='1'/><text x='720' y='206' font-size='11.5' font-weight='600' fill='#4A5562' text-anchor='end'>FASE CÓDIGO · RAIZ DO REPO</text><g fill='none' stroke='#8A8F94' stroke-width='1.25'><path d='M160 116H176' marker-end='url(#fl)'/><path d='M296 116H312' marker-end='url(#fl)'/><path d='M432 116H448' marker-end='url(#fl)'/><path d='M568 116H584' marker-end='url(#fl)'/><path d='M644 144V172H100V216' marker-end='url(#fl)'/><path d='M160 244H176' marker-end='url(#fl)'/><path d='M296 244H312' marker-end='url(#fl)'/><path d='M432 244H448' marker-end='url(#fl)'/><path d='M568 244H584' marker-end='url(#fl)'/></g><rect x='40' y='88' width='120' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='100' y='112' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>/brain</text><text x='100' y='128' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>lê os STATUS.md</text><rect x='176' y='88' width='120' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='236' y='112' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>/new-project</text><text x='236' y='128' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>repo + perfil</text><rect x='312' y='88' width='120' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='372' y='112' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>docs/input</text><text x='372' y='128' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>material bruto</text><rect x='448' y='88' width='120' height='56' rx='8' fill='#D9682B' fill-opacity='0.12' stroke='#D9682B' stroke-width='2'/><text x='508' y='112' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>/canonize</text><text x='508' y='128' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>CONTEXT.md</text><rect x='584' y='88' width='120' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='644' y='112' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>/prd</text><text x='644' y='128' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>PRD do projeto</text><rect x='40' y='216' width='120' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='100' y='240' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>/spec</text><text x='100' y='256' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>FEAT → TEST</text><rect x='176' y='216' width='120' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='236' y='240' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>/arch</text><text x='236' y='256' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>C4 + README</text><rect x='312' y='216' width='120' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='372' y='240' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>/loop</text><text x='372' y='256' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>LOOP-4 · G1–G4</text><rect x='448' y='216' width='120' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='508' y='240' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>/review</text><text x='508' y='256' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>área sensível</text><rect x='584' y='216' width='120' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='644' y='240' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>/save</text><text x='644' y='256' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>STATUS, JOURNAL</text></svg></div>
+<p style="font-size:26px;line-height:1.4;color:#3E4A57;width:1600px">Comandos do plugin bks (/bks:brain, /bks:spec…). O harness não troca esse fluxo: ele coloca a equipe dentro de cada etapa.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 05</p>
+</section>
+</div>
+<div class="frame">
+<section id="conceitos" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">05 · CONCEITOS</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Seis ideias sustentam o harness</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><h3 style="font-size:30px;font-weight:600">Dois cérebros</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Conhecimento (o que você sabe) separado de trabalho (como você trabalha). Dado de projeto nunca vive no cérebro.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><h3 style="font-size:30px;font-weight:600">Spec é a fonte de verdade</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">FEAT, TEST e TASK aprovados por você antes de qualquer linha de código.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><h3 style="font-size:30px;font-weight:600">LOOP-4</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">No máximo quatro tentativas com objetivo verificável. Depois, o agente para e pergunta.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><h3 style="font-size:30px;font-weight:600">Gate</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Verificação que o harness executa: build, testes e regras de arquitetura. Não é opinião do modelo.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><h3 style="font-size:30px;font-weight:600">Roteamento</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Cada papel usa o modelo certo, e o reviewer sempre roda num fornecedor diferente do builder.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><h3 style="font-size:30px;font-weight:600">Política de dados</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Zonas sensíveis do manifesto só vão para provedores aprovados ou para modelo local.</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 06</p>
+</section>
+</div>
+<div class="frame">
+<section id="loop4" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">06 · LOOP-4</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Quatro tentativas, um objetivo verificável</h2>
+<div style="display:flex;justify-content:center"><svg aria-label='LOOP-4: tentativa, gates, revisão ou decisão humana' width='1400' height='468' aria-label='LOOP-4: tentativa, gates, revisão ou decisão humana' viewBox='0 44 760 254' role='img' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='lp' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='#8A8F94'/></marker></defs><g fill='none' stroke='#8A8F94' stroke-width='1.25'><path d='M152 130H184' marker-end='url(#lp)'/><path d='M312 130H344' marker-end='url(#lp)'/><path d='M472 130H536' marker-end='url(#lp)'/><path d='M600 154V226' marker-end='url(#lp)'/><path d='M408 170V226' marker-end='url(#lp)'/><path d='M408 90V72H248V106' marker-end='url(#lp)'/></g><rect x='24' y='106' width='128' height='48' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='88' y='134' font-size='13' font-weight='400' fill='#1C2733' text-anchor='middle'>Task em RED</text><rect x='184' y='106' width='128' height='48' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='248' y='134' font-size='13' font-weight='400' fill='#1C2733' text-anchor='middle'>Dev implementa</text><rect x='536' y='106' width='128' height='48' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='600' y='134' font-size='13' font-weight='400' fill='#1C2733' text-anchor='middle'>Painel revisa</text><polygon points='344,130 408,90 472,130 408,170' fill='none' stroke='#8A8F94' stroke-width='1.25'/><text x='408' y='134' font-size='13' font-weight='400' fill='#1C2733' text-anchor='middle'>Gates passam?</text><rect x='344' y='226' width='128' height='48' rx='8' fill='#D9682B' fill-opacity='0.12' stroke='#D9682B' stroke-width='2'/><text x='408' y='254' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Decisão humana</text><rect x='516' y='226' width='168' height='48' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='600' y='254' font-size='13' font-weight='400' fill='#1C2733' text-anchor='middle'>Documentador registra</text><text x='504' y='120' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>sim</text><text x='328' y='64' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>falhou: o erro real volta como contexto</text><text x='416' y='202' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='start'>4ª falha</text><text x='608' y='194' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='start'>aprovado</text></svg></div>
+<p style="font-size:26px;line-height:1.4;color:#3E4A57;width:1664px"><span style="color:#1C2733;font-weight:600">Goals:</span> G1 build limpo · G2 testes verdes · G3 cenários do TEST cobertos · G4 fiel ao brain/engineering/ do projeto. Na 4ª falha, outputs/BLOQUEIO-*.md.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 07</p>
+</section>
+</div>
+<div class="frame">
+<section id="arquitetura" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">07 · ARQUITETURA</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Hexagonal: o núcleo não sabe qual modelo está do outro lado</h2>
+<div style="display:flex;gap:20px;align-items:stretch">
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:14px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">ENTRADA (DRIVING)</p><ul style="font-size:24px;line-height:1.6;color:#3E4A57"><li>Plugin bkhar</li><li>Claude Code</li><li>Servidor MCP</li><li>Pipeline de CI</li></ul></div>
+<p style="font-size:40px;color:#A84E18;align-self:center">→</p>
+<div style="flex:1.4;background:#13202E;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">CORE</p>
+<p style="font-size:24px;line-height:1.5;color:#F5F2EB">Domínio: Phase, Feat, Task, LoopAttempt, Gate</p>
+<p style="font-size:24px;line-height:1.5;color:#C9D3DC">Pipeline com TXC, Result Pattern</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">PORTAS</p>
+<p style="font-size:24px;line-height:1.5;color:#C9D3DC">LlmProvider · KnowledgeStore · ToolHost · GateRunner · PolicyEngine · Telemetry</p>
+</div>
+<p style="font-size:40px;color:#A84E18;align-self:center">→</p>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:14px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">SAÍDA (DRIVEN)</p><ul style="font-size:24px;line-height:1.6;color:#3E4A57"><li>Anthropic · DeepSeek</li><li>Ollama local</li><li>Vault 2brains</li><li>dotnet test, NetArchTest</li><li>OpenTelemetry</li></ul></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 08</p>
+<aside>Mesmo padrão que você cobra da equipe: adicionar um provedor novo é escrever um adapter de LlmProvider, sem tocar no core.</aside>
+</section>
+</div>
+<div class="frame">
+<section id="componentes" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">08 · COMPONENTES</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Onze componentes; quase metade já existe no kit</h2>
+<table style="font-size:24px;line-height:1.25;width:1664px;border-collapse:collapse">
+<tr><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">Componente</th><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">Responsabilidade</th><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">Origem</th></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Plugin bkhar</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Skills, comandos, agentes, guardas, perfis</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Existe como bks 0.7.0</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Team orchestrator</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Conduz os ritos, dá a vez a cada agente</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Novo</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Agent registry</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Os sete perfis, com modelo e limites</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Evolui agents/ do kit</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Skill registry</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Skills, versões e estágio</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Evolui as 17 skills do kit</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Perfis de projeto</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Fases, artefatos e skills por perfil</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Existe: .bks-profile.json</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Gate runner</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Build, testes, arquitetura, guardas</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Evolui hooks/ e o LOOP-4</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Model router</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Modelo por agente e por zona</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Novo</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Policy engine</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Zona sensível só em provedor aprovado</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Novo, lê o manifesto</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Proposal inbox</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">O que a equipe aprendeu, para curadoria</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Novo: inbox/proposals/</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Telemetry</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Custo por agente, modelo, skill e fase</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Evolui session_cost.py</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Eval suite</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Delta with × without por skill e modelo</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Existe: 20 casos</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 09</p>
+</section>
+</div>
+<div class="frame">
+<section id="roteamento" style="background:#13202E;color:#F5F2EB;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">09 · ROTEAMENTO E POLÍTICA</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">routing.yaml: suas regras de trabalho viram configuração</h2>
+<div style="display:flex;gap:40px">
+<div style="flex:1;background:#0C1620;border:1px solid #2D4257;border-radius:16px;padding:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;color:#C9D3DC"><span style="color:#F0904F">agents:</span><br>&nbsp;&nbsp;arquiteto: <span style="color:#F5F2EB">claude-opus</span> <span style="color:#8FA0B0"># planner hoje</span><br>&nbsp;&nbsp;dev: <span style="color:#F5F2EB">claude-sonnet</span> <span style="color:#8FA0B0"># deepseek após evals</span><br>&nbsp;&nbsp;testes: <span style="color:#F5F2EB">claude-sonnet</span><br>&nbsp;&nbsp;seguranca: <span style="color:#F5F2EB">claude-opus</span> <span style="color:#8FA0B0"># reviewer hoje</span><br><span style="color:#F0904F">rules:</span><br>&nbsp;&nbsp;reviewer.vendor != dev.vendor<br>&nbsp;&nbsp;loop.max_attempts: 4<br><span style="color:#F0904F">zones:</span><br>&nbsp;&nbsp;sensitive:<br>&nbsp;&nbsp;&nbsp;&nbsp;allowed: [anthropic, ollama-local]</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Quem decide usa o mais forte.</span> Arquiteto e Gerente erram caro.</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Quem executa pode usar o mais barato.</span> Os gates protegem o Dev.</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Quem revisa usa outro fornecedor.</span> Testes e Segurança erram de forma diferente do Dev.</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Zona sensível não sai.</span> O policy engine troca o provedor sem depender de lembrar.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8FA0B0;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 10 · nomes de modelo são exemplos</p>
+<aside>A API hospedada do DeepSeek armazena dados fora do Brasil. Por isso, no contexto bancário, zonas sensíveis só usam provedor aprovado ou pesos abertos rodando localmente.</aside>
+</section>
+</div>
+<div class="frame">
+<section id="equipe" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px;gap:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">10 · A EQUIPE</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Sete agentes, cada um com papel, limite e pergunta</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px">
+<div style="background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Gerente</h3><p style="font-size:24px;line-height:1.4;color:#3E4A57">Conduz ritos, cobra decisões</p><p style="font-size:24px;line-height:1.4;color:#A84E18;font-style:italic">“O que está pendente de você?”</p></div>
+<div style="background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Arquiteto</h3><p style="font-size:24px;line-height:1.4;color:#3E4A57">Padrões, contextos, ADRs</p><p style="font-size:24px;line-height:1.4;color:#A84E18;font-style:italic">“Respeita as premissas?”</p></div>
+<div style="background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Dev</h3><p style="font-size:24px;line-height:1.4;color:#3E4A57">Implementa e explica</p><p style="font-size:24px;line-height:1.4;color:#A84E18;font-style:italic">“Qual alternativa descartei?”</p></div>
+<div style="background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Testes</h3><p style="font-size:24px;line-height:1.4;color:#3E4A57">Cenários e casos de borda</p><p style="font-size:24px;line-height:1.4;color:#A84E18;font-style:italic">“O que prova que está errado?”</p></div>
+<div style="background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Segurança</h3><p style="font-size:24px;line-height:1.4;color:#3E4A57">AppSec, LGPD, BACEN</p><p style="font-size:24px;line-height:1.4;color:#A84E18;font-style:italic">“Que dado sensível passa aqui?”</p></div>
+<div style="background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Qualidade</h3><p style="font-size:24px;line-height:1.4;color:#3E4A57">Clean Code, smells</p><p style="font-size:24px;line-height:1.4;color:#A84E18;font-style:italic">“Um júnior entende isso?”</p></div>
+<div style="background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Documentador</h3><p style="font-size:24px;line-height:1.4;color:#3E4A57">ADR, C4, aprendizado</p><p style="font-size:24px;line-height:1.4;color:#A84E18;font-style:italic">“O que vira padrão?”</p></div>
+<div style="background:#13202E;border-radius:16px;padding:28px;display:flex;flex-direction:column;justify-content:center"><p style="font-size:26px;line-height:1.4;color:#F5F2EB">Nenhum decide por você. A decisão é sua, e fica registrada.</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 11</p>
+<aside>Origem no kit: o planner (Opus) se divide em Arquiteto e Testes; o builder (Sonnet) vira Dev; o reviewer (Opus, read-only) vira Segurança; o scribe (Haiku) vira Documentador; Gerente e Qualidade são papéis novos. Tipo PBQ: Gerente orquestra, Dev implementa, Testes, Segurança e Qualidade validam.</aside>
+</section>
+</div>
+<div class="frame">
+<section id="equipe-mapa" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px;gap:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">11 · COMO A EQUIPE SE ORGANIZA</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Quem revisa nunca é quem constrói</h2>
+<div style="display:flex;justify-content:center"><svg aria-label='A equipe: você decide, o Gerente conduz, a equipe constrói, revisa e registra' width='1060' height='575' aria-label='A equipe: você decide, o Gerente conduz, a equipe constrói, revisa e registra' viewBox='0 48 760 412' role='img' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='tm' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='#8A8F94'/></marker></defs><g fill='none' stroke='#8A8F94' stroke-width='1.25'><path d='M380 112V136' marker-end='url(#tm)' marker-start='url(#tm)'/><path d='M380 192V204'/><path d='M244 204H608'/><path d='M244 204V216' marker-end='url(#tm)'/><path d='M608 204V216' marker-end='url(#tm)'/><path d='M472 204V344' marker-end='url(#tm)'/></g><rect x='280' y='56' width='200' height='56' rx='8' fill='#D9682B' fill-opacity='0.12' stroke='#D9682B' stroke-width='2'/><text x='380' y='80' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Você</text><text x='380' y='96' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>decide e faz a curadoria</text><rect x='230' y='136' width='300' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='380' y='160' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Gerente</text><text x='380' y='176' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>conduz os ritos e cobra decisões</text><rect x='24' y='216' width='440' height='104' rx='8' fill='#EFE9DE' stroke='#CFCAC0' stroke-width='1'/><text x='40' y='238' font-size='11.5' font-weight='600' fill='#4A5562' text-anchor='start'>CONSTRÓI</text><rect x='480' y='216' width='256' height='104' rx='8' fill='#EFE9DE' stroke='#CFCAC0' stroke-width='1'/><text x='496' y='238' font-size='11.5' font-weight='600' fill='#4A5562' text-anchor='start'>REGISTRA E APRENDE</text><rect x='24' y='344' width='712' height='104' rx='8' fill='#EFE9DE' stroke='#CFCAC0' stroke-width='1'/><text x='40' y='366' font-size='11.5' font-weight='600' fill='#4A5562' text-anchor='start'>REVISA · FORNECEDOR DIFERENTE DO DEV</text><rect x='40' y='248' width='196' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='138' y='272' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Arquiteto</text><text x='138' y='288' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>padrões, ADRs, fitness</text><rect x='252' y='248' width='196' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='350' y='272' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Dev</text><text x='350' y='288' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>implementa e explica</text><rect x='496' y='248' width='224' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='608' y='272' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Documentador</text><text x='608' y='288' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>ADR, C4, retrospectiva</text><rect x='40' y='376' width='216' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='148' y='400' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Testes</text><text x='148' y='416' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>casos de borda, RED</text><rect x='272' y='376' width='216' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='380' y='400' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Segurança</text><text x='380' y='416' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>LGPD, BACEN, segredos</text><rect x='504' y='376' width='216' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='612' y='400' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Qualidade</text><text x='612' y='416' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>Clean Code, smells</text></svg></div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 12</p>
+</section>
+</div>
+<div class="frame">
+<section id="ritos" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">12 · RITOS E DIÁLOGO</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Cinco formas de conversar com a equipe</h2>
+<table style="font-size:24px;line-height:1.35;width:1664px;border-collapse:collapse">
+<tr><th style="text-align:left;padding:10px 16px;border-bottom:2px solid #1C2733;font-weight:600">Rito</th><th style="text-align:left;padding:10px 16px;border-bottom:2px solid #1C2733;font-weight:600">Quando</th><th style="text-align:left;padding:10px 16px;border-bottom:2px solid #1C2733;font-weight:600">Quem</th><th style="text-align:left;padding:10px 16px;border-bottom:2px solid #1C2733;font-weight:600">Termina com</th></tr>
+<tr><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Refinamento</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Antes de cada FEAT</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Gerente, Arquiteto, Testes, Segurança</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">FEAT aprovada por você</td></tr>
+<tr><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Painel</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Dúvida com mais de uma resposta</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Gerente + 2 ou 3 agentes</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Sua decisão em ADR</td></tr>
+<tr><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Pergunta direta</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">A qualquer momento</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Um agente, via /bkhar:ask</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Resposta com fonte</td></tr>
+<tr><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Revisão em painel</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Depois de gates verdes</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Testes, Segurança, Qualidade</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Aprovação ou novas tasks</td></tr>
+<tr><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Retrospectiva</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Ao fim de cada FEAT</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Todos, pelo Documentador</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Propostas para o cérebro</td></tr>
+</table>
+<div style="display:flex;gap:28px">
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><h3 style="font-size:30px;font-weight:600">Toda opinião cita fonte</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Sua wiki, suas premissas ou referência primária. Sem fonte, vem marcada como opinião.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><h3 style="font-size:30px;font-weight:600">Conflito é exposto</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Se Arquiteto e Dev discordam, você vê as duas posições lado a lado.</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 13</p>
+</section>
+</div>
+<div class="frame">
+<section id="aprendizado" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">13 · CICLO DE APRENDIZADO</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">A equipe propõe, você cura, o padrão cresce</h2>
+<div style="display:flex;justify-content:center"><svg aria-label='Ciclo de aprendizado em quatro passos' width='1100' height='434' aria-label='Ciclo de aprendizado em quatro passos' viewBox='0 60 760 300' role='img' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='cy' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='#8A8F94'/></marker></defs><g fill='none' stroke='#8A8F94' stroke-width='1.25'><path d='M480 100H620V182' marker-end='url(#cy)'/><path d='M620 238V320H480' marker-end='url(#cy)'/><path d='M280 320H140V238' marker-end='url(#cy)'/><path d='M140 182V100H280' marker-end='url(#cy)'/></g><rect x='280' y='72' width='200' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='380' y='96' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>1 · Observar</text><text x='380' y='112' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>agentes anotam nos ritos</text><rect x='520' y='182' width='200' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='620' y='206' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>2 · Propor</text><text x='620' y='222' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>uma proposta por arquivo</text><rect x='280' y='292' width='200' height='56' rx='8' fill='#D9682B' fill-opacity='0.12' stroke='#D9682B' stroke-width='2'/><text x='380' y='316' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>3 · Curar (você)</text><text x='380' y='332' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>aceita, edita ou rejeita</text><rect x='40' y='182' width='200' height='56' rx='8' fill='none' fill-opacity='1' stroke='#8A8F94' stroke-width='1.25'/><text x='140' y='206' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>4 · Incorporar</text><text x='140' y='222' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>premissa, checklist, wiki, gate</text><text x='380' y='206' font-size='13' font-weight='600' fill='#1C2733' text-anchor='middle'>Seu padrão</text><text x='380' y='224' font-size='11.5' font-weight='400' fill='#4A5562' text-anchor='middle'>cresce a cada FEAT</text></svg></div>
+<div style="background:#13202E;border-radius:16px;padding:32px 40px">
+<p style="font-size:26px;line-height:1.45;color:#C9D3DC"><span style="color:#F0904F;font-weight:600">O time também te provoca:</span> “você decidiu isso três vezes sem ADR, vira premissa?” ou “essa decisão contradiz a premissa de outro projeto, qual vale?”</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 14</p>
+</section>
+</div>
+<div class="frame">
+<section id="skills" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px;gap:28px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">14 · EVOLUÇÃO</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">O agente é o papel; a skill é a competência</h2>
+<table style="font-size:24px;line-height:1.3;width:1664px;border-collapse:collapse">
+<tr><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">Skill</th><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">O que traz</th><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">Usada por</th><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">Situação</th></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">bks-sdd · plan-tasks</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Ciclo SDD, tasks atômicas</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Gerente, Arquiteto</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">dotnet · ts · go</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Stacks no padrão BKS com TXC</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Arquiteto, Dev</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">bks-standards</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Premissas, calisthenics, comentário</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Qualidade, Arquiteto</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">bks-tests · bks-arch</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">xUnit 90%+; notação de diagrama</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Testes, Documentador</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">security-audit</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Autorização, segredo, dado sensível</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Segurança</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe; ganha STRIDE, LGPD</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">maintainability-review</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Parecer 0–100 por aplicação</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Qualidade, Arquiteto</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe (0.7.0)</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">brainstorming</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Divergir e convergir, pre-mortem</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Gerente, painéis</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#A84E18;font-weight:600">Proposta</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">performance</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Orçamento p95, profiling, carga</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Dev, Qualidade</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#A84E18;font-weight:600">Proposta</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">lang-java · legado</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Spring, PHP; COBOL e ACL</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Dev, Arquiteto</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#A84E18;font-weight:600">Proposta</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 15</p>
+<aside>O kit já tem 17 skills; aqui as que mais pesam na equipe. Skills carregam sob demanda: só nome e descrição ficam no contexto; o corpo entra quando acionada. Mesma lógica de economia de tokens do BKS-TXC.</aside>
+</section>
+</div>
+<div class="frame">
+<section id="skills-ciclo" style="background:#13202E;color:#F5F2EB;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">15 · CICLO DE VIDA DA SKILL</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Toda skill nasce proposta e só vira estável com evidência</h2>
+<div style="display:flex;gap:20px">
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:10px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">1</p><h3 style="font-size:30px;font-weight:600;color:#F5F2EB">Proposta</h3><p style="font-size:24px;line-height:1.45;color:#C9D3DC">Surge na retro, quando três propostas tratam do mesmo tema.</p></div>
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:10px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">2</p><h3 style="font-size:30px;font-weight:600;color:#F5F2EB">Experimental</h3><p style="font-size:24px;line-height:1.45;color:#C9D3DC">SKILL.md e 5 evals. Só em projeto não sensível.</p></div>
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:10px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">3</p><h3 style="font-size:30px;font-weight:600;color:#F5F2EB">Estável</h3><p style="font-size:24px;line-height:1.45;color:#C9D3DC">Passa nas evals e em 3 FEATs reais, com sua aprovação.</p></div>
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:10px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">4</p><h3 style="font-size:30px;font-weight:600;color:#F5F2EB">Deprecada</h3><p style="font-size:24px;line-height:1.45;color:#C9D3DC">Substituída. Fica para quem a fixou, até migrar.</p></div>
+</div>
+<div style="display:flex;gap:28px">
+<div style="flex:1;background:#0C1620;border:1px solid #2D4257;border-radius:16px;padding:28px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;color:#C9D3DC"><span style="color:#F0904F">perfil do agente:</span><br>skills: [security-audit@^1]<br><span style="color:#F0904F">skills.lock do projeto:</span><br>security-audit: 1.3.2</p></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px">
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">SemVer:</span> MAJOR muda comportamento, MINOR acrescenta, PATCH corrige texto.</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Reprodutível:</span> uma FEAT antiga é revisada com as mesmas regras de quando nasceu.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8FA0B0;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 16</p>
+</section>
+</div>
+<div class="frame">
+<section id="fluxo" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">16 · FLUXO</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Do pedido ao aprendizado: quem faz o quê</h2>
+<table style="font-size:24px;line-height:1.25;width:1664px;border-collapse:collapse">
+<tr><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Etapa</th><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Dono</th><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Saída</th><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Portão</th></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Entendimento</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Gerente, Arquiteto</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">docs/input → /bks:canonize → CONTEXT.md</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Incertezas respondidas</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Requisito</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Arquiteto</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">/bks:prd → PRD do projeto</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Sua aprovação</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Refinamento</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Gerente</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Perguntas e suas respostas</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Suas respostas</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">FEAT</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Arquiteto</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Critérios e dados sensíveis</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Sua aprovação</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">TEST</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Testes</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Cenários e testes em RED</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Sua aprovação</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">TASK</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Gerente</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Pares RED/GREEN</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">—</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Implementação</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Dev</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Código e explicação das escolhas</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Gates, LOOP-4</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Revisão</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Testes, Segurança, Qualidade</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Achados classificados</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Sem bloqueante</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Registro</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Documentador</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">ADR, C4, STATUS, JOURNAL</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">—</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Retrospectiva</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Documentador</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Propostas em inbox/proposals/</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Sua curadoria</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 17</p>
+</section>
+</div>
+<div class="frame">
+<section id="comandos" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">17 · COMANDOS</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">O plugin vira bkhar, e os comandos o prefixo</h2>
+<table style="font-size:24px;line-height:1.25;width:1664px;border-collapse:collapse">
+<tr><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Comando</th><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Hoje no kit</th><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Status</th></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">/bkhar:brain · :new-project · :note</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">/bks:brain, /bks:new-project, /bks:note</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe, renomeia</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">/bkhar:canonize · :prd · :spec</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">/bks:canonize, /bks:prd, /bks:spec</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe, renomeia</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">/bkhar:arch · :loop · :save</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">/bks:arch, /bks:loop (LOOP-4), /bks:save</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe, renomeia</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">/bkhar:review · :maintainability · :ingest</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">/bks:review, /bks:maintainability, /bks:ingest</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe, renomeia</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">/bkhar:migrate</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Traz um projeto do bks para o bkhar</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Existe</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">/bkhar:refine · :panel · :brainstorm</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Ritos com a equipe</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#A84E18;font-weight:600">Proposto</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">/bkhar:ask · :retro · :curate</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Pergunta direta, retro, curadoria</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#A84E18;font-weight:600">Proposto</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733">/bkhar:skill · :cost</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Ciclo de vida da skill; custo (evolui --cost-report)</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#A84E18;font-weight:600">Proposto</td></tr>
+</table>
+<p style="font-size:24px;line-height:1.4;color:#3E4A57">O prefixo é o nome do plugin: o kit é renomeado bkhar (opção A) e o bks fica instalado até o último projeto migrar.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 18</p>
+</section>
+</div>
+<div class="frame">
+<section id="manual-vault" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">18 · MANUAL DE USO · VAULT</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Três comandos rodam na raiz do vault</h2>
+<table style="font-size:24px;line-height:1.3;width:1664px;border-collapse:collapse">
+<tr><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Comando</th><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Para que serve</th><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Como usar</th></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:brain</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Retoma o trabalho: na raiz do vault, o panorama de todos os projetos pelos STATUS.md; num repo, onde parou e o próximo passo</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">primeira coisa de toda sessão</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:new-project</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Cria o projeto com a estrutura canônica e grava o perfil em .bks-profile.json</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">pergunta nome, categoria e perfil</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:ingest</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Leva uma fonte, um lote ou a pasta raw/_inbox/ para a wiki em knowledge/</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">/bkhar:ingest raw/papers/x.pdf</td></tr>
+</table>
+<p style="font-size:24px;line-height:1.4;color:#3E4A57">Os dois prefixos convivem até a Fase 7: projeto não migrado usa /bks:*, migrado ou novo usa /bkhar:*. O passo a passo de cada comando está na Parte X do Atlas.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 19</p>
+<aside>O vault é o que atravessa projetos: perfil, conhecimento e a lista de projetos. Só brain, new-project e ingest escrevem ou leem ali.</aside>
+</section>
+</div>
+<div class="frame">
+<section id="manual-repo" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">19 · MANUAL DE USO · REPO</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Dez comandos rodam na raiz do repo do projeto</h2>
+<table style="font-size:24px;line-height:1.25;width:1664px;border-collapse:collapse">
+<tr><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Comando</th><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Para que serve</th><th style="text-align:left;padding:8px 16px;border-bottom:2px solid #1C2733;font-weight:600">Como usar</th></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:note</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Nota viva em docs/input/notas/: material bruto para o canônico</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">/bkhar:note limites-pix</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:canonize</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Consolida docs/input/ e docs/design/ em docs/canonical/CONTEXT.md</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">depois de juntar material</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:prd</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Transforma o CONTEXT.md no PRD do projeto</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">com o canônico revisado</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:spec</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Entrevista do bounded context; gera FEAT e, aprovada, TEST</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">uma feature por vez</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:arch</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">C4 em Mermaid e README do repo a partir das specs</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">com specs aprovadas</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:loop</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">LOOP-4: implementa a task, no máximo 4 tentativas, G1 a G4</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">FEAT e TEST aprovados</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:review</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Revisão independente e read-only de segurança e conformidade</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">antes de aprovar área sensível</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:maintainability</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Parecer de manutenibilidade por aplicação de app/ e fundamentação</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">com código em app/</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:save</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Fecha a sessão: ADR, specs, STATUS.md, JOURNAL.md</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">ao fim de toda sessão</td></tr>
+<tr><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;color:#1C2733;white-space:nowrap">/bkhar:migrate</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Traz um projeto do bks para o bkhar e grava o .bkhar.json</td><td style="padding:8px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px">uma vez, com a árvore limpa</td></tr>
+</table>
+<p style="font-size:24px;line-height:1.4;color:#3E4A57">Rodar do lugar errado grava no lugar errado: estes comandos escrevem no repositório onde a sessão está aberta.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 20</p>
+<aside>A ordem da tabela é a ordem do ciclo: material, canônico, PRD, spec, arquitetura, implementação, revisão, parecer e fechamento. Num projeto ainda não migrado, os mesmos comandos respondem com o prefixo /bks:.</aside>
+</section>
+</div>
+<div class="frame">
+<section id="case-intro" style="background:#13202E;color:#F5F2EB;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px;justify-content:space-between">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">20 · CASE FICTÍCIO</p>
+<div style="display:flex;flex-direction:column;gap:28px">
+<h2 style="font-size:96px;font-weight:600;line-height:1.05;width:1600px">Endpoint de consulta de comprovante PIX</h2>
+<p style="font-size:30px;line-height:1.45;color:#C9D3DC;width:1400px">Uma API .NET em hexagonal com Dapper. A zona de pagamentos está marcada como sensível no manifesto. Vamos acompanhar a feature do escopo ao merge.</p>
+</div>
+<div style="display:flex;gap:24px">
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">STACK</p><p style="font-size:28px;color:#F5F2EB">.NET · Dapper · SQL Server</p></div>
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">ZONA</p><p style="font-size:28px;color:#F5F2EB">Sensível, pelo manifesto</p></div>
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">MODELOS</p><p style="font-size:28px;color:#F5F2EB">Equipe de 7 agentes</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8FA0B0;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 21</p>
+</section>
+</div>
+<div class="frame">
+<section id="case-refinamento" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px;gap:24px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">21 · CASE — REFINAMENTO</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Antes da FEAT, o time pergunta</h2>
+<div style="background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">VOCÊ</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">/bkhar:refine endpoint para consultar comprovante PIX por id.</p></div>
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">SEGURANÇA</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">Quem pode consultar, só o pagador ou também o recebedor?</p></div>
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">TESTES</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">Inexistente e de outro cliente dão a mesma resposta? Se não, o endpoint revela que existe.</p></div>
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">ARQUITETO</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">Sua premissa pede CQRS para leitura pesada. Vale aqui, ou leitura direta basta?</p></div>
+<div style="display:flex;gap:24px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18;width:200px">QUALIDADE</p><p style="font-size:26px;line-height:1.4;color:#1C2733;flex:1">Result Pattern ou exceção? Dois controllers do projeto ainda usam exceção.</p></div>
+</div>
+<p style="font-size:26px;line-height:1.4;width:1600px">Você responde, e a leitura direta vira ADR com CQRS como alternativa descartada.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 22</p>
+</section>
+</div>
+<div class="frame">
+<section id="case-contexto" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">22 · CASE — FEAT E TEST</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">As suas respostas entram na spec</h2>
+<div style="display:flex;gap:28px">
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">ARQUITETO</p><h3 style="font-size:30px;font-weight:600">FEAT</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">404 para inexistente ou alheio, CPF sempre mascarado, acesso por pagador ou recebedor, p95 abaixo de [__] ms.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">TESTES</p><h3 style="font-size:30px;font-weight:600">TEST</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Um teste xUnit em RED por critério, escrito antes do Dev começar.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">GERENTE</p><h3 style="font-size:30px;font-weight:600">TASKS</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Pares RED/GREEN, cada um com objetivo verificável para o LOOP-4.</p></div>
+</div>
+<p style="font-size:28px;line-height:1.4;width:1500px">Até aqui, zero código, quatro perguntas respondidas e três aprovações suas em arquivo versionado.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 23</p>
+</section>
+</div>
+<div class="frame">
+<section id="case-loop" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">23 · CASE — IMPLEMENTAÇÃO</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">LOOP-4 com gates reais</h2>
+<table style="font-size:24px;line-height:1.35;width:1664px;border-collapse:collapse">
+<tr><th style="text-align:left;padding:10px 16px;border-bottom:2px solid #1C2733;font-weight:600">Tentativa</th><th style="text-align:left;padding:10px 16px;border-bottom:2px solid #1C2733;font-weight:600">O que aconteceu</th><th style="text-align:left;padding:10px 16px;border-bottom:2px solid #1C2733;font-weight:600">Gate</th><th style="text-align:left;padding:10px 16px;border-bottom:2px solid #1C2733;font-weight:600">Resultado</th></tr>
+<tr><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">1</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Dev referencia um tipo que não existe</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">dotnet build</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#A84E18;font-weight:600">Falhou: erro volta como contexto</td></tr>
+<tr><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">2</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Domain passa a referenciar Dapper diretamente</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">NetArchTest</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#A84E18;font-weight:600">Falhou: viola a hexagonal</td></tr>
+<tr><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">3</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Repositório movido para o adapter, porta no domínio</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">dotnet test</td><td style="padding:10px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#2F6B4F;font-weight:600">Passou: todos verdes</td></tr>
+</table>
+<div style="background:#13202E;border-radius:16px;padding:32px 40px">
+<p style="font-size:26px;line-height:1.45;color:#C9D3DC"><span style="color:#F0904F;font-weight:600">Policy engine em ação:</span> o routing.yaml pedia DeepSeek como Dev, mas a zona é sensível. O harness trocou sozinho para o modelo local. Num projeto sem zona sensível, o DeepSeek seria usado.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 24</p>
+</section>
+</div>
+<div class="frame">
+<section id="case-revisao" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">24 · CASE — REVISÃO E RETRO</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">O painel acha o que os testes não pegaram</h2>
+<div style="display:flex;gap:24px">
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">SEGURANÇA · BLOQUEANTE</p><h3 style="font-size:30px;font-weight:600">Log Debug com CPF</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Vira nova task. O Dev corrige e os gates rodam de novo.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">QUALIDADE · SUGESTÃO</p><h3 style="font-size:30px;font-weight:600">Handler grande</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Extrair a autorização num serviço de domínio. Você aceita.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">TESTES · APRENDIZADO</p><h3 style="font-size:30px;font-weight:600">Caso faltante</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Recebedor consultando comprovante de outro recebedor.</p></div>
+</div>
+<div style="background:#13202E;border-radius:16px;padding:32px 40px">
+<p style="font-size:26px;line-height:1.45;color:#C9D3DC"><span style="color:#F0904F;font-weight:600">Retro:</span> três propostas aceitas — CPF como value object, checklist de log Debug, seção “Quem pode ver” no template de FEAT. A próxima feature já começa com elas.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 25</p>
+</section>
+</div>
+<div class="frame">
+<section id="ganhos" style="background:#13202E;color:#F5F2EB;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">25 · O QUE MUDA</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Do prompt que pede para a estrutura que garante</h2>
+<div style="display:flex;gap:28px">
+<div style="flex:1;background:#1D2E40;border:1px solid #2D4257;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">HOJE</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC">Regras em CLAUDE.md que o modelo pode ignorar</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC">“Terminei” dito pelo próprio agente</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC">Trocar de modelo é recomeçar do zero</p>
+<p style="font-size:24px;line-height:1.45;color:#C9D3DC">O que se aprende fica perdido no chat</p>
+</div>
+<div style="flex:1;background:#F5F2EB;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">COM O HARNESS</p>
+<p style="font-size:24px;line-height:1.45;color:#3E4A57">Fases e gates executados em código</p>
+<p style="font-size:24px;line-height:1.45;color:#3E4A57">Pronto = gates verdes e painel de revisão</p>
+<p style="font-size:24px;line-height:1.45;color:#3E4A57">Trocar de modelo é uma linha no routing.yaml</p>
+<p style="font-size:24px;line-height:1.45;color:#3E4A57">Cada feature deixa seu padrão mais rico</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8FA0B0;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 26</p>
+</section>
+</div>
+<div class="frame">
+<section id="roadmap" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">26 · PRÓXIMOS PASSOS</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Sem big bang: o kit vira bkhar e os projetos migram um a um</h2>
+<div style="display:flex;gap:24px">
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">FASES 0–2</p><h3 style="font-size:30px;font-weight:600">Importar e instalar</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Kit trazido com histórico para o repositório do harness, renomeado bkhar, instalado ao lado do bks.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">FASE 3</p><h3 style="font-size:30px;font-weight:600">Equipe e ritos</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Gerente, Testes e Qualidade; refine, panel, retro, curate; inbox/proposals/.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">FASES 4–5</p><h3 style="font-size:30px;font-weight:600">Modelo e piloto</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Modo Contexto como adapter, DeepSeek num projeto poc; um projeto migrado por uma semana.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">FASES 6–7</p><h3 style="font-size:30px;font-weight:600">Migrar e medir</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Um projeto por vez, nquantic por último; baseline das evals; bks aposentado.</p></div>
+</div>
+<p style="font-size:28px;line-height:1.4;width:1600px">Primeiro passo: fechar as decisões do PLANO-MIGRACAO e importar o prj-bks-kit no repositório do harness.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 27</p>
+</section>
+</div>
+<div class="frame">
+<section id="versoes" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">27 · VERSÕES</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">Os artefatos também são versionados</h2>
+<table style="font-size:24px;line-height:1.3;width:1664px;border-collapse:collapse">
+<tr><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">Artefato</th><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">Versão</th><th style="text-align:left;padding:9px 16px;border-bottom:2px solid #1C2733;font-weight:600">O que mudou</th></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Atlas</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">1.6.1</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Caminhos da máquina do autor trocados por exemplo</td></tr><tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Apresentação</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">1.7.1</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Sem caminho da máquina do autor</td></tr><tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Apresentação</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">1.7.0</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Manual de uso dos comandos: vault e repo</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Atlas</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">1.6.0</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Parte X, Manual de comandos; HTML gerado do repositório</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Apresentação</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">1.6.0</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Revisada contra o kit bks 0.7.0 e o ${BKS_VAULT} local</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Atlas</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">1.5.0</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Sem hub _bks-ai; /bks:* → /bkhar:*; fases do PLANO-MIGRACAO</td></tr>
+<tr><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;color:#1C2733;font-weight:600">Apresentação</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57;font-family:'JetBrains Mono', 'Courier New', monospace">1.5.0</td><td style="padding:9px 16px;border-bottom:1px solid #DDD6C8;color:#3E4A57">Revisada contra o 2brains real: fluxo pesquisa → código</td></tr>
+
+
+</table>
+<p style="font-size:26px;line-height:1.4;width:1500px">MAJOR muda a estrutura do harness, MINOR acrescenta parte ou capacidade, PATCH corrige texto. Mesma regra das skills. Histórico completo no Apêndice F do atlas.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 28</p>
+</section>
+</div>
+</div>
+<script>
+function fit(){document.querySelectorAll('.frame').forEach(f=>{f.firstElementChild.style.transform='scale('+(f.clientWidth/1920)+')'})}
+addEventListener('resize',fit);fit();
+addEventListener('keydown',e=>{
+ const frames=[...document.querySelectorAll('.frame')];
+ const i=frames.findIndex(f=>f.getBoundingClientRect().top>=-10);
+ if(e.key==='ArrowRight'||e.key==='PageDown'){frames[Math.min(i+1,frames.length-1)].scrollIntoView({behavior:'smooth'});e.preventDefault()}
+ if(e.key==='ArrowLeft'||e.key==='PageUp'){frames[Math.max(i-1,0)].scrollIntoView({behavior:'smooth'});e.preventDefault()}
+ if(e.key==='n'){document.body.classList.toggle('notes')}
+});
+</script>
+</body></html>

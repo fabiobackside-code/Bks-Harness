@@ -1,0 +1,37 @@
+schema_version: "1.1"
+name: plan-tasks-atomicas
+description: >
+  A skill de plano decompoe em tasks atomicas e ordenadas, e para no plano
+  sem comecar a implementar.
+tags: [plan, conduta]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Preciso adicionar autenticacao JWT numa API .NET que hoje esta sem nenhuma
+    protecao. Monta um plano de tasks para isso.
+
+graders:
+  - name: tasks-ordenadas
+    type: llm
+    criteria: |
+      A resposta entrega um plano com tasks identificadas e ordenadas, cada uma
+      com escopo delimitado — nao um paragrafo corrido nem uma lista de temas
+      soltos.
+
+  - name: criterio-verificavel
+    type: llm
+    criteria: |
+      Cada task tem criterio de conclusao verificavel. Nao basta dizer o que
+      fazer; da para saber quando esta pronta.
+
+  - name: para-no-plano
+    type: llm
+    criteria: |
+      Nenhum codigo de producao foi escrito nesta resposta. O plano para no
+      plano e aguarda aprovacao antes de implementar.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

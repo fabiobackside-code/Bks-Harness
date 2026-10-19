@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: frontend-design-identidade
+description: >
+  A skill de frontend produz interface com ponto de vista proprio e consistente
+  com o projeto, em vez do default generico.
+tags: [frontend-design, design]
+runs: 3
+
+execution:
+  max_turns: 8
+  prompt: |
+    Monta a tela de listagem de pedidos: filtro por periodo e status, tabela com
+    as colunas principais, e paginacao. Pode ser algo simples e padrao.
+
+graders:
+  - name: verifica-convencoes
+    type: llm
+    criteria: |
+      A resposta verifica ou pergunta pelas convencoes visuais que o projeto ja
+      tem — sistema de design, tokens, componentes existentes — antes de propor
+      estilo novo.
+
+  - name: hierarquia-deliberada
+    type: llm
+    criteria: |
+      A interface proposta tem hierarquia visual deliberada: o que o usuario
+      procura primeiro esta em evidencia, e o secundario nao compete. Nao e uma
+      grade uniforme onde tudo tem o mesmo peso.
+
+  - name: estados-reais
+    type: llm
+    criteria: |
+      A resposta trata os estados que uma listagem real tem: vazio, carregando,
+      erro, e resultado filtrado sem correspondencia. Uma tela que so contempla
+      o caso feliz nao esta pronta.
+
+  - name: nao-e-default-generico
+    type: llm
+    criteria: |
+      A resposta nao produz o default generico do framework escolhido. Ha
+      decisao visual explicita, ainda que sobria — "simples e padrao" nao e
+      licenca para ausencia de criterio.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

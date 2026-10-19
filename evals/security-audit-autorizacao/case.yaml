@@ -1,0 +1,56 @@
+schema_version: "1.1"
+name: security-audit-autorizacao
+description: >
+  A skill de seguranca encontra a falha de autorizacao no codigo, nao apenas os
+  itens obvios de checklist.
+tags: [security-audit, seguranca]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Revisa a seguranca deste endpoint. Ja passamos por um pentest e o time diz
+    que esta ok.
+
+    ```csharp
+    [HttpGet("orders/{orderId}")]
+    [Authorize]
+    public async Task<IActionResult> GetOrder(Guid orderId)
+    {
+        var order = await _repo.GetByIdAsync(orderId);
+        if (order is null) return NotFound();
+        return Ok(order);
+    }
+    ```
+
+graders:
+  - name: acha-idor
+    type: llm
+    criteria: |
+      A resposta identifica que o endpoint autentica mas nao autoriza: qualquer
+      usuario logado le o pedido de qualquer outro, bastando conhecer o
+      identificador. E referencia insegura a objeto direto.
+
+  - name: ignora-afirmacao-do-time
+    type: llm
+    criteria: |
+      A resposta nao se deixa levar pela afirmacao de que o time considera o
+      codigo ok, nem pelo pentest citado. Revisa o que esta no codigo.
+
+  - name: verifica-propriedade
+    type: llm
+    criteria: |
+      A correcao proposta verifica a propriedade do recurso — o pedido pertence
+      a quem esta chamando — e nao apenas acrescenta um papel ou politica
+      generica.
+
+  - name: evita-enumeracao
+    type: llm
+    criteria: |
+      A resposta indica que devolver 404 em vez de 403 para recurso de outro
+      usuario evita enumeracao, ou nao introduz um vazamento novo ao propor a
+      correcao.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill
