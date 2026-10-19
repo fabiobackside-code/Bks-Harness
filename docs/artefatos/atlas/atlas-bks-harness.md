@@ -2,7 +2,7 @@
 
 Oct 18, 2026 · @Fabio Magalhaes
 
-Versão 1.6.1, revisada contra o `${BKS_VAULT}` local e o kit `bks` 0.7.0, já importado no repositório `bks-harness`. Ganha a Parte X, o manual de uso de cada comando. O histórico de versões está no Apêndice F.
+Versão 1.7.0, revisada contra o `bkhar` 0.9.0. Ganha a equipe construída na Fase 3: seis agentes, o Gerente como protocolo da sessão principal, os ritos `/bkhar:ask`, `/bkhar:panel` e `/bkhar:refine`, a revisão em painel e o `LEARNINGS.md`. O histórico de versões está no Apêndice F.
 
 ## Prefácio
 
@@ -109,8 +109,8 @@ Trocar um fornecedor muda só a coluna da direita; o core e as portas ficam igua
 | Componente | Responsabilidade | Origem |
 | --- | --- | --- |
 | Plugin `bkhar` | Empacota skills, comandos, agentes, guardas, perfis e templates; uma instalação no escopo do usuário | Existe como plugin `bks` 0.7.0; renomeado na Fase 1 |
-| Team orchestrator | Conduz os ritos, dá a vez a cada agente, consolida e cobra suas decisões | Novo (papel do Gerente) |
-| Agent registry | Os sete perfis com persona, limites, modelo e fontes | Evolui `agents/` do kit (planner, builder, reviewer, scribe) |
+| Team orchestrator | Conduz os ritos, dá a vez a cada agente, consolida e cobra suas decisões | Existe (0.9.0): skill `bks-team`, seguida pela sessão principal |
+| Agent registry | Os sete perfis com persona, limites, modelo e fontes | Existe (0.9.0): seis agentes em `agents/`; o Gerente é a skill `bks-team` |
 | Skill registry | Cataloga as skills, versões e estágio de cada uma | Evolui `skills/` do kit (17 skills) |
 | Perfis de projeto | Dizem quais fases, artefatos e skills se aplicam | Existe: nove perfis + eixos em `.bks-profile.json` |
 | Orquestrador SDD | Fases e portões; impede pular etapa | Existe no `bks-sdd` e nos comandos `/bks:*` |
@@ -147,7 +147,7 @@ Quem revisa nunca é quem constrói, e quem decide é sempre você.
 
 | Agente | Tipo (PBQ) | Papel | Pergunta que sempre faz | Modelo hoje / sugerido | Vem de (kit) |
 | --- | --- | --- | --- | --- | --- |
-| Gerente | Orquestrador | Conduz os ritos, consolida opiniões, cobra decisões | O que está pendente de decisão sua? | Sonnet | Novo (hoje é a sessão principal) |
+| Gerente | Orquestrador | Conduz os ritos, consolida opiniões, cobra decisões | O que está pendente de decisão sua? | a sessão principal | Novo: skill `bks-team` |
 | Arquiteto | Consultivo | Bounded contexts, padrões, ADRs, fitness functions | Isso respeita o padrão ou pede exceção? | Opus | `planner` (FEAT, TASK) + `/bks:arch` |
 | Dev | Implementador | Implementa e explica cada escolha | Qual alternativa descartei, e por quê? | Sonnet | `builder` + `/bks:loop` |
 | Testes | Validador | Cenários, casos de borda, TDD RED/GREEN | Qual cenário prova que isso está errado? | Sonnet → outro fornecedor | `planner` (TEST) + skill `bks-tests` |
@@ -155,23 +155,23 @@ Quem revisa nunca é quem constrói, e quem decide é sempre você.
 | Qualidade | Validador | Clean Code, calisthenics, smells, manutenibilidade | Um júnior entende isso daqui a 6 meses? | Sonnet | Novo (`bks-standards`, `bks-maintainability-review`) |
 | Documentador | Consultivo | ADR, C4, STATUS, JOURNAL, registro de aprendizado | O que aprendemos hoje que vale virar padrão? | Haiku | `scribe` + `/bks:save` + `bks-writing` |
 
-Hoje o kit tem quatro agentes em `agents/`, com modelo no frontmatter e o tier anunciado na primeira linha: `planner` (Opus, em medição contra Sonnet), `builder` (Sonnet), `reviewer` (Opus, read-only) e `scribe` (Haiku). A ordem dentro de uma entrega é fixa, `planner → builder → reviewer → scribe`, nunca em paralelo. A equipe de sete é a evolução deles: o planner se divide em Arquiteto e Testes, o builder vira Dev, o reviewer vira Segurança, o scribe vira Documentador, e Gerente e Qualidade entram como papéis novos. A coluna PBQ diz o tipo do papel no vocabulário da Fase 6 do `bks-sdd`. As regras duras continuam: o builder não edita zona de contenção nem commita, o reviewer só lê e exige `arquivo:linha`, e o scribe nunca afirma teste sem evidência.
+No `bkhar` 0.9.0 a equipe existe. Seis papéis são subagentes em `agents/`, com modelo no frontmatter e o tier anunciado na primeira linha: `architect` (Opus), `tester` (Sonnet), `developer` (Sonnet), `security` (Opus, só leitura), `quality` (Sonnet, só leitura) e `scribe` (Haiku). O Gerente é a sessão principal seguindo a skill `bks-team`, porque subagente do Claude Code não conversa com você no meio do trabalho nem chama outro subagente. A equipe evoluiu dos quatro agentes do kit: o planner se dividiu em Arquiteto e Testes, o builder virou Dev, o reviewer virou Segurança, o scribe virou Documentador, e Gerente e Qualidade entraram como papéis novos. O plugin `bks` segue com os quatro antigos nos projetos não migrados. A coluna PBQ diz o tipo do papel no vocabulário da Fase 6 do `bks-sdd`. As regras duras continuam: o Dev não edita zona de contenção nem commita, a Segurança só lê e exige `arquivo:linha`, e o Documentador nunca afirma teste sem evidência.
 
 ### 12. Os perfis
 
-**Gerente.** É o mestre de cerimônias. Abre cada rito, decide quem fala, impede que a conversa avance sem uma resposta sua e resume os trade-offs em opções numeradas. Não opina sobre técnica: quando há conflito entre agentes, ele expõe o conflito, não o resolve. Fontes: PRD, PLAN, `.states`, decisões pendentes.
+**Gerente.** É o mestre de cerimônias. Abre cada rito, decide quem fala, impede que a conversa avance sem uma resposta sua e resume os trade-offs em opções numeradas. Não opina sobre técnica: quando há conflito entre agentes, ele expõe o conflito, não o resolve. No `bkhar`, o Gerente é a sessão principal seguindo a skill `bks-team`. Fontes: PRD, PLAN, `.states`, decisões pendentes.
 
 **Arquiteto.** Guarda o seu padrão: Hexagonal, DDD tático, Pipeline com TXC, Result Pattern, SEDA quando cabe. Toda recomendação cita a regra ou a página da wiki que a sustenta. Quando uma decisão contradiz o padrão, ele exige um ADR. Fontes: skill `bks-standards`, `brain/engineering/` do projeto, `knowledge/wiki/architecture/`, ADRs do projeto, skills `bks-dotnet-solutions`, `bks-typescript-solutions`, `bks-go-solutions` e `bks-arch`.
 
 **Dev.** Implementa as tasks sob LOOP-4. Diferente de um vibe coder, ele explica: qual abordagem escolheu, qual descartou e por quê. Quando a spec é ambígua, ele para e pergunta antes de codificar. Fontes: FEAT, TEST, TASK, skills de stack.
 
-**Testes.** Pensa como quem quer quebrar o sistema. Questiona a FEAT no refinamento (casos de borda, respostas que vazam informação) e escreve os testes RED antes do Dev. Roda em fornecedor diferente do Dev. Fontes: TEST, critérios de aceite, histórico de bugs.
+**Testes.** Pensa como quem quer quebrar o sistema. Questiona a FEAT no refinamento (casos de borda, respostas que vazam informação) e escreve os testes RED no passo 0 do `/bkhar:loop`, antes do Dev. Não revisa os próprios testes. A meta é rodar em fornecedor diferente do Dev, a partir da Fase 4. Fontes: TEST, critérios de aceite e os casos do `LEARNINGS.md` da área da task.
 
 **Segurança.** Analisa cada FEAT e cada diff pelo ângulo de dado sensível, autorização, log, segredo e conformidade. Confere mascaramento, uso do CyberArk e se a zona do manifesto foi respeitada. Também roda em fornecedor diferente do Dev. Fontes: manifesto, checklist de segurança, normas aplicáveis.
 
-**Qualidade.** Revisa legibilidade, nomes, tamanho de função, comentários desnecessários e smells, sempre balanceando com custo real de performance. Pensa na sua equipe júnior e pleno como leitora do código. Fontes: bks-clean-code, Object Calisthenics, catálogo de refactoring.
+**Qualidade.** Revisa legibilidade, nomes, tamanho de função, comentários desnecessários e smells, sempre balanceando com custo real de performance. Pensa na sua equipe júnior e pleno como leitora do código. Julga também os testes que o Testes escreveu e os resultados da execução, e devolve o defeito resolvido como caso para o `LEARNINGS.md`. Fontes: bks-clean-code, Object Calisthenics, catálogo de refactoring.
 
-**Documentador.** Transforma decisões em ADR, mantém diagramas C4, atualiza o estado do projeto e, principalmente, conduz a retrospectiva: recolhe o que cada agente aprendeu e transforma em propostas para o seu cérebro. Fontes: tudo o que foi decidido na sessão.
+**Documentador.** Transforma decisões em ADR, mantém diagramas C4, atualiza o estado do projeto e grava o ADR de cada painel. Na fase da retrospectiva, ainda proposta, conduz o rito: recolhe o que cada agente aprendeu e transforma em propostas para o seu cérebro. Fontes: tudo o que foi decidido na sessão.
 
 ### 13. Regras de convivência
 
@@ -195,9 +195,11 @@ A equipe conversa com você em cinco formatos, cada um com começo, meio e fim. 
 | Revisão em painel | Depois de gates verdes | Testes, Segurança, Qualidade, Arquiteto | Aprovação ou novas tasks |
 | Retrospectiva | Ao fim de cada FEAT | Todos, conduzidos pelo Documentador | Propostas para o cérebro |
 
+Quatro ritos têm comando desde a 0.9.0: `/bkhar:refine`, `/bkhar:panel`, `/bkhar:ask` e `/bkhar:review`. A retrospectiva é proposta. Nenhum rito grava `STATUS.md` nem `JOURNAL.md`: no fim, o Gerente lista o que o `/bkhar:save` grava. A exceção é o ADR do painel, que o Documentador grava logo depois da sua escolha.
+
 ### 14. Refinamento
 
-O Gerente apresenta o pedido. Cada agente faz até três perguntas pelo seu ângulo. O Gerente agrupa as perguntas, você responde, e só então o Arquiteto e o Testes escrevem FEAT e TEST com as suas respostas dentro. Uma FEAT que nasce sem refinamento é exceção registrada.
+O Gerente apresenta o pedido. Cada agente faz até três perguntas pelo seu ângulo. O Gerente agrupa as perguntas, você responde, e só então o Arquiteto e o Testes escrevem FEAT e TEST com as suas respostas dentro. Uma FEAT que nasce sem refinamento, pelo `/bkhar:spec`, é exceção registrada no cabeçalho: `Refinamento: não (exceção)`.
 
 ### 15. Painel
 
@@ -205,13 +207,13 @@ Você faz uma pergunta aberta ("CQRS ou leitura direta aqui?"). Dois ou três ag
 
 ### 16. Pergunta direta
 
-Use `@agente` para falar com um papel específico: `@seguranca preciso mascarar esse campo no log?` A resposta segue o perfil: cita a fonte e diz quando é opinião.
+Use `/bkhar:ask <agente> <pergunta>` para falar com um papel específico: `/bkhar:ask seguranca preciso mascarar esse campo no log?` O nome vale em inglês ou português. A resposta segue o perfil: cita a fonte e diz quando é opinião.
 
-O atalho `@<agente>` equivale ao comando `/bkhar:ask <agent> <question>`.
+O atalho com arroba, previsto nas primeiras versões deste Atlas, não existe: no Claude Code, a arroba é menção de arquivo.
 
 ### 17. Revisão em painel
 
-Depois que os gates passam, três revisores leem o diff em invocações separadas: Testes, Segurança e Qualidade. O Arquiteto entra quando o diff toca uma fronteira de contexto ou uma premissa. Cada achado vira um de três tipos: bloqueante (nova task), sugestão (você decide) ou aprendizado (vai para a retrospectiva).
+Depois que os gates passam, três revisores leem o diff em invocações separadas: Testes, Segurança e Qualidade. O Arquiteto entra quando o diff toca uma fronteira de contexto ou uma premissa. O Testes confere se cada cenário está coberto; a força dos testes é julgada pela Qualidade, porque quem escreveu o teste não o revisa. Cada achado vira um de três tipos: bloqueante (proposta de task, escrita depois do seu ok), sugestão (você decide) ou aprendizado. Defeito resolvido, com evidência, vai para o `LEARNINGS.md` do projeto, que o Testes lê antes de escrever teste novo; o resto espera a retrospectiva.
 
 ### 18. Retrospectiva
 
@@ -247,7 +249,7 @@ O único passo que exige você é a curadoria; os outros três a equipe faz sozi
 | Tipo | Destino ao ser aceita | Exemplo |
 | --- | --- | --- |
 | Regra de padrão | `skills/bks-standards/` (todo projeto) ou `brain/engineering/` (um projeto) | Máscara de CPF é responsabilidade do domínio |
-| Regra de checklist | `agents/references/` do agente | Segurança: verificar log em nível Debug |
+| Regra de checklist | `skills/bks-team/references/` | Segurança: verificar log em nível Debug |
 | Página de conhecimento | `knowledge/wiki/` do vault, via `/bks:ingest` | Resumo de um paper citado no painel |
 | Template | `templates/` do plugin | Seção "Dados sensíveis" obrigatória na FEAT |
 | Guarda | `hooks/scripts/` + teste em `hooks/tests/` | Domain não referencia Dapper |
@@ -270,7 +272,7 @@ status: pendente
 # Máscara de CPF na camada de domínio
 
 **O que muda:** CPF passa a ser um value object que só expõe a versão mascarada.
-**Por quê:** o reviewer encontrou CPF completo em log de Debug.
+**Por quê:** a Segurança encontrou CPF completo em log de Debug.
 **Onde se aplica:** todo projeto com zona de dados pessoais.
 ```
 
@@ -307,18 +309,18 @@ Os comandos já existem e só existem no plugin: a cópia global em `~/.claude/c
 | `/bkhar:note` | `/bks:note` | Repo | Nota viva em `docs/input/notas/` | Existe, renomeia |
 | `/bkhar:canonize` | `/bks:canonize` | Repo | `docs/input/` + `docs/design/` → `CONTEXT.md` | Existe, renomeia |
 | `/bkhar:prd` | `/bks:prd` | Repo | `CONTEXT.md` → `PRD-{projeto}.md` | Existe, renomeia |
-| `/bkhar:spec` | `/bks:spec` | Repo | Entrevista → FEAT → TEST | Existe, ganha o rito de refinamento |
+| `/bkhar:spec` | `/bks:spec` | Repo | Entrevista → FEAT → TEST, sem rito | Existe; exceção ao `/bkhar:refine` |
 | `/bkhar:arch` | `/bks:arch` | Repo | ARCH no renderer do perfil + README | Existe, renomeia |
-| `/bkhar:loop` | `/bks:loop` | Repo | LOOP-4 com G1–G4 ou `BLOQUEIO-*.md` | Existe, ganha model router |
-| `/bkhar:review` | `/bks:review` | Repo | Revisão independente read-only | Existe, vira painel |
+| `/bkhar:loop` | `/bks:loop` | Repo | Passo 0 com o RED do Testes; LOOP-4 com o Dev, G1–G4 ou `BLOQUEIO-*.md` | Existe (0.9.0); ganha model router na Fase 4 |
+| `/bkhar:review` | `/bks:review` | Repo | Revisão em painel: Testes, Qualidade e, em área sensível, Segurança | Existe, em painel (0.9.0) |
 | `/bkhar:maintainability` | `/bks:maintainability` | Repo | Parecer de manutenibilidade por aplicação | Existe, renomeia |
 | `/bkhar:save` | `/bks:save` | Repo | Decisões, specs, STATUS, JOURNAL, alerta do canônico | Existe, renomeia |
 | `/bkhar:ingest` | `/bks:ingest` | Vault | Fonte ou lote → página em `knowledge/wiki/` | Existe, renomeia |
 | skill `bks-sdd` + flags | idem | Repo | Fluxo completo: workspace, PLAN, TASKs, `--context`, `--cost-report` | Existe |
-| `/bkhar:refine` | — | Repo | Abre o rito de refinamento | Proposto |
-| `/bkhar:panel` | — | Qualquer pasta | Painel com 2 ou 3 agentes | Proposto |
+| `/bkhar:refine` | — | Repo | Rito de refinamento: perguntas da equipe, FEAT com `Refinamento: sim`, TEST | Existe (0.9.0) |
+| `/bkhar:panel` | — | Repo | Painel com 2 ou 3 agentes independentes; ADR com as opções descartadas | Existe (0.9.0) |
 | `/bkhar:brainstorm` | — | Qualquer pasta | Rito de brainstorming com a skill de mesmo nome | Proposto |
-| `/bkhar:ask <agent>` | — | Qualquer pasta | Pergunta direta a um papel; atalho `@<agente>` | Proposto |
+| `/bkhar:ask <agent>` | — | Repo | Pergunta direta a um papel, com resposta que cita a fonte | Existe (0.9.0) |
 | `/bkhar:retro` | — | Repo | Retrospectiva da FEAT atual | Proposto |
 | `/bkhar:curate` | — | Repo do harness | Revisa as propostas pendentes | Proposto |
 | `/bkhar:skill new / list / promote` | — | Repo do harness | Cria, lista e promove skills | Proposto |
@@ -394,7 +396,7 @@ A implantação parte do kit que já funciona e nunca para os projetos em curso.
 | 0. Planejar | Plano, decisões fechadas, ADR-001 (nomenclatura A) | Decisões da seção 7 do plano respondidas | Nenhum |
 | 1. Importar | Kit trazido com os 44 commits, renomeado `bkhar`, suíte estrutural verde, `/bkhar:migrate` escrito | `claude plugin validate` e testes estruturais passam | Nenhum: `bks` segue instalado |
 | 2. Instalar lado a lado | `bkhar` instalado no escopo do usuário, aliases dos comandos antigos | Os dois plugins respondem sem colisão | Baixo |
-| 3. Equipe e ritos | Gerente, Testes e Qualidade; `/bkhar:refine`, `panel`, `retro`, `curate`; `inbox/proposals/` | Uma FEAT real com refinamento, painel e retro | Nenhum até um projeto migrar |
+| 3. Equipe e ritos | Seis agentes e o Gerente (skill `bks-team`); `/bkhar:ask`, `panel`, `refine`; `review` em painel; `LEARNINGS.md`. `retro`, `curate` e `inbox/proposals/` ficaram para a fase da retrospectiva | Uma FEAT real com refinamento e painel | Nenhum até um projeto migrar |
 | 4. Modelo plugável | `providers/`, Modo Contexto como primeiro adapter, policy engine lendo o manifesto | Um agente rodando em DeepSeek num projeto `poc` | Nenhum |
 | 5. Piloto | Um projeto migrado e usado por uma semana | Retomar e fechar sessão sem atrito | Baixo, reversível |
 | 6. Migrar os demais | Um por vez, entre fases; `nquantic` por último | Todos com `.bks-profile.json` e `/bkhar:*` | Baixo |
@@ -432,12 +434,13 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 
 - [x] Criar `<harness>` com git local e o plano de migração
 - [ ] Fechar as decisões: nomenclatura A, histórico do kit, merge da `feat/maintainability`, projeto piloto
-- [ ] Registrar o ADR-001 (nomenclatura) em `<harness>\decisions\`
-- [ ] Importar o `prj-bks-kit` com histórico e renomear o plugin para `bkhar`
+- [x] Registrar o ADR-001 (nomenclatura) em `<harness>\decisions\`
+- [x] Importar o `prj-bks-kit` com histórico e renomear o plugin para `bkhar`
 - [x] Escrever o `/bkhar:migrate`
 - [ ] Dar `.bks-profile.json` ao `nquantic` e ao `layan` (o `/bkhar:migrate` pergunta o perfil)
-- [ ] Instalar `bkhar` ao lado do `bks` com `/plugin marketplace add <harness>` (ex.: `C:\dev\bks-harness`)
-- [ ] Escrever Gerente, Testes e Qualidade e os ritos `/bkhar:refine`, `panel`, `retro`, `curate`
+- [x] Instalar `bkhar` ao lado do `bks` com `/plugin marketplace add <harness>` (ex.: `C:\dev\bks-harness`)
+- [x] Escrever a equipe, o Gerente e os ritos `/bkhar:ask`, `panel`, `refine` (0.9.0)
+- [ ] Escrever a retrospectiva e a curadoria: `/bkhar:retro`, `curate`
 - [ ] Migrar o piloto (`mcp-sql` ou `bks-motor-sdk`) e usar uma semana
 - [ ] Rodar a baseline das evals quando houver crédito
 
@@ -528,45 +531,49 @@ O próprio harness segue o padrão que ele aplica. Agentes, comandos, skills, gu
 
 ### A. Template de perfil de agente
 
-Exemplo do agente de Segurança, que evolui o `reviewer` atual. No kit, os agentes já vivem em `agents/` como subagentes do Claude Code, com frontmatter e o tier anunciado na primeira linha. O campo `skills` abaixo é o acréscimo do harness.
+O formato real dos agentes do `bkhar`, aqui com a Segurança, resumida de `agents/security.md`. O frontmatter tem só as quatro chaves que o Claude Code lê; as skills que o papel carrega ficam numa seção do corpo, para não depender de chave que a plataforma não conhece. A primeira linha do corpo anuncia o tier, e as sete seções são as mesmas em todo perfil.
 
 ```markdown
 ---
 name: security
-description: Analista de segurança e conformidade. Use no refinamento de toda FEAT e na revisão de todo diff que toque zona sensível do manifesto.
-model: opus   # hoje igual ao reviewer; meta: fornecedor diferente do Dev
+description: Segurança da equipe. Analisa FEAT e diff pelo ângulo de dado sensível, autorização, log e segredo. Só lê; todo achado com arquivo:linha.
+model: opus
 tools: Read, Grep, Glob
-skills: [security-audit@^1, bks-standards@^1]   # lido pelo harness
 ---
-# Persona
+
+> Ao iniciar, diga em uma linha: `security - Opus - Read, Grep, Glob`.
+
+# Agente — security
+
+## Persona
 Analista de AppSec com experiência em sistemas bancários brasileiros.
 Direto, cético, nunca aprova por cortesia.
 
-# Responsabilidades
-- Questionar a FEAT pelo ângulo de dado sensível, autorização e log
-- Revisar o diff: mascaramento, segredos, zona do manifesto
+## Responsabilidades
+- No refinamento, até três perguntas pelo ângulo da segurança
+- Na revisão em painel, o diff que toca área sensível do manifesto
 - Classificar cada achado: bloqueante, sugestão ou aprendizado
 
-# Limites
-- Não escreve código de produção
-- Não aprova o que não leu
-- Opinião sem fonte vem marcada como opinião
+## Limites
+- Só lê; todo achado tem arquivo:linha
+- Crítica bloqueia a entrega
 
-# Fontes obrigatórias
+## Fontes obrigatórias
 - manifesto do projeto
-- references/checklist-seguranca.md
-- regras de segurança em skills/bks-standards/ e o brain/engineering/ do projeto
+- skills/bks-standards/references/checklist-revisao-critica.md
+- skills/bks-team/references/code-review-checklist.md
 
-# Perguntas obrigatórias
+## Perguntas obrigatórias
 1. Que dado sensível passa por aqui?
 2. Quem pode ver este dado, e como isso é verificado?
 3. Algum log, mensagem de erro ou trace expõe o dado?
-4. Algum segredo aparece fora do CyberArk?
-5. A resposta revela a existência de um recurso a quem não deveria?
 
-# Aprendizado
-Ao fim de cada revisão, anote em até 3 linhas o que vale virar regra
-de checklist ou premissa. O Documentador transforma em proposta.
+## Skills que carrega
+`security-audit` e `bks-standards`.
+
+## Aprendizado
+Ao fim da revisão, devolva ao Gerente, em até 3 linhas, o que vale
+virar regra de checklist ou premissa. O /bkhar:save registra.
 ```
 
 ### B. routing.yaml de referência
@@ -575,17 +582,17 @@ O ponto de partida são os modelos que os agentes do kit já usam. Trocas, como 
 
 ```yaml
 agents:
-  manager:   { model: claude-sonnet }   # novo
-  architect: { model: claude-opus }     # planner hoje, em medição contra sonnet
-  developer: { model: claude-sonnet }   # builder hoje; candidato: deepseek em projeto poc
+  manager:   { model: session }         # a sessão principal, skill bks-team
+  architect: { model: claude-opus }     # era o planner; em medição contra sonnet
+  developer: { model: claude-sonnet }   # era o builder; candidato: deepseek em projeto poc
   tester:    { model: claude-sonnet }   # novo; meta: fornecedor diferente do developer
-  security:  { model: claude-opus }     # reviewer hoje (read-only)
+  security:  { model: claude-opus }     # era o reviewer (read-only)
   quality:   { model: claude-sonnet }   # novo
   scribe:    { model: claude-haiku }    # scribe hoje
 
 rules:
   - order: [manager, architect, tester, developer, security, quality, scribe]
-  - reviewer.vendor != developer.vendor   # meta da Fase 4
+  - security.vendor != developer.vendor   # meta da Fase 4
   - loop.max_attempts: 4
 
 zones:
@@ -675,6 +682,7 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 
 | Artefato | Versão | Data | O que mudou |
 | --- | --- | --- | --- |
+| Atlas do BKS Harness | 1.7.0 | 2026-10-19 | Partes III e IV ajustadas à equipe construída na Fase 3: seis agentes, Gerente como skill `bks-team`, `/bkhar:ask`, `panel` e `refine` existentes, revisão em painel, `LEARNINGS.md`, sem o atalho com arroba; Apêndice A no formato real do perfil |
 | Atlas do BKS Harness | 1.6.1 | 2026-10-19 | Caminhos da máquina do autor trocados por `<harness>`, com exemplo de pasta; o repositório passa a constar como público no GitHub |
 | Atlas do BKS Harness | 1.6.0 | 2026-10-18 | Parte X, Manual de comandos, com cada comando explicado e exemplificado; diagramas do fluxo e da arquitetura atualizados; mantido no repositório `bks-harness` e gerado em HTML pronto para PDF |
 | Atlas do BKS Harness | 1.5.0 | 2026-10-18 | Revisão contra o `${BKS_VAULT}` local e o kit `bks` 0.7.0: sai o hub `brain/_bks-ai/`, entram `workbench/`, `knowledge/` e o projeto autossuficiente; comandos `/bks:*` e o caminho para `/bkhar:*` (opção A); guardas, evals, perfis, rigor e as 17 skills como existentes; planner em Opus; coluna PBQ; propostas em `inbox/proposals/`; sem `bkhar run` nem brain compiler; fases, estrutura e primeiros passos alinhados ao `PLANO-MIGRACAO` |
@@ -683,6 +691,7 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 | Atlas do BKS Harness | 1.2.0 | 2026-10-17 | Comandos em inglês com prefixo `bkhar`, atalho `@<agente>` |
 | Atlas do BKS Harness | 1.1.0 | 2026-10-17 | Parte IX (skills plugáveis), skill registry, apêndices E e F |
 | Atlas do BKS Harness | 1.0.0 | 2026-10-17 | Primeira versão: Partes I a VIII, equipe de sete agentes, ritos, ciclo de aprendizado, case |
+| Apresentação BKS Harness | 1.8.0 | 2026-10-19 | Slides de equipe, ritos, comandos e manual do repo com a equipe da Fase 3; conceitos e roteamento sem os agentes antigos como estado atual |
 | Apresentação BKS Harness | 1.7.1 | 2026-10-19 | Slide do roadmap sem o caminho da máquina do autor |
 | Apresentação BKS Harness | 1.7.0 | 2026-10-18 | Dois slides de manual de uso dos comandos, um para o vault e outro para o repo; mantida no repositório `bks-harness` e gerada em HTML pronto para PDF |
 | Apresentação BKS Harness | 1.6.0 | 2026-10-18 | Mesma revisão do Atlas 1.5.0 aplicada aos slides |

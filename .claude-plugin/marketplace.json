@@ -9,7 +9,7 @@
       "name": "bkhar",
       "source": "./",
       "description": "Kit BKS de Spec-Driven Development: PRD, specs, tasks, execucao e arquitetura hexagonal em .NET, TypeScript e Go.",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "category": "development",
       "keywords": ["sdd", "spec-driven-development", "hexagonal-architecture", "dotnet", "typescript", "go"]
     }

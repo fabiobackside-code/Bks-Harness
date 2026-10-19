@@ -51,7 +51,7 @@ Dois agentes só ao mesmo tempo se cada um ficar inteiramente dentro de:
 - Dado pessoal/regulado (LGPD)
 - Assinatura/validação de webhook, integração TCP externa
 
-## Invariantes do domínio (o `reviewer` verifica explicitamente)
+## Invariantes do domínio (o `security` verifica explicitamente)
 - Zero `float`/`double` em campo monetário — sempre `decimal`
 - Idempotência por CONSTRAINT de banco, nunca só checagem em código
 - Toda query filtra por `InquilinoId`/`tenant` — sem exceção, inclusive agregados/relatórios
@@ -59,14 +59,17 @@ Dois agentes só ao mesmo tempo se cada um ficar inteiramente dentro de:
 - `<invariantes específicas deste projeto>`
 
 ## Perfis disponíveis
-Vêm do plugin `bks`, invocados pelo nome:
+Vêm do plugin `bkhar`, invocados pelo nome. O Gerente, que conduz os ritos, é a sessão principal
+seguindo a skill `bks-team`.
 
 | Perfil | Invocação | Para que |
 |---|---|---|
-| builder | `bkhar:builder` | implementa sob LOOP-4 |
-| reviewer | `bkhar:reviewer` | revisão read-only, invocação separada |
-| planner | `bkhar:planner` | escopo → FEAT/TEST/TASK, nunca código |
-| scribe | `bkhar:scribe` | sincroniza doc de trabalho já verificado |
+| architect | `bkhar:architect` | padrão, FEAT, TASK e ADR; nunca código |
+| tester | `bkhar:tester` | TEST e o RED em código, antes da implementação |
+| developer | `bkhar:developer` | implementa uma tentativa do LOOP-4 por vez |
+| security | `bkhar:security` | revisão de segurança read-only, invocação separada |
+| quality | `bkhar:quality` | legibilidade, arquivos de teste, casos para o `LEARNINGS.md` |
+| scribe | `bkhar:scribe` | ADR de painel e doc de trabalho já verificado |
 
 ## Convenções — aponte, não repita
 - Quem é o usuário: `workbench/profile.md`, no vault

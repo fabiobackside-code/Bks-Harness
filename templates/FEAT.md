@@ -2,7 +2,7 @@
 relacionada: []   # ADR-NNN que esta feature segue; o corpo não cita número de ADR
 ---
 # FEAT-[nome]
-**Bounded Context:** | **Status:** Rascunho
+**Bounded Context:** | **Status:** Rascunho | **Refinamento:** sim (via `/bkhar:refine`) ou não (exceção, via `/bkhar:spec`)
 ## Objetivo
 ## Regras de negócio
 ## Entidades e Value Objects

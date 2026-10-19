@@ -15,7 +15,7 @@ Para entender o desenho antes de instalar:
 
 Comandos em inglês, prefixo `bkhar`. Documentação em português do Brasil.
 
-## O kit (base 0.7.0, agora `bkhar` 0.8.0)
+## O kit (base 0.7.0, agora `bkhar` 0.9.0)
 
 Plugin do Claude Code com o kit BKS de **Spec-Driven Development** — o processo que leva uma ideia
 de produto até código implementado, passando por PRD, planos, especificações de feature, cenários
@@ -49,6 +49,7 @@ Para instalar a partir de um clone local: `/plugin marketplace add <pasta-do-clo
 | `bks-dotnet-solutions` | Geração de soluções .NET com Arquitetura Hexagonal e o padrão TXC (Transaction Context) |
 | `bks-typescript-solutions` | Backends Node.js + TypeScript: API REST, agente LangGraph, worker e consumer, também sob TXC |
 | `bks-go-solutions` | Soluções Go: API REST, worker, consumer, CLI e SDK — TXC na forma que Go admite, erro idiomático no lugar de `Result[T]` |
+| `bks-team` | Protocolo do Gerente: conduz os ritos da equipe, chama cada agente em invocação separada, numera as opções e para antes de gerar artefato |
 | `bks-create-plan-tasks` | Decomposição de qualquer trabalho em tasks atomicas otimizadas para consumo de tokens |
 | `bks-tests` | Cobertura de testes em solution .NET: projeto xUnit único em `src/`, 90%+ em linhas, branches e métodos, conformidade SonarQube |
 | `bks-standards` | Padrões de engenharia BKS: premissas de codificação, dependências .NET e Go, calisthenics, politica de comentario, SEDA e TCP |
@@ -73,11 +74,14 @@ Para instalar a partir de um clone local: `/plugin marketplace add <pasta-do-clo
 | `/bkhar:ingest` | Ingere conhecimento para a base transversal em `knowledge/` do vault |
 | `/bkhar:canonize` | Consolida pesquisa e design num contexto canônico único |
 | `/bkhar:prd` | Gera o PRD a partir do contexto canônico |
-| `/bkhar:spec` | Entrevista de bounded context e gera `FEAT` + `TEST` |
+| `/bkhar:spec` | Caminho direto, sem rito: o `architect` escreve a especificação e o `tester`, os cenários |
 | `/bkhar:arch` | Gera `ARCH-[projeto].md` (C4 em Mermaid) e o README do repo |
-| `/bkhar:loop` | LOOP-4: implementa task sob goals verificáveis, máximo 4 tentativas |
-| `/bkhar:review` | Dispara revisão independente read-only |
+| `/bkhar:refine` | Refinamento: a equipe pergunta antes; o `architect` escreve a especificação e o `tester`, os cenários |
+| `/bkhar:loop` | LOOP-4: o `tester` escreve o teste que falha, o `developer` implementa; máximo 4 tentativas |
+| `/bkhar:review` | Revisão em painel: `tester`, `quality` e, em área sensível, `security`, cada um em invocação separada |
 | `/bkhar:maintainability` | Inventaria `app/`, gera um parecer de manutenibilidade por aplicação em `outputs/maintainability/` e a fundamentação do projeto em `outputs/references/` |
+| `/bkhar:ask` | Pergunta direta a um agente da equipe, com resposta que cita a fonte |
+| `/bkhar:panel` | Painel: 2 ou 3 agentes respondem sem ver os outros; você escolhe e o `scribe` registra a decisão |
 | `/bkhar:save` | Roteia o resultado da sessão pela regra dos dois lugares |
 | `/bkhar:migrate` | Traz um projeto do `bks` para o `bkhar`: confere o layout, troca o prefixo no `WORKFLOW.md` e no `CLAUDE.md`, grava o `.bkhar.json`; não commita |
 
@@ -85,9 +89,11 @@ Para instalar a partir de um clone local: `/plugin marketplace add <pasta-do-clo
 
 | Agente | Papel | Modelo |
 |---|---|---|
-| `planner` | Escopo vira `FEAT`/`TEST`/`TASK` — nunca código de produção | Opus |
-| `builder` | Implementa sob LOOP-4, dentro dos limites da FEAT aprovada | Sonnet |
-| `reviewer` | Revisão de segurança independente, read-only | Opus |
+| `architect` | Guarda o padrão; escreve especificação, tasks e registros de decisão; nunca código de produção | Opus |
+| `tester` | Escreve os cenários e o teste que falha antes do código; confere a cobertura | Sonnet |
+| `developer` | Implementa uma tentativa do loop por vez contra os testes que falham; não commita | Sonnet |
+| `security` | Revisão de segurança independente, só leitura, todo achado com `arquivo:linha` | Opus |
+| `quality` | Legibilidade, arquivos de teste e resultados; devolve casos para o `LEARNINGS.md` | Sonnet |
 | `scribe` | Registra apenas o que foi confirmado com evidência | Haiku |
 
 ### Perfis de projeto
@@ -226,33 +232,45 @@ aprovado. É a mesma regra do `/bkhar:spec`, aplicada a um ciclo maior.
 
 ### Arquitetura de agentes
 
-Os quatro agentes não são o mesmo trabalhador com nomes diferentes. Cada um tem **as ferramentas
-do seu papel, e só elas** — a restrição é o desenho, não uma economia.
+O `bkhar` trabalha com uma equipe de sete papéis. Seis são subagentes; o sétimo, o Gerente, é a
+sessão principal seguindo a skill `bks-team`, porque subagente não conversa com você no meio do
+trabalho nem chama outro subagente. Cada papel tem **as ferramentas do seu trabalho, e só elas**: a
+restrição é o desenho, não uma economia.
 
-| Agente | Modelo | Ferramentas | O que a restrição impede |
-|---|---|---|---|
-| `planner` | Opus | leitura + escrita, sem `Bash` | não executa nada; escopo vira FEAT/TEST/TASK, nunca código |
-| `builder` | Sonnet | leitura + escrita + `Bash` | implementa sob LOOP-4, dentro dos limites de uma FEAT aprovada |
-| `reviewer` | Opus | **só leitura** | não conserta o que julga — achado vira relato, não commit |
-| `scribe` | Haiku | leitura + escrita | registra o que foi confirmado; não decide o que foi feito |
+| Papel | Tipo | Modelo | Ferramentas | O que a restrição impede |
+|---|---|---|---|---|
+| Gerente | orquestrador | sessão principal | as da sessão | não opina sobre técnica nem escolhe entre agentes |
+| `architect` | consultivo | Opus | leitura + escrita, sem `Bash` | não executa nada; escreve especificação e decisão, nunca código |
+| `tester` | validador | Sonnet | leitura + escrita + `Bash` | escreve só teste; não revisa os próprios testes |
+| `developer` | implementador | Sonnet | leitura + escrita + `Bash` | não commita, não mexe no teste do `tester`, não revisa o próprio código |
+| `security` | validador | Opus | **só leitura** | não conserta o que julga; achado vira relato, não commit |
+| `quality` | validador | Sonnet | **só leitura** | não conserta o que julga; devolve o defeito resolvido como caso |
+| `scribe` | consultivo | Haiku | leitura + escrita | registra o que foi confirmado; não decide o que foi feito |
 
-Três consequências desse arranjo:
+Quatro consequências desse arranjo:
 
-**A revisão é independente porque não pode agir.** O `reviewer` sem `Write` não tem como
-transformar um achado em correção silenciosa. Quem revisa não conserta; quem conserta não aprova
-o próprio conserto.
+**Quem escreve o teste não é quem faz o teste passar.** No `/bkhar:loop`, o `tester` escreve o
+teste que falha antes da primeira tentativa, e o `developer` implementa contra ele. Na revisão, o
+`tester` confere só a cobertura dos cenários; a qualidade dos testes é julgada pelo `quality`.
 
-**O modelo acompanha o julgamento exigido.** Opus onde se julga — segurança no `reviewer`,
-arquitetura no `planner`, porque spec errada contamina toda task abaixo dela. Sonnet onde se
-executa spec aprovada. Haiku onde se transcreve evidência. Pagar Opus para registrar o que já foi decidido é desperdício; pagar Haiku
-para julgar risco é imprudência.
+**A revisão é independente porque não pode agir.** `security` e `quality` sem `Write` não têm como
+transformar um achado em correção silenciosa. Quem revisa não conserta; quem conserta não aprova o
+próprio conserto.
 
-**O papel é invocado, não assumido.** O `reviewer` roda em invocação separada de quem
-implementou, sem o estado da sessão que produziu o código. Um agente que revisa o próprio
-trabalho na mesma sessão carrega as premissas que o levaram ao defeito.
+**O modelo acompanha o julgamento exigido.** Opus onde se julga: segurança e arquitetura, porque
+spec errada contamina toda task abaixo dela. Sonnet onde se executa e se confere. Haiku onde se
+transcreve evidência.
 
-Invoque pelo nome: `bkhar:reviewer`, `bkhar:planner`, `bkhar:builder`, `bkhar:scribe`. O `/bkhar:review`
-dispara o `reviewer` com o contexto certo.
+**A decisão é sua.** Num painel, cada agente responde sem ver os outros, o Gerente numera as
+posições e você escolhe; o `scribe` grava a decisão com as opções descartadas.
+
+Os ritos têm comando próprio: `/bkhar:ask` (pergunta a um agente), `/bkhar:panel` (decisão),
+`/bkhar:refine` (perguntas antes da especificação) e `/bkhar:review` (revisão em painel). O agente
+também pode ser chamado pelo nome, `bkhar:<agente>`. O `@agente` no prompt não serve: no Claude
+Code, `@` é menção de arquivo.
+
+Defeito detectado e resolvido, com evidência, vira caso no `LEARNINGS.md` do projeto: o `quality`
+identifica, o `/bkhar:save` grava e o `tester` lê os casos da área antes de escrever teste novo.
 
 ### Kit e vault, juntos
 
