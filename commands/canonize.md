@@ -2,6 +2,10 @@
 description: Consolida docs/input/ e docs/design/ de um projeto num contexto canônico único, fonte para o /bkhar:prd e o /bkhar:spec.
 ---
 
+**Passo 0 — delegar.** Rode `python ${CLAUDE_PLUGIN_ROOT}/scripts/maestri_config.py delegate . --command canonize`.
+Com `terminal <nome>`, siga a seção "Delegação de comando" da skill `bks-team` e não execute
+os passos abaixo neste terminal. Com `local: <motivo>`, siga normalmente.
+
 Consolida o material de pesquisa (docs/input/ + docs/design/) de UM projeto em um contexto
 canônico único — a fonte que vai alimentar o /bkhar:prd e, depois, o /bkhar:spec.
 

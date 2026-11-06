@@ -25,7 +25,7 @@ perfil e `reengineering`.
 | inventario | `outputs/INVENTARIO-{projeto}.md` |
 | leitura | `docs/input/` — anotações brutas da leitura do código |
 | domínio | `brain/domain/` — as regras de negócio encontradas |
-| arquitetura | `outputs/ARCH-{projeto}-ATUAL.md` — como o sistema e hoje |
+| arquitetura | `docs/library/architecture/ARCH-{projeto}-ATUAL.md` + `models/` — como o sistema e hoje |
 | dados | `outputs/DADOS-{projeto}.md` — modelo como está |
 | riscos | `outputs/RISCOS-{projeto}.md` |
 | consolidação | `docs/canonical/CONTEXT.md` |

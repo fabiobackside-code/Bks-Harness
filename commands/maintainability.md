@@ -3,6 +3,10 @@ description: Inventaria as aplicações de app/, gera um parecer de manutenibili
 argument-hint: "[opcional: nomes das aplicações a avaliar]"
 ---
 
+**Passo 0 — delegar.** Rode `python ${CLAUDE_PLUGIN_ROOT}/scripts/maestri_config.py delegate . --command maintainability`.
+Com `terminal <nome>`, siga a seção "Delegação de comando" da skill `bks-team` e não execute
+os passos abaixo neste terminal. Com `local: <motivo>`, siga normalmente.
+
 Avalia a manutenibilidade das aplicações concretas do projeto (APIs, Workers, Web Services,
 componentes, SDKs, scripts SQL) e atualiza a fundamentação teórica e técnica que as sustenta. Use a
 skill `bks-maintainability-review` para tudo que vem abaixo: persona, rubrica, critérios por stack

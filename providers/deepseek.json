@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "name": "deepseek",
+  "requires_key": true,
+  "base_url": "https://api.deepseek.com/anthropic",
+  "env": {
+    "base_url": "ANTHROPIC_BASE_URL",
+    "token": "ANTHROPIC_AUTH_TOKEN",
+    "labels": {
+      "opus": "ANTHROPIC_DEFAULT_OPUS_MODEL",
+      "sonnet": "ANTHROPIC_DEFAULT_SONNET_MODEL",
+      "haiku": "ANTHROPIC_DEFAULT_HAIKU_MODEL"
+    },
+    "clear": ["ANTHROPIC_API_KEY"]
+  },
+  "default_models": {
+    "opus": "deepseek-v4-pro",
+    "sonnet": "deepseek-flash",
+    "haiku": "deepseek-flash"
+  },
+  "single_model": false
+}

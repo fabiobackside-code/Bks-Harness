@@ -6,3 +6,9 @@ echo
 python hooks/tests/test_dod_docs.py
 echo
 python hooks/tests/test_writing_guard.py
+
+echo
+python hooks/tests/test_status_drift.py
+
+echo
+python hooks/tests/test_architect_bash.py

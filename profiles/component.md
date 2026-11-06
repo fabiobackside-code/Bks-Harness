@@ -23,7 +23,7 @@ Aplicação, interface, infraestrutura de execução. Uma biblioteca não tem `P
 | consolidação | `docs/canonical/CONTEXT.md` |
 | contrato | `specs/features/FEAT-*.md` — a API publica antes da implementação |
 | especificação | `specs/tests/TEST-*.md`, `specs/tasks/TASK-*.md` |
-| arquitetura | `outputs/ARCH-{projeto}.md` |
+| arquitetura | `docs/library/architecture/ARCH-{projeto}.md` + `models/` |
 | implementação | `app/` |
 | empacotamento | versionamento, publicação, changelog |
 | revisão | independente |

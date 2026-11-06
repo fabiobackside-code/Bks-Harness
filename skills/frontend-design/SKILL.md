@@ -12,7 +12,8 @@ what AI tools produce by default.
 
 ## Process
 
-1. Check the project's frontend stack, component library, design tokens, styling method, and existing UI patterns before designing.
+1. Check the project's frontend stack, component library, design tokens, styling method, and existing UI patterns before designing. If the project has a `DESIGN.md`, it is the brand: read it first, and the taste skill
+   runs with `--keep palette,type`. With no `DESIGN.md` but a known brand, call `bks-design-system` before designing.
 2. Commit to a specific aesthetic direction before markup: editorial, industrial, luxury, playful, dense data-forward, organic, retro-futuristic, or another deliberate fit.
 3. Make typography, spacing, shape, and color serve that direction while staying inside the project's available system.
 4. Use current idioms for the actual framework and version in the repo.
@@ -20,6 +21,15 @@ what AI tools produce by default.
 6. Handle real states: loading, empty, error, long content, missing media, zero/one/many counts, and narrow screens.
 7. Verify at mobile and desktop sizes before considering the UI complete.
 8. Extend existing components and tokens instead of creating parallel controls.
+
+## Art direction with the taste skill
+
+When the skill `design-taste-frontend` (taste-skill, MIT) is installed in the user scope, load it for
+public-facing pages and app screens: its scripts deal researched directions and inspect the result in a
+real browser. Its asset script fetches images from public collections; in a project with
+`rigor: producao` or a sensitive area in the manifest, ask before running it. Without the skill,
+follow this process as written. It is installed outside the kit, by the user:
+`npx skills add Leonxlnx/taste-skill -g -s design-taste-frontend` with `DISABLE_TELEMETRY=1`.
 
 <HARD-GATE>
 Do not write generic "modern SaaS" markup. Before building, state the aesthetic direction and the screen's primary job. If an existing design system governs the area, the direction must fit inside it rather than replacing it.

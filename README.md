@@ -15,7 +15,7 @@ Para entender o desenho antes de instalar:
 
 Comandos em inglês, prefixo `bkhar`. Documentação em português do Brasil.
 
-## O kit (base 0.7.0, agora `bkhar` 0.9.0)
+## O kit (base 0.7.0, agora `bkhar` 3.0.0-beta)
 
 Plugin do Claude Code com o kit BKS de **Spec-Driven Development** — o processo que leva uma ideia
 de produto até código implementado, passando por PRD, planos, especificações de feature, cenários
@@ -23,6 +23,11 @@ de teste e tasks executáveis.
 
 Não e um framework de código. É o processo de trabalho: skills que conduzem o ciclo, comandos que
 operam o workbench e agentes com papéis separados.
+
+> **3.0.0-beta.** Esta versão traz a integração com o Maestri: a equipe em terminais, o
+> `/bkhar:maestri`, a delegação de comando e o `architect` com Bash sob guarda. Essa parte ainda está
+> em prova num projeto piloto. Sem o bloco `maestri` no perfil do projeto, o harness funciona como na
+> 1.1.0: papéis por subagente e comandos na própria sessão.
 
 ### Instalação
 
@@ -42,6 +47,10 @@ Para instalar a partir de um clone local: `/plugin marketplace add <pasta-do-clo
 O passo a passo completo, do pré-requisito ao primeiro ciclo com a equipe e com o vault opcional,
 está no manual de treinamento: [`docs/artefatos/treinamento/treinamento-bks-harness.html`](docs/artefatos/treinamento/treinamento-bks-harness.html),
 pronto para imprimir em PDF.
+
+### Antes de instalar o harness
+
+Git, Python 3 (com `python -m pip install -r requirements.txt`) e Node.js são os pré-requisitos. O harness roda com a conta do Claude Code ou, pelo lançador `bkhar`, com DeepSeek ou OpenRouter. O guia completo, com o `PATH` e a guarda da chave, está na seção "Antes de instalar o harness" do manual de comandos: [`docs/artefatos/manual/manual-comandos.md`](docs/artefatos/manual/manual-comandos.md).
 
 ### O que vem no kit
 
@@ -78,16 +87,122 @@ pronto para imprimir em PDF.
 | `/bkhar:ingest` | Ingere conhecimento para a base transversal em `knowledge/` do vault |
 | `/bkhar:canonize` | Consolida pesquisa e design num contexto canônico único |
 | `/bkhar:prd` | Gera o PRD a partir do contexto canônico |
+| `/bkhar:plan` | Gera o plano macro `outputs/PLAN-{projeto}.md` a partir do PRD — obrigatório no perfil `fullstack` |
 | `/bkhar:spec` | Caminho direto, sem rito: o `architect` escreve a especificação e o `tester`, os cenários |
-| `/bkhar:arch` | Gera `ARCH-[projeto].md` (C4 em Mermaid) e o README do repo |
+| `/bkhar:arch` | Portão de arquitetura: com o PLAN aprovado, escreve o índice ARCH e um modelo por arquivo em `docs/library/architecture/`, pela `bks-arch`, para você aprovar; `--update` refaz só o que está defasado |
+| `/bkhar:library` | Biblioteca do projeto: catálogo `docs/library/LIBRARY.md`, dashboard `docs/library/site/index.html`, aviso de arquitetura defasada e exportação para `knowledge/` do vault |
 | `/bkhar:refine` | Refinamento: a equipe pergunta antes; o `architect` escreve a especificação e o `tester`, os cenários |
-| `/bkhar:loop` | LOOP-4: o `tester` escreve o teste que falha, o `developer` implementa; máximo 4 tentativas |
+| `/bkhar:loop` | LOOP-4: o `tester` escreve o teste que falha, o `developer` implementa; máximo 4 tentativas. Com `--wave N`, no modo `autonomo`, roda a onda do grafo com até 4 tasks em paralelo, cada uma em worktree |
 | `/bkhar:review` | Revisão em painel: `tester`, `quality` e, em área sensível, `security`, cada um em invocação separada |
 | `/bkhar:maintainability` | Inventaria `app/`, gera um parecer de manutenibilidade por aplicação em `outputs/maintainability/` e a fundamentação do projeto em `outputs/references/` |
 | `/bkhar:ask` | Pergunta direta a um agente da equipe, com resposta que cita a fonte |
 | `/bkhar:panel` | Painel: 2 ou 3 agentes respondem sem ver os outros; você escolhe e o `scribe` registra a decisão |
+| `/bkhar:retro` | Retrospectiva do aprendizado: você promove cada proposta candidata a regra do projeto, do vault ou do kit, ou a rejeita |
+| `/bkhar:harvest` | Na raiz do vault: indexa por script os ADRs e o `LEARNINGS.md` de `repos/` e consolida por tema em `knowledge/wiki/experiencia/` |
 | `/bkhar:save` | Roteia o resultado da sessão pela regra dos dois lugares |
+| `/bkhar:status` | Estado da execução em ondas: tasks por onda, o que está liberado, bloqueios e suposições abertas; só lê |
+| `/bkhar:mode` | Troca o modo de condução (`colaborativo` ou `autonomo`): roda a checagem de prontidão, grava ADR e altera o `.bks-profile.json` |
+| `/bkhar:maestri` | Liga, desliga e confere a integração com o Maestri: grava o bloco `maestri` do `.bks-profile.json`, valida os terminais da equipe e do executor `ops` e diz o que criar quando falta |
 | `/bkhar:migrate` | Traz um projeto do `bks` para o `bkhar`: confere o layout, troca o prefixo no `WORKFLOW.md` e no `CLAUDE.md`, grava o `.bkhar.json`; não commita |
+
+#### Modos de condução, ondas e painel
+
+O projeto escolhe o modo em `axes.mode` do `.bks-profile.json`:
+
+| Modo | Como anda |
+|---|---|
+| `colaborativo` (padrão) | a equipe pergunta e espera você em cada FEAT (especificação da feature), TEST (cenários de teste) e tentativa |
+| `autonomo` | a pergunta vira suposição em `decisions/SUPOSICOES.md`; você aprova o PRD, o PLAN (plano macro) e o ARCH (arquitetura), os contratos da onda de desenho e a entrega |
+
+O `/bkhar:mode autonomo` só troca o modo quando `scripts/readiness.py` concede: canônico, PRD,
+PLAN e grafo (`outputs/GRAPH-{projeto}.json`) aprovados, ARCH e modelos aprovados e em dia, sem
+questão em aberto, e a stack no perfil.
+Daí o `/bkhar:loop --wave N` roda as ondas do grafo: desenho, construção, front e integração. Cada
+onda tem até 4 tasks em paralelo, cada uma na sua worktree, e uma task só começa quando o que ela
+consome está aprovado.
+
+Nenhum modo afrouxa os guardas, o teste escrito antes do código, as 4 tentativas, a proibição de
+push na `main` e o `security` em área sensível.
+
+O painel acompanha a execução e conversa com ela:
+
+```
+python ${CLAUDE_PLUGIN_ROOT}/scripts/dashboard.py .     # http://127.0.0.1:8765
+```
+
+Ele mostra as ondas, as tasks e as tentativas ao vivo, os bloqueios, o modelo de cada papel e o
+consumo por modelo, agente e dia. Por ele você responde a um bloqueio, pausa ou retoma a onda,
+deixa mensagem para a próxima tentativa e troca o modelo de um papel. Tudo vira pedido em
+`outputs/run/inbox/`, que o orquestrador aplica no próximo ponto de controle. O painel escuta só em
+`127.0.0.1` e não escreve estado.
+
+O modelo de cada papel vem do frontmatter do agente; o mapa `models` do `.bks-profile.json`
+sobrescreve por projeto.
+
+#### Equipe em terminais do Maestri
+
+Em beta: a integração ainda está em prova num projeto piloto.
+
+A integração é opcional e vale por projeto. No terminal `manager`, `/bkhar:maestri on` grava o
+bloco `maestri` no `.bks-profile.json` e confere se os terminais existem com os nomes do mapa;
+`/bkhar:maestri off` desliga e guarda o mapa. Desligada, tudo roda como fora do Maestri.
+
+Ligada, cada papel roda no próprio terminal, criado a partir de uma partitura salva por você:
+
+| Terminal | Comando |
+|---|---|
+| `manager` | `claude` (ou `bkhar`, para outro provedor) |
+| `architect`, `developer`, `tester`, `quality`, `security`, `scribe` | `claude --agent bkhar:<papel>` |
+| `ops` (executor) | `claude --model opus` |
+
+Cada terminal se conecta só ao `manager`. O Gerente fala com os papéis por `maestri ask` e limpa a
+sessão com `/clear` antes de cada rito. Papel sem terminal conectado cai para subagente. O Maestro
+Mode fica desligado.
+
+Os comandos `arch`, `prd` e `plan` rodam delegados no `architect`, e `canonize`, `save` e
+`maintainability`, no `ops`. O `architect` tem Bash limitado pelo guarda
+`hooks/scripts/architect_bash.py`: scripts do plugin, `git` de leitura e `maestri ask`.
+
+Você chama os comandos no `manager`. Ele entrega o contexto da sessão por arquivo
+(`outputs/run/handoff/`), repassa a você toda pergunta do terminal delegado e devolve o resultado.
+Você só fala com o `manager`.
+
+O andamento aparece na nota `status` do canvas e na barra lateral (`floor status`):
+
+```
+python ${CLAUDE_PLUGIN_ROOT}/scripts/status_note.py sync .
+```
+
+O `/bkhar:loop` e o `/bkhar:save` rodam esse comando sozinhos. Ele regera
+`outputs/run/status-canvas.md` a partir do `STATUS.md` e do estado das ondas e, no Maestri, copia o
+texto para a nota. O arquivo fica fora do git do projeto. Decisões em `decisions/ADR-009` e
+`decisions/ADR-010` e `decisions/ADR-011`.
+
+O aprendizado volta como candidato: cada correção sua vira proposta em `inbox/proposals/`, o
+`/bkhar:save` a leva ao vault com filtro de dado pessoal e segredo, e só o `/bkhar:retro` a promove
+a regra. O `/bkhar:harvest` consolida no vault as decisões de todos os projetos.
+
+#### Arquitetura e biblioteca do projeto
+
+A arquitetura é portão nos dois modos: `prd → plan → arch (aprovado) → refine/spec`. O `/bkhar:arch`
+escreve o índice `docs/library/architecture/ARCH-{projeto}.md` e um modelo por arquivo em
+`models/` (C4, dados, sequências, fronteiras sensíveis, implantação), desenhados pela notação da
+`bks-arch` no motor do perfil, todos em `status: rascunho`. Sem ARCH e modelos aprovados, o
+`/bkhar:refine` e o `/bkhar:spec` não começam, e a prontidão do `autonomo` recusa.
+
+Os modelos são artefatos vivos. Cada um declara `atualizado` e, opcionalmente, `fontes`; ADR,
+contrato ou PLAN mais novo o deixa defasado. O `/bkhar:save`, o `/bkhar:brain` e o fim de cada onda
+avisam, e o `/bkhar:arch --update` refaz só o que ficou para trás.
+
+A biblioteca cataloga por referência tudo o que o projeto produziu — canônicos, arquitetura,
+contratos, specs, decisões, ilustrações, histórico — e apresenta no dashboard estático
+`docs/library/site/index.html`, com os diagramas renderizados e a linha do tempo das specs e do
+diário. O `/bkhar:library export` leva a biblioteca para `knowledge/wiki/projetos/{projeto}/` do
+vault, com o mesmo filtro de dado sensível do harvest:
+
+```
+python ${CLAUDE_PLUGIN_ROOT}/scripts/library.py index|stale|build|export .
+```
 
 #### Agentes
 
@@ -135,7 +250,7 @@ acontece, e os achados voltam ao agente para correção na mesma passada.
 | `comment_budget` | escrita em `.cs` | bloco de comentario acima de 5 linhas, e marca de severidade em comentario |
 | `dod_docs` | escrita em `.cs` que declara tipo público | a escrita, enquanto `README.md` e `ARCHITECTURE.md` não tiverem sido tocados na mesma leva |
 | `writing_guard` | depois da escrita em `.md` de documentação viva | nada — devolve ao agente ADR fora da nota de decisão, frase acima de 40 palavras, sigla sem definição, muleta e emoji do trecho escrito, e lembra o usuário de rodar o `/bkhar:review` |
-| `session_memory` | inicio de sessão | nada — carrega o `STATUS.md` do projeto, ou o perfil do usuário na raiz do vault |
+| `session_memory` | inicio de sessão | nada — carrega o `STATUS.md` do projeto, ou o perfil do usuário na raiz do vault, e avisa quando o `STATUS.md` é mais antigo que o último commit ou a última entrada do `JOURNAL.md` |
 
 Os guardas de código ignoram arquivo de teste, arquivo fora de repositório git e qualquer coisa
 que não seja `.cs`. O `writing_guard` ignora `STATUS.md`, `JOURNAL.md`, `CLAUDE.md`, ADR,
@@ -163,6 +278,9 @@ resolve, comando documentado que existe, guarda declarado que compila. Roda sem 
 python tests/test_structure.py
 bash hooks/tests/run.sh
 ```
+
+Os scripts têm suíte própria, uma por script: `python tests/test_<script>.py` (`readiness`,
+`wave_graph`, `run_state`, `dashboard`, `learning`, `harvest`, `library`).
 
 **Comportamental** — a skill ainda decide certo? Recusa MediatR, mantém o projeto de testes em
 `src/`, pergunta antes de assumir. Roda o agente de verdade, com braco baseline sem o plugin para
@@ -200,13 +318,15 @@ trabalho atual.
 /bkhar:note          material bruto entra
 /bkhar:canonize      vira contexto canônico
 /bkhar:prd           vira PRD
-/bkhar:spec          vira FEAT + TEST
+/bkhar:plan          vira plano macro e grafo de tasks
+/bkhar:arch          vira arquitetura: ARCH + modelos, para aprovar (portão)
+/bkhar:refine        vira FEAT + TEST apoiada nos modelos (ou /bkhar:spec, sem rito)
                    (ou a skill bks-sdd, para o ciclo com workspace e plano macro)
 /bkhar:loop          implementa task sob goals
 /bkhar:review        revisão independente
 /bkhar:maintainability  parecer por aplicação e fundamentação
-/bkhar:arch          consolida a visão de arquitetura
-/bkhar:save          registra decisões e progresso
+/bkhar:library       catálogo, dashboard e exportação para o vault
+/bkhar:save          registra decisões e progresso, regera a biblioteca
 ```
 
 ### `/bkhar:spec` ou a skill `bks-sdd`?
@@ -244,7 +364,7 @@ restrição é o desenho, não uma economia.
 | Papel | Tipo | Modelo | Ferramentas | O que a restrição impede |
 |---|---|---|---|---|
 | Gerente | orquestrador | sessão principal | as da sessão | não opina sobre técnica nem escolhe entre agentes |
-| `architect` | consultivo | Opus | leitura + escrita, sem `Bash` | não executa nada; escreve especificação e decisão, nunca código |
+| `architect` | consultivo | Opus | leitura + escrita, `Bash` limitado por guarda | roda só os scripts do plugin, `git` de leitura e `maestri ask`; escreve especificação e decisão, nunca código |
 | `tester` | validador | Sonnet | leitura + escrita + `Bash` | escreve só teste; não revisa os próprios testes |
 | `developer` | implementador | Sonnet | leitura + escrita + `Bash` | não commita, não mexe no teste do `tester`, não revisa o próprio código |
 | `security` | validador | Opus | **só leitura** | não conserta o que julga; achado vira relato, não commit |

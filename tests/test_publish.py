@@ -48,13 +48,18 @@ def test_allowlist():
     print('\nlista do que pode sair')
     root = source({'skills/a/SKILL.md': 'x', 'STATUS.md': 'x', 'docs/specs/f.md': 'x',
                    'docs/ARCHITECTURE.md': 'x', 'docs/artefatos/historico/v1.html': 'x',
-                   'docs/artefatos/treinamento/t.md': 'x'})
+                   'docs/artefatos/treinamento/t.md': 'x',
+                   'bin/bkhar.cmd': 'x', 'providers/deepseek.json': 'x', 'requirements.txt': 'x'})
     out, problems = publish.build(root, ['skills/a/SKILL.md', 'STATUS.md', 'docs/specs/f.md',
                                          'docs/ARCHITECTURE.md', 'docs/artefatos/historico/v1.html',
-                                         'docs/artefatos/treinamento/t.md'])
+                                         'docs/artefatos/treinamento/t.md',
+                                         'bin/bkhar.cmd', 'providers/deepseek.json', 'requirements.txt'])
     check('skill sai', 'skills/a/SKILL.md' in out)
     check('ARCHITECTURE sai', 'docs/ARCHITECTURE.md' in out)
     check('manual de treinamento sai', 'docs/artefatos/treinamento/t.md' in out)
+    check('lançador sai', 'bin/bkhar.cmd' in out)
+    check('definição de provedor sai', 'providers/deepseek.json' in out)
+    check('requirements sai', 'requirements.txt' in out)
     check('STATUS fica', 'STATUS.md' not in out)
     check('spec de fase fica', 'docs/specs/f.md' not in out)
     check('histórico de artefato fica', 'docs/artefatos/historico/v1.html' not in out)

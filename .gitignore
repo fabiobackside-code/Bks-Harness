@@ -49,3 +49,4 @@ __pycache__/
 
 # --- dependência de ferramenta local ---
 node_modules/
+.playwright-mcp/

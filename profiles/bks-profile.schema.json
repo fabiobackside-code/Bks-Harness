@@ -6,6 +6,9 @@
   "type": "object",
   "required": ["profile", "category", "axes"],
   "additionalProperties": false,
+  "$defs": {
+    "model": { "enum": ["opus", "sonnet", "haiku"] }
+  },
   "properties": {
     "profile": {
       "description": "O que o projeto gera. Um arquivo por perfil em profiles/.",
@@ -49,7 +52,38 @@
           "description": "Quanto de disciplina. poc afrouxa a exigencia de teste e documentacao; nao a elimina.",
           "enum": ["producao", "poc"],
           "default": "producao"
+        },
+        "mode": {
+          "description": "Como o projeto e conduzido. autonomo so e concedido pela checagem de prontidao do /bkhar:mode. Ausente vale colaborativo.",
+          "enum": ["colaborativo", "autonomo"],
+          "default": "colaborativo"
         }
+      }
+    },
+    "library": {
+      "description": "Opcional. Biblioteca do projeto (docs/library/). Sem export, o /bkhar:library export recusa.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "export": {
+          "description": "Destino da exportacao, relativo ao vault; {projeto} vira o nome da pasta do projeto.",
+          "type": "string",
+          "minLength": 1,
+          "default": "knowledge/wiki/projetos/{projeto}"
+        }
+      }
+    },
+    "models": {
+      "description": "Opcional. Modelo por papel neste projeto; sobrescreve o frontmatter do agente. Ausente vale o frontmatter.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "architect": { "$ref": "#/$defs/model" },
+        "developer": { "$ref": "#/$defs/model" },
+        "tester": { "$ref": "#/$defs/model" },
+        "security": { "$ref": "#/$defs/model" },
+        "quality": { "$ref": "#/$defs/model" },
+        "scribe": { "$ref": "#/$defs/model" }
       }
     },
     "stack": {
@@ -67,6 +101,50 @@
       "description": "Opcional. Template documental de arquitetura, quando o perfil gera documento formal.",
       "enum": ["togaf", "c4", "proprio", null],
       "default": null
+    },
+    "maestri": {
+      "description": "Opcional. Integração com o Maestri, gravada pelo /bkhar:maestri. Ausente ou enabled false: papéis por subagente e comandos na própria sessão.",
+      "type": "object",
+      "required": ["enabled"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "manager": { "type": "string", "minLength": 1 },
+        "roles": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "architect": { "type": "string", "minLength": 1 },
+            "developer": { "type": "string", "minLength": 1 },
+            "tester": { "type": "string", "minLength": 1 },
+            "quality": { "type": "string", "minLength": 1 },
+            "security": { "type": "string", "minLength": 1 },
+            "scribe": { "type": "string", "minLength": 1 }
+          }
+        },
+        "executors": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        },
+        "notes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "status": { "type": "string", "minLength": 1 } }
+        },
+        "delegate": {
+          "description": "Comando delegável → vaga (papel ou executor) que o roda. Ausente vale o padrão: todos no executor ops.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "arch": { "type": "string" },
+            "prd": { "type": "string" },
+            "plan": { "type": "string" },
+            "canonize": { "type": "string" },
+            "save": { "type": "string" },
+            "maintainability": { "type": "string" }
+          }
+        }
+      }
     }
   }
 }

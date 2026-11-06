@@ -34,6 +34,10 @@ Responda em até seis linhas:
 Se o `STATUS.md` estiver desatualizado em relação ao `JOURNAL.md` ou ao git log, diga isso em uma
 linha e ofereça atualizá-lo. Não atualize sozinho.
 
+Se existir `docs/library/architecture/`, rode `python ${CLAUDE_PLUGIN_ROOT}/scripts/library.py stale .`.
+Saída 1: uma linha a mais, com quantos modelos estão defasados e o `/bkhar:arch --update` como quem
+destrava. Saída 0: não comente.
+
 Se não houver `STATUS.md`, ofereça criá-lo a partir do template do kit.
 
 ---

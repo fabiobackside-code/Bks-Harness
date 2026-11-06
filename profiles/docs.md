@@ -21,7 +21,7 @@ questão aberta e siga — mudar de perfil é decisão do usuário, não do agen
 | entrada | `docs/input/` — notas, entrevistas, pesquisa |
 | consolidação | `docs/canonical/CONTEXT.md` |
 | escopo | `outputs/ESCOPO-{projeto}.md` |
-| arquitetura | `outputs/ARCH-{projeto}.md` no template escolhido |
+| arquitetura | `docs/library/architecture/ARCH-{projeto}.md` + `models/` no template escolhido |
 | apresentação | `outputs/APRESENTACAO-{projeto}.{md,html}` — se pedida |
 | fechamento | `STATUS.md`, `JOURNAL.md` |
 

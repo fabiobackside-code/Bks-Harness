@@ -21,7 +21,7 @@ não usa não aparecem abaixo.
 
 ### 1 · Entrada de material
 
-`/note <assunto>` — material bruto vai para `docs/input/notas/`. Nota viva: cresce ao longo dos
+`/bkhar:note <assunto>` — material bruto vai para `docs/input/notas/`. Nota viva: cresce ao longo dos
 dias, com seção `## Estado em AAAA-MM-DD`. Nunca decisão fechada.
 
 Material de terceiros (artigo, entrevista, norma) vai para `docs/input/research/` à mão.
@@ -34,7 +34,7 @@ Material de terceiros (artigo, entrevista, norma) vai para `docs/input/research/
 Rode quando as notas pararem de mudar, não antes.
 
 O comando é re-executável e versionado: a cada rodada a versão anterior vai para `docs/history/`
-e o `CONTEXT.md` novo abre com o que mudou. Depois da fase 4, ele passa a ler também `specs/` e
+e o `CONTEXT.md` novo abre com o que mudou. Depois da fase 5, ele passa a ler também `specs/` e
 `decisions/` — spec aprovada e ADR fechado são a parte mais atual do que o projeto decidiu, e o
 canônico que os ignora alimenta o `/bkhar:prd` seguinte com informação vencida.
 
@@ -42,17 +42,25 @@ canônico que os ignora alimenta o `/bkhar:prd` seguinte com informação vencid
 
 `/bkhar:prd` — do `CONTEXT.md` sai o PRD. O que o produto é, para quem, e o que conta como pronto.
 
-### 4 · Especificação
+### 4 · Plano e arquitetura
 
-`/bkhar:spec` — entrevista por bounded context e gera `specs/features/FEAT-*.md`. Depois de aprovado,
-`specs/tests/TEST-*.md`. Depois de aprovado, `specs/tasks/TASK-*.md`.
+`/bkhar:plan` — do PRD aprovado sai o plano macro `outputs/PLAN-{{projeto}}.md` e o grafo de tasks.
+
+`/bkhar:arch` — com o plano aprovado, elabora a arquitetura: o índice
+`docs/library/architecture/ARCH-{{projeto}}.md` e um modelo por arquivo em
+`docs/library/architecture/models/` (C4, dados, sequências, fronteiras sensíveis, implantação),
+desenhados pela notação BKS no renderer do `.bks-profile.json`. Atualiza o `README.md`.
+
+É portão: nenhuma FEAT começa sem o ARCH e os modelos em `status: aprovado`, nos dois modos. Os
+modelos são vivos: ADR, contrato ou plano mais novo que um modelo o deixa defasado, e o
+`/bkhar:arch --update` refaz só o que ficou para trás.
+
+### 5 · Especificação
+
+`/bkhar:refine` (ou `/bkhar:spec`, sem rito) — gera `specs/features/FEAT-*.md` apoiada nos modelos
+aprovados. Depois de aprovado, `specs/tests/TEST-*.md`. Depois de aprovado, `specs/tasks/TASK-*.md`.
 
 Não pule a aprovação entre os três. Spec aprovada sem teste vira código sem critério.
-
-### 5 · Arquitetura
-
-`/bkhar:arch` — gera `outputs/ARCH-{{projeto}}.md` e atualiza o `README.md`. Diagramas seguem a notação
-BKS; o renderer está no `.bks-profile.json`.
 
 ### 6 · Implementação
 
@@ -75,6 +83,11 @@ própria segurança.
 | Onde o projeto parou | `STATUS.md` |
 | Marco da sessão | `JOURNAL.md` |
 | Entregável | `outputs/` |
+| Catálogo e dashboard da biblioteca | `docs/library/LIBRARY.md`, `docs/library/site/index.html` |
+
+O `/bkhar:save` regera o catálogo e o dashboard e avisa quando um modelo da arquitetura está
+defasado. `/bkhar:library export` leva a biblioteca para `knowledge/` do vault, quando o perfil tem
+`library.export`.
 
 Antes de fechar o `STATUS.md`, o `/bkhar:save` compara a data do `CONTEXT.md` com a de `specs/` e
 `decisions/`. Se o canônico ficou para trás, a pendência entra na seção do que trava — quem

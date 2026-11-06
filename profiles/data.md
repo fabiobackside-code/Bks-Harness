@@ -23,7 +23,7 @@ Aplicação transacional, interface de usuário. O consumo dos dados e de outro 
 | consolidação | `docs/canonical/CONTEXT.md` |
 | inventario de fontes | `outputs/FONTES-{projeto}.md` — o que existe e em que estado |
 | modelagem | modelo analitico e contratos de dados |
-| arquitetura | `outputs/ARCH-{projeto}.md` — linhagem e fronteiras de dado sensivel |
+| arquitetura | `docs/library/architecture/ARCH-{projeto}.md` + `models/` — linhagem e fronteiras de dado sensivel |
 | especificação | `specs/features/`, `specs/tests/` |
 | implementação | `app/` — pipeline e transformações |
 | qualidade | validação, anomalia, reconciliação |

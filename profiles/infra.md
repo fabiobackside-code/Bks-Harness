@@ -21,7 +21,7 @@ Aplicação. Este perfil entrega a plataforma onde outra coisa roda.
 |---|---|
 | entrada | `docs/input/` — requisitos de plataforma, restrições, custo |
 | consolidação | `docs/canonical/CONTEXT.md` |
-| topologia | `outputs/ARCH-{projeto}.md` — ambientes, rede, fronteiras |
+| topologia | `docs/library/architecture/ARCH-{projeto}.md` + `models/` — ambientes, rede, fronteiras |
 | especificação | `specs/features/`, `specs/tests/` |
 | implementação | `app/` — IaC e pipeline |
 | observabilidade | dashboards, alertas, SLO |

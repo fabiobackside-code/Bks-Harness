@@ -4,3 +4,8 @@
 *.jpg binary
 *.gif binary
 *.ico binary
+
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.sh text eol=lf
+bin/bkhar text eol=lf

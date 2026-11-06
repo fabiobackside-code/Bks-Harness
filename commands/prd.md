@@ -2,6 +2,10 @@
 description: Gera o PRD inicial de um projeto a partir do contexto canônico já consolidado. Ponte entre /bkhar:canonize e /bkhar:spec.
 ---
 
+**Passo 0 — delegar.** Rode `python ${CLAUDE_PLUGIN_ROOT}/scripts/maestri_config.py delegate . --command prd`.
+Com `terminal <nome>`, siga a seção "Delegação de comando" da skill `bks-team` e não execute
+os passos abaixo neste terminal. Com `local: <motivo>`, siga normalmente.
+
 Gera um PRD inicial a partir do contexto canônico já consolidado — é a ponte entre /bkhar:canonize e
 /bkhar:spec.
 
@@ -40,6 +44,8 @@ Faça, nesta ordem:
 5. Reporte o PRD gerado e o próximo passo: "revise o PRD, feche o que ainda está em aberto, e
    rode /bkhar:spec (na raiz deste repo) para a primeira feature — a partir de agora, /bkhar:spec só deve
    citar docs/canonical/ (CONTEXT.md e PRD-*.md), nunca docs/input/ ou docs/design/ direto."
+   No perfil `fullstack`, o próximo passo é /bkhar:plan, que gera o plano macro obrigatório
+   antes de qualquer spec.
 
 O PRD e o CONTEXT.md em docs/canonical/ são, a partir deste ponto, a ÚNICA fonte que o /bkhar:spec
 deve usar. Se um /bkhar:spec futuro citar algo de docs/input/ ou docs/design/ diretamente, isso é

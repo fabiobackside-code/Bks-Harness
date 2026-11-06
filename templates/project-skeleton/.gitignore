@@ -7,3 +7,5 @@ node_modules/
 *.docx
 Thumbs.db
 .DS_Store
+outputs/run/status-canvas.md
+outputs/run/handoff/

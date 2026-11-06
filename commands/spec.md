@@ -5,6 +5,14 @@ description: Fluxo bks-sdd de especificação direto, sem rito: entrevista sobre
 Fluxo bks-sdd direto, sem o rito de refinamento. O caminho com a equipe perguntando antes da FEAT é
 o `/bkhar:refine`; este comando continua existindo como exceção.
 
+## Portão de arquitetura
+
+Antes de tudo, confira `docs/library/architecture/ARCH-{projeto}.md` e os modelos em
+`docs/library/architecture/models/`. Sem o ARCH, ou com ele ou um modelo fora de `status: aprovado`,
+pare e diga para rodar `/bkhar:arch`; vale nos dois modos. O `architect` lê o ARCH e os modelos antes
+de perguntar ou de escrever a FEAT, e a FEAT cita o modelo em que se apoia. Decisão da FEAT que
+contradiz um modelo aprovado não entra: vira ADR e `/bkhar:arch --update`.
+
 Entreviste-me sobre o bounded context, objetivos, entidades, operações, integrações (TCP? filas?
 SEDA?) e critérios de aceite VERIFICÁVEIS. Rode este comando com o Claude Code aberto na RAIZ DO
 REPO do projeto (não na raiz do vault).
@@ -16,6 +24,13 @@ leva `Refinamento: não (exceção)`.
 
 Depois de aprovada, chame o agente `tester` para gerar TEST-[nome].md em specs/tests/. NUNCA
 implemente nesta etapa.
+
+## Modo `autonomo`
+
+Com `axes.mode: autonomo`, não há entrevista: o `architect` tira as respostas do PRD, do PLAN e
+dos contratos que a task consome, e grava em `decisions/SUPOSICOES.md` o que precisou presumir. A
+FEAT leva `Refinamento: autonomo` e segue para o TEST sem portão. Dado pessoal, autorização e
+segredo não se presumem: param em `outputs/BLOQUEIO-[nome].md`.
 
 
 ## Idioma dos artefatos
