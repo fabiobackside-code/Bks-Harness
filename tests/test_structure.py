@@ -655,7 +655,7 @@ def test_training():
     text = read(*(base + ('treinamento-bks-harness.md',))) if os.path.isfile(path) else ''
     check('treinamento tem linha de versão', bool(re.search(r'^Versão \d+\.\d+\.\d+', text, re.M)))
     chapters = re.split(r'^### (?=\d+\. )', text, flags=re.M)[1:]
-    check('treinamento tem treze capítulos', len(chapters) == 13, 'encontrados: %d' % len(chapters))
+    check('treinamento tem catorze capítulos', len(chapters) == 14, 'encontrados: %d' % len(chapters))
     no_check = [c.split('\n', 1)[0] for c in chapters if '**Confira.**' not in c]
     check('todo capítulo fecha com Confira', not no_check, 'sem: %s' % '; '.join(no_check))
     no_ex = [c.split('\n', 1)[0] for c in chapters[6:11] if '**Exercício.**' not in c]
@@ -671,6 +671,12 @@ def test_training():
     check('HTML do treinamento existe',
           os.path.isfile(os.path.join(ROOT, *(base + ('treinamento-bks-harness.html',)))))
     check('README aponta para o treinamento', 'treinamento/treinamento-bks-harness' in read('README.md'))
+    guide = ('docs', 'artefatos', 'maestri')
+    check('guia do Maestri e o HTML dele existem',
+          all(os.path.isfile(os.path.join(ROOT, *(guide + (f,)))) for f in ('guia-maestri.md', 'guia-maestri.html')))
+    check('README e treinamento apontam para o guia do Maestri',
+          'maestri/guia-maestri' in read('README.md') and 'maestri/guia-maestri' in text)
+    check('o guia do Maestri sai para o público', "'docs/artefatos/maestri/'" in read('scripts', 'publish.py'))
     if os.path.isfile(os.path.join(ROOT, 'docs', 'artefatos', 'README.md')):
         check('README dos artefatos lista o treinamento',
               'treinamento-bks-harness.md' in read('docs', 'artefatos', 'README.md'))

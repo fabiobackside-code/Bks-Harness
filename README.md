@@ -48,6 +48,9 @@ O passo a passo completo, do pré-requisito ao primeiro ciclo com a equipe e com
 está no manual de treinamento: [`docs/artefatos/treinamento/treinamento-bks-harness.html`](docs/artefatos/treinamento/treinamento-bks-harness.html),
 pronto para imprimir em PDF.
 
+Para usar a equipe em terminais do Maestri, siga o guia:
+[`docs/artefatos/maestri/guia-maestri.html`](docs/artefatos/maestri/guia-maestri.html).
+
 ### Antes de instalar o harness
 
 Git, Python 3 (com `python -m pip install -r requirements.txt`) e Node.js são os pré-requisitos. O harness roda com a conta do Claude Code ou, pelo lançador `bkhar`, com DeepSeek ou OpenRouter. O guia completo, com o `PATH` e a guarda da chave, está na seção "Antes de instalar o harness" do manual de comandos: [`docs/artefatos/manual/manual-comandos.md`](docs/artefatos/manual/manual-comandos.md).
@@ -141,7 +144,15 @@ sobrescreve por projeto.
 
 #### Equipe em terminais do Maestri
 
-Em beta: a integração ainda está em prova num projeto piloto.
+O [Maestri](https://www.themaestri.app) é um aplicativo de área de trabalho para agentes: um
+canvas com terminais de agente, notas e conexões, operado pela CLI `maestri`. Com ele, cada papel
+da equipe roda no próprio terminal, e você acompanha todos trabalhando ao mesmo tempo, em vez de ver
+só o resultado dos subagentes. O Gerente do harness continua no comando: o Maestri mostra e
+transporta, e a memória segue nos arquivos do projeto. Testado com o Maestri 0.30.1 para Windows.
+
+Em beta: a integração ainda está em prova num projeto piloto. O passo a passo completo, da
+montagem do canvas aos exercícios, está no guia:
+[`docs/artefatos/maestri/guia-maestri.html`](docs/artefatos/maestri/guia-maestri.html).
 
 A integração é opcional e vale por projeto. No terminal `manager`, `/bkhar:maestri on` grava o
 bloco `maestri` no `.bks-profile.json` e confere se os terminais existem com os nomes do mapa;

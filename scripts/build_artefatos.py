@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Gera o HTML do Atlas, da Apresentação e do treinamento a partir da fonte em docs/artefatos/.
+"""Gera o HTML do Atlas, da Apresentação, do treinamento e do guia do Maestri a partir de docs/artefatos/.
 
 Uso:
-  python scripts/build_artefatos.py            gera os três HTML
+  python scripts/build_artefatos.py            gera os quatro HTML
   python scripts/build_artefatos.py --check    falha se o HTML versionado estiver defasado
 
 Requer o pacote Python `markdown` (3.x). Saída pronta para imprimir em PDF pelo navegador.
@@ -27,6 +27,9 @@ DECK_HTML = os.path.join(DECK, 'apresentacao-bks-harness.html')
 TRAINING = os.path.join(ART, 'treinamento')
 TRAINING_MD = os.path.join(TRAINING, 'treinamento-bks-harness.md')
 TRAINING_HTML = os.path.join(TRAINING, 'treinamento-bks-harness.html')
+GUIDE = os.path.join(ART, 'maestri')
+GUIDE_MD = os.path.join(GUIDE, 'guia-maestri.md')
+GUIDE_HTML = os.path.join(GUIDE, 'guia-maestri.html')
 
 FONTS = ('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700'
          '&family=JetBrains+Mono:wght@400;600&display=swap')
@@ -219,6 +222,12 @@ def build_training():
                       'para quem instala pelo repositório público')
 
 
+def build_guide():
+    return render_doc(read(GUIDE_MD), os.path.join(GUIDE, 'figuras'), 'BKS HARNESS · MAESTRI',
+                      'a equipe de agentes em terminais do Maestri, a delegação de comandos e o uso fora dele.',
+                      'beta: integração em prova')
+
+
 def build_deck():
     deck = json.loads(read(os.path.join(DECK, 'deck.json')))
     frames = []
@@ -239,7 +248,8 @@ def build_deck():
 
 
 def main(argv):
-    outputs = [(ATLAS_HTML, build_atlas()), (DECK_HTML, build_deck()), (TRAINING_HTML, build_training())]
+    outputs = [(ATLAS_HTML, build_atlas()), (DECK_HTML, build_deck()), (TRAINING_HTML, build_training()),
+               (GUIDE_HTML, build_guide())]
     if '--check' in argv:
         stale = [p for p, text in outputs if not os.path.exists(p) or read(p) != text]
         for p in stale:
