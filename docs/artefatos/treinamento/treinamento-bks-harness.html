@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Treinamento do bks-harness — Instalação e uso · v1.3.0</title>
+<title>Treinamento do bks-harness — Instalação e uso · v1.4.0</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,7 +39,7 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">BKS HARNESS · TREINAMENTO</div>
 <div><h1>Treinamento do bks-harness</h1><p class="sub">Instalação e uso: do zero à primeira sessão produtiva e a um ciclo completo com a equipe de agentes.</p></div>
-<div class="meta">Versão 1.3.0 · para quem instala pelo repositório público</div></section>
+<div class="meta">Versão 1.4.0 · para quem instala pelo repositório público</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#antes-de-comecar">Antes de começar</a></li><li><a href="#parte-1-instalacao">Parte 1 — Instalação</a></li><li><a href="#parte-2-uso">Parte 2 — Uso</a></li><li><a href="#historico-de-versoes">Histórico de versões</a></li></ol></nav>
 <h2 id="antes-de-comecar">Antes de começar</h2>
 <p>Este manual leva você do zero até a primeira sessão produtiva e, depois, a um ciclo completo com a
@@ -541,7 +541,25 @@ reconstrução da conversa.</p>
 <p><strong>Exercício.</strong> No <code>treino-harness</code>, rode <code>/bkhar:save</code>. Feche a sessão, abra outra e rode
 <code>/bkhar:brain</code>.</p>
 <p><strong>Confira.</strong> O <code>/bkhar:brain</code> da sessão nova responde com o estado que o <code>/bkhar:save</code> gravou.</p>
-<h3>13. Referência rápida</h3>
+<h3>13. Usar com o Maestri</h3>
+<p>O <a href="https://www.themaestri.app">Maestri</a> é um aplicativo de área de trabalho para agentes: um canvas
+com terminais, notas e conexões. Com ele, cada papel da equipe roda no próprio terminal, e você vê o
+<code>architect</code>, o <code>tester</code> e o <code>developer</code> trabalhando, em vez de só o resultado dos subagentes. Você
+continua falando com um terminal só, o <code>manager</code>, que conduz a equipe e recebe todos os portões.</p>
+<p>O uso é opcional. Sem configurar nada, o harness segue como nos capítulos anteriores, inclusive
+dentro do Maestri. Para ligar:</p>
+<ol>
+<li>Monte no canvas os terminais <code>manager</code>, <code>architect</code>, <code>developer</code>, <code>tester</code>, <code>quality</code>, <code>security</code>,
+   <code>scribe</code> e <code>ops</code>, cada um com o seu comando e conectado só ao <code>manager</code>.</li>
+<li>No <code>manager</code>, crie a nota de status: <code>maestri note create --name "status"</code>.</li>
+<li>No <code>manager</code>, rode <code>/bkhar:maestri on</code> e siga o que ele pedir até o <code>check</code> passar.</li>
+</ol>
+<p>A partir daí, <code>arch</code>, <code>prd</code> e <code>plan</code> rodam no <code>architect</code>, e <code>canonize</code>, <code>save</code> e <code>maintainability</code>,
+no <code>ops</code>, sem ocupar o <code>manager</code>. A montagem completa, as rotinas e a recuperação de problemas estão
+no guia do Maestri, em <code>docs/artefatos/maestri/guia-maestri.html</code>. A integração está em beta.</p>
+<p><strong>Confira.</strong> <code>/bkhar:maestri check</code> termina em <code>ok: manager, 6 papéis e a nota de status
+conectados</code>.</p>
+<h3>14. Referência rápida</h3>
 <table>
 <thead>
 <tr>
@@ -661,6 +679,11 @@ reconstrução da conversa.</p>
 <td>trazer projeto do kit antigo <code>bks</code></td>
 <td>raiz do projeto</td>
 </tr>
+<tr>
+<td><code>/bkhar:maestri</code></td>
+<td>ligar, desligar e conferir a equipe em terminais do Maestri</td>
+<td>terminal <code>manager</code>, raiz do projeto</td>
+</tr>
 </tbody>
 </table>
 <p>O detalhe de cada comando, com passo a passo e exemplo, está no manual de comandos.</p>
@@ -676,6 +699,11 @@ reconstrução da conversa.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.4.0</td>
+<td>2026-11-06</td>
+<td>Capítulo 13, "Usar com o Maestri", com o <code>/bkhar:maestri</code> e o ponteiro para o guia do Maestri</td>
+</tr>
 <tr>
 <td>1.3.0</td>
 <td>2026-11-05</td>

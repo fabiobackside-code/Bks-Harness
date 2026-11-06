@@ -1,0 +1,563 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia do Maestri — Usar o harness com terminais de agente · v1.0.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0F1923;--paper:#13202E;--ink:#EDE9E1;--soft:#C9D3DC;--quiet:#8FA0B0;--line:#2D4257;--accent:#F0904F;--accent2:#F0904F;--codebg:#0C1620;--axis:#7D8C99;--grid:#2D4257;--tint:#1D2E40}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Arial,sans-serif;font-size:16px;line-height:1.6}
+main{max-width:860px;margin:0 auto;padding:48px 32px 96px}
+.cover{min-height:92vh;display:flex;flex-direction:column;justify-content:space-between;padding:64px 0;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:'JetBrains Mono','Courier New',monospace;font-size:13px;letter-spacing:.06em;color:var(--accent)}
+.cover h1{font-size:56px;line-height:1.05;margin:24px 0 16px;font-weight:600;border:none;padding:0}
+.cover p.sub{font-size:20px;color:var(--soft);max-width:620px}
+.meta{font-family:'JetBrains Mono','Courier New',monospace;font-size:13px;color:var(--quiet)}
+nav.toc{padding:48px 0;border-bottom:1px solid var(--line)} nav.toc ol{padding-left:20px;columns:2;column-gap:40px} nav.toc li{margin:6px 0}
+a{color:var(--accent)}
+h2{font-size:32px;line-height:1.15;margin:72px 0 16px;padding-top:24px;border-top:3px solid var(--accent2);font-weight:600}
+h3{font-size:22px;margin:40px 0 8px;font-weight:600}
+h4{font-size:18px;margin:32px 0 6px;font-weight:600;color:var(--accent)}
+h5{font-size:16px;margin:24px 0 4px;font-weight:600}
+p,li{color:var(--soft)} strong,b{color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:16px 0 24px;display:block;overflow-x:auto}
+th{text-align:left;border-bottom:2px solid var(--ink);padding:8px 10px} td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top;color:var(--soft)}
+code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.88em;background:var(--codebg);padding:1px 5px;border-radius:4px}
+pre{background:var(--codebg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;font-size:13px;line-height:1.5;white-space:pre-wrap} pre code{background:none;padding:0}
+blockquote{margin:16px 0;padding:8px 20px;border-left:3px solid var(--accent2);background:var(--paper);border-radius:0 10px 10px 0}
+figure{margin:28px 0;padding:20px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+figure svg{width:100%;height:auto;display:block} figcaption{font-size:13px;color:var(--quiet);margin-top:10px}
+ul li::marker,ol li::marker{color:var(--accent)}
+@page{size:A4;margin:18mm 16mm 20mm}
+@media print{
+ :root{--bg:#fff;--paper:#fff;--ink:#1C2733;--soft:#2E3A47;--quiet:#5A636E;--line:#D8D2C6;--accent:#A84E18;--accent2:#D9682B;--codebg:#F4F1EA;--axis:#7A7F84;--grid:#CFCAC0;--tint:#F3EFE7}
+ html,body{font-size:11pt} main{max-width:none;padding:0}
+ .cover{min-height:250mm;page-break-after:always;border:none} nav.toc{page-break-after:always;border:none}
+ h2{page-break-before:always;margin-top:0} h3,h4,h5{page-break-after:avoid}
+ figure,table,pre,blockquote{page-break-inside:avoid} table{display:table}
+ a{color:var(--ink);text-decoration:none}
+}
+</style></head><body><main>
+<section class="cover"><div class="eyebrow">BKS HARNESS · MAESTRI</div>
+<div><h1>Guia do Maestri</h1><p class="sub">Usar o harness com terminais de agente: a equipe de agentes em terminais do Maestri, a delegação de comandos e o uso fora dele.</p></div>
+<div class="meta">Versão 1.0.0 · beta: integração em prova</div></section>
+<nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#antes-de-comecar">Antes de começar</a></li><li><a href="#o-que-e-o-maestri">O que é o Maestri</a></li><li><a href="#dois-jeitos-de-rodar">Dois jeitos de rodar</a></li><li><a href="#montar-o-workspace">Montar o workspace</a></li><li><a href="#ligar-desligar-e-conferir">Ligar, desligar e conferir</a></li><li><a href="#trabalhar-no-modo-colaborativo">Trabalhar no modo colaborativo</a></li><li><a href="#trabalhar-no-modo-autonomo">Trabalhar no modo autônomo</a></li><li><a href="#comandos-delegados">Comandos delegados</a></li><li><a href="#responder-aos-portoes">Responder aos portões</a></li><li><a href="#fora-do-maestri">Fora do Maestri</a></li><li><a href="#problemas-e-recuperacao">Problemas e recuperação</a></li><li><a href="#exercicios">Exercícios</a></li><li><a href="#referencia-rapida">Referência rápida</a></li><li><a href="#historico-de-versoes">Histórico de versões</a></li></ol></nav>
+<h2 id="antes-de-comecar">Antes de começar</h2>
+<p>Este guia mostra como usar o harness <code>bkhar</code> dentro do Maestri, com cada papel da equipe no seu
+próprio terminal, e o que muda quando a sessão roda num terminal comum. Ele pressupõe o harness
+instalado e uma primeira sessão feita: se ainda não chegou lá, siga antes o treinamento
+(<code>docs/artefatos/treinamento/treinamento-bks-harness.md</code>).</p>
+<p>A regra que organiza tudo: <strong>o Gerente do harness conduz, e o Maestri só mostra e transporta.</strong> A
+memória do projeto continua nos arquivos de sempre (<code>STATUS.md</code>, <code>JOURNAL.md</code>, <code>decisions/</code>), e nada
+no canvas a substitui.</p>
+<blockquote>
+<p><strong>Beta.</strong> A integração com o Maestri chegou na 3.0.0-beta e ainda está em prova num projeto
+piloto. Sem o bloco <code>maestri</code> no perfil do projeto, o harness funciona como na 1.1.0.</p>
+</blockquote>
+<h2 id="o-que-e-o-maestri">O que é o Maestri</h2>
+<p>O <a href="https://www.themaestri.app">Maestri</a> é um aplicativo de área de trabalho para agentes de inteligência artificial. Num
+canvas, você posiciona terminais de agente, notas em markdown e portais de navegador, e liga uns aos
+outros por conexões. Um terminal conectado a outro pode mandar pedidos a ele e ler as respostas pela
+CLI <code>maestri</code>, que o aplicativo instala.</p>
+<table>
+<thead>
+<tr>
+<th>Conceito</th>
+<th>O que é no Maestri</th>
+<th>Como o harness usa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Workspace</td>
+<td>espaço de trabalho com diretório e ambiente</td>
+<td>um por projeto, com o diretório na raiz do repositório e o ambiente <strong>Local</strong></td>
+</tr>
+<tr>
+<td>Canvas</td>
+<td>área onde ficam terminais, notas e conexões</td>
+<td>a equipe inteira à vista</td>
+</tr>
+<tr>
+<td>Terminal</td>
+<td>processo de agente num quadro do canvas</td>
+<td>um por papel; o nome do terminal é o nome do papel</td>
+</tr>
+<tr>
+<td>Conexão</td>
+<td>linha que deixa um terminal falar com outro ou ler uma nota</td>
+<td>em estrela: cada terminal liga só ao <code>manager</code></td>
+</tr>
+<tr>
+<td>Nota</td>
+<td>markdown no canvas, lido e escrito pela CLI</td>
+<td>a nota <code>status</code>, espelho gerado do estado do projeto</td>
+</tr>
+<tr>
+<td>Partitura</td>
+<td>equipe salva para inserir de novo</td>
+<td>a equipe montada uma vez e reaproveitada nos outros projetos</td>
+</tr>
+<tr>
+<td>Role</td>
+<td>prompt fixo que abre o agente num subdiretório</td>
+<td><strong>não usado</strong>: o subdiretório afastaria o agente do <code>STATUS.md</code></td>
+</tr>
+<tr>
+<td>Maestro Mode</td>
+<td>deixa um agente criar e dispensar outros</td>
+<td><strong>sempre desligado</strong>: dois orquestradores brigariam pelo comando</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dois-jeitos-de-rodar">Dois jeitos de rodar</h2>
+<p>O mesmo comando funciona nos dois jeitos. O que decide é o bloco <code>maestri</code> do <code>.bks-profile.json</code>
+do projeto e se a sessão está num terminal do Maestri.</p>
+<table>
+<thead>
+<tr>
+<th>Situação</th>
+<th>Papéis da equipe</th>
+<th>Comandos delegáveis</th>
+<th>Nota de status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Maestri, bloco ligado, terminal conectado</td>
+<td>terminal do papel</td>
+<td><code>architect</code> ou <code>ops</code></td>
+<td>arquivo, nota e barra lateral</td>
+</tr>
+<tr>
+<td>Maestri, bloco ligado, terminal ausente</td>
+<td>subagente, com o motivo em uma linha</td>
+<td>no <code>manager</code></td>
+<td>arquivo e nota</td>
+</tr>
+<tr>
+<td>Maestri, bloco desligado ou ausente</td>
+<td>subagente</td>
+<td>na própria sessão</td>
+<td>só o arquivo</td>
+</tr>
+<tr>
+<td>Terminal comum</td>
+<td>subagente</td>
+<td>na própria sessão</td>
+<td>só o arquivo</td>
+</tr>
+</tbody>
+</table>
+<h2 id="montar-o-workspace">Montar o workspace</h2>
+<p>Crie um workspace por projeto, com o diretório na raiz do repositório do projeto e o ambiente
+<strong>Local</strong>. O harness guarda o estado nos arquivos do projeto, então não precisa que o processo
+sobreviva ao fechamento do aplicativo; o WSL (Subsistema Windows para Linux) trocaria os caminhos
+do Windows e quebraria os guardas.</p>
+<div markdown="0"><figure><svg viewBox='0 0 760 340' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Equipe no canvas do Maestri' font-family='IBM Plex Sans, Arial, sans-serif'><text x='24' y='28' font-size='15' font-weight='600' fill='var(--ink)' text-anchor='start'>Cada terminal liga só ao manager: um papel nunca vê a resposta de outro</text><g stroke='var(--axis)' stroke-width='1.25'><line x1='380' y1='185' x2='130' y2='85'/><line x1='380' y1='185' x2='380' y2='75'/><line x1='380' y1='185' x2='630' y2='85'/><line x1='380' y1='185' x2='110' y2='190'/><line x1='380' y1='185' x2='650' y2='190'/><line x1='380' y1='185' x2='170' y2='290'/><line x1='380' y1='185' x2='380' y2='300'/><line x1='380' y1='185' x2='590' y2='290'/></g><rect x='300' y='158' width='160' height='54' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='380' y='182' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle'>manager</text><text x='380' y='199' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>você fala e decide aqui</text><g fill='var(--paper)' stroke='var(--axis)' stroke-width='1.25'><rect x='60' y='62' width='140' height='44' rx='8'/><rect x='310' y='50' width='140' height='44' rx='8'/><rect x='560' y='62' width='140' height='44' rx='8'/><rect x='40' y='168' width='140' height='44' rx='8'/><rect x='580' y='168' width='140' height='44' rx='8'/><rect x='100' y='268' width='140' height='44' rx='8'/><rect x='520' y='268' width='140' height='44' rx='8'/></g><rect x='310' y='278' width='140' height='44' rx='8' fill='none' stroke='var(--accent)' stroke-width='1.25' stroke-dasharray='5 4'/><g font-size='13' fill='var(--ink)' text-anchor='middle'><text x='130' y='89'>architect</text><text x='380' y='77'>nota status</text><text x='630' y='89'>scribe</text><text x='110' y='195'>developer</text><text x='650' y='195'>tester</text><text x='170' y='295'>quality</text><text x='590' y='295'>security</text><text x='380' y='298'>ops</text></g><text x='380' y='314' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>executor</text></svg><figcaption><b>Figura 1</b> · equipe no canvas</figcaption></figure></div>
+
+<table>
+<thead>
+<tr>
+<th>Terminal</th>
+<th>Comando (aba Details)</th>
+<th>Ferramentas</th>
+<th>Como devolve o resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>manager</code></td>
+<td><code>claude</code> (ou <code>bkhar</code>, para outro provedor)</td>
+<td>todas</td>
+<td>é onde você lê e decide</td>
+</tr>
+<tr>
+<td><code>architect</code></td>
+<td><code>claude --agent bkhar:architect</code></td>
+<td>Bash limitado por guarda</td>
+<td>resposta inteira</td>
+</tr>
+<tr>
+<td><code>developer</code></td>
+<td><code>claude --agent bkhar:developer</code></td>
+<td>com Bash</td>
+<td>resposta inteira</td>
+</tr>
+<tr>
+<td><code>tester</code></td>
+<td><code>claude --agent bkhar:tester</code></td>
+<td>com Bash</td>
+<td>resposta inteira</td>
+</tr>
+<tr>
+<td><code>quality</code></td>
+<td><code>claude --agent bkhar:quality</code></td>
+<td>só leitura</td>
+<td>última tela e arquivo</td>
+</tr>
+<tr>
+<td><code>security</code></td>
+<td><code>claude --agent bkhar:security</code></td>
+<td>só leitura</td>
+<td>última tela e arquivo</td>
+</tr>
+<tr>
+<td><code>scribe</code></td>
+<td><code>claude --agent bkhar:scribe</code></td>
+<td>sem Bash</td>
+<td>última tela e arquivo</td>
+</tr>
+<tr>
+<td><code>ops</code></td>
+<td><code>claude --model opus</code></td>
+<td>todas</td>
+<td>resposta inteira</td>
+</tr>
+</tbody>
+</table>
+<p>O <code>--agent</code> faz a sessão assumir o perfil, as ferramentas e o modelo do agente, os mesmos do
+subagente. Se o projeto tiver o mapa <code>models</code> no perfil, acrescente <code>--model &lt;id&gt;</code> ao comando.</p>
+<p>O <code>ops</code> não é papel da equipe: só executa os comandos delegados <code>canonize</code>, <code>save</code> e
+<code>maintainability</code>. Troque para <code>--model sonnet</code> se quiser gastar menos.</p>
+<p>O Bash do <code>architect</code> é limitado pelo guarda <code>hooks/scripts/architect_bash.py</code>: scripts do plugin,
+<code>git</code> de leitura e <code>maestri ask</code>, um comando por chamada. A escrita dele só passa em <code>specs/</code>,
+<code>decisions/</code>, <code>docs/</code> e <code>outputs/</code> do projeto.</p>
+<p>Passo a passo no canvas:</p>
+<ol>
+<li>Crie o workspace pela barra lateral.</li>
+<li>Para cada linha da tabela, use a ferramenta Terminal com o preset "Claude Code", dê o nome exato e
+   ajuste o comando na aba Details.</li>
+<li>Desligue o Maestro Mode em todos os terminais (aba Details).</li>
+<li>Conecte cada terminal ao <code>manager</code> pelo botão Connect, e só a ele.</li>
+<li>No <code>manager</code>, crie a nota com nome fixo: <code>maestri note create --name "status"</code>. Sem <code>--name</code>, a
+   nota é renomeada pela própria primeira linha a cada escrita.</li>
+<li>No <code>manager</code>, rode <code>/bkhar:maestri on</code> até o <code>check</code> passar.</li>
+<li>Salve a partitura. Nos próximos projetos, insira a partitura e rode <code>/bkhar:maestri on</code>.</li>
+</ol>
+<p><strong>Mais terminais não são necessários.</strong> Os comandos delegados rodam um de cada vez, e um <code>ops</code>
+basta. Terminal a mais no canvas não quebra nada: o <code>check</code> o aponta como fora do mapa, e o
+despacho o ignora.</p>
+<p><strong>Confira.</strong> No <code>manager</code>, <code>maestri list</code> mostra os sete outros terminais e a nota <code>status</code>, todos
+conectados a ele.</p>
+<h2 id="ligar-desligar-e-conferir">Ligar, desligar e conferir</h2>
+<p>O <code>/bkhar:maestri</code> roda no <code>manager</code>, na raiz do projeto, a qualquer momento.</p>
+<table>
+<thead>
+<tr>
+<th>Comando</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/bkhar:maestri</code> ou <code>check</code></td>
+<td>mostra o bloco e confere o nome deste terminal, os seis papéis, o <code>ops</code>, a nota e o mapa de delegação</td>
+</tr>
+<tr>
+<td><code>/bkhar:maestri on</code></td>
+<td>lê o <code>maestri list</code>, pergunta pelo terminal de nome diferente, grava o bloco com o seu ok e confere</td>
+</tr>
+<tr>
+<td><code>/bkhar:maestri off</code></td>
+<td>desliga e guarda o mapa para o próximo <code>on</code></td>
+</tr>
+</tbody>
+</table>
+<p>O bloco gravado no <code>.bks-profile.json</code>:</p>
+<pre><code class="language-json">&quot;maestri&quot;: {
+  &quot;enabled&quot;: true,
+  &quot;manager&quot;: &quot;manager&quot;,
+  &quot;roles&quot;: { &quot;architect&quot;: &quot;architect&quot;, &quot;developer&quot;: &quot;developer&quot;, &quot;tester&quot;: &quot;tester&quot;,
+             &quot;quality&quot;: &quot;quality&quot;, &quot;security&quot;: &quot;security&quot;, &quot;scribe&quot;: &quot;scribe&quot; },
+  &quot;executors&quot;: { &quot;ops&quot;: &quot;ops&quot; },
+  &quot;notes&quot;: { &quot;status&quot;: &quot;status&quot; },
+  &quot;delegate&quot;: { &quot;arch&quot;: &quot;architect&quot;, &quot;prd&quot;: &quot;architect&quot;, &quot;plan&quot;: &quot;architect&quot;,
+                &quot;canonize&quot;: &quot;ops&quot;, &quot;save&quot;: &quot;ops&quot;, &quot;maintainability&quot;: &quot;ops&quot; }
+}
+</code></pre>
+<p>Terminal com outro nome: <code>--role developer=dev</code>. Tirar um comando da delegação:
+<code>--delegate save=local</code>. O script recusa delegar <code>arch</code>, <code>plan</code> ou <code>save</code> ao <code>quality</code>, ao
+<code>security</code> ou ao <code>scribe</code>, que não têm Bash.</p>
+<p>O <code>on</code> lembra também de deixar fora do git do projeto o <code>outputs/run/status-canvas.md</code> e o
+<code>outputs/run/handoff/</code>, e pergunta antes de acrescentar as linhas ao <code>.gitignore</code>.</p>
+<p><strong>Confira.</strong> <code>/bkhar:maestri check</code> termina em <code>ok: manager, 6 papéis e a nota de status conectados</code>.</p>
+<h2 id="trabalhar-no-modo-colaborativo">Trabalhar no modo colaborativo</h2>
+<ol>
+<li>Abra o workspace e só os terminais que a etapa usa. Papel fechado cai para subagente, e você não
+   paga o custo fixo de sessão dele.</li>
+<li>No <code>manager</code>, rode <code>/bkhar:brain</code>: ele diz onde o projeto parou e qual é o próximo passo.</li>
+<li>Rode o comando que o <code>STATUS.md</code> indica. Nos ritos (<code>refine</code>, <code>spec</code>, <code>loop</code>, <code>review</code>, <code>panel</code>,
+   <code>ask</code>), o Gerente limpa a sessão do papel com <code>/clear</code>, manda o pedido com os arquivos a ler, e
+   você vê o trabalho no terminal do papel.</li>
+<li>Em cada portão, o <code>manager</code> para com as opções numeradas. Responda ali.</li>
+<li>Falar direto com um papel no terminal dele é permitido. O Gerente lê esse terminal
+   (<code>maestri check</code>) antes de seguir.</li>
+<li>Feche com <code>/bkhar:save</code> no <code>manager</code>. Ele roda delegado no <code>ops</code> e regera a nota.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Etapa</th>
+<th>Terminais abertos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>canônico</td>
+<td><code>manager</code>, <code>ops</code></td>
+</tr>
+<tr>
+<td>PRD (requisitos do produto), plano e arquitetura</td>
+<td><code>manager</code>, <code>architect</code></td>
+</tr>
+<tr>
+<td>refinamento e especificação</td>
+<td><code>manager</code>, <code>architect</code>, <code>tester</code></td>
+</tr>
+<tr>
+<td>construção</td>
+<td><code>manager</code>, <code>tester</code>, <code>developer</code></td>
+</tr>
+<tr>
+<td>revisão</td>
+<td><code>manager</code>, <code>quality</code>, <code>security</code></td>
+</tr>
+<tr>
+<td>fechamento</td>
+<td><code>manager</code>, <code>ops</code></td>
+</tr>
+</tbody>
+</table>
+<p>Não há save automático ao fechar terminal. O que não passou pelo <code>/bkhar:save</code> fica só na conversa.</p>
+<p><strong>Confira.</strong> Num <code>/bkhar:ask architect ...</code>, o pedido aparece no terminal do <code>architect</code> e a resposta
+volta ao <code>manager</code> com a fonte citada.</p>
+<h2 id="trabalhar-no-modo-autonomo">Trabalhar no modo autônomo</h2>
+<ol>
+<li>Rode <code>/bkhar:mode autonomo</code> no <code>manager</code>. A checagem de prontidão concede o modo ou diz o que
+   falta.</li>
+<li>Abra os terminais de construção e revisão, e o <code>architect</code> se a onda tiver tarefa de desenho.</li>
+<li>Rode <code>/bkhar:loop --wave next</code>: até 4 tarefas em paralelo, cada uma na sua worktree, com até 4
+   tentativas por tarefa.</li>
+<li>Acompanhe pela nota <code>status</code> e pela barra lateral. Os estados <code>blocked</code> e <code>review</code> notificam você.</li>
+<li>No portão ou no fim, a nota basta para validar. O detalhe fica em <code>specs/tasks/</code> e em
+   <code>outputs/run/onda-N/RELATORIO.md</code>.</li>
+</ol>
+<p>A nota é regerada inteira pelo <code>scripts/status_note.py</code> em cada ponto de controle. Ninguém escreve
+nela à mão, e ela nunca substitui o <code>STATUS.md</code>:</p>
+<pre><code># Status · meu-projeto
+&gt; Espelho gerado de STATUS.md e outputs/run/. Não editar à mão. Atualizado: 2026-11-06 15:30
+
+Modo: autonomo · Etapa: onda 2 de 5 — construcao · Concluídas: 3/9
+
+## Em uma frase
+## Próximo passo
+## Itens da spec
+## Falhas
+## Bloqueios
+</code></pre>
+<p><strong>Confira.</strong> Com a onda rodando, a barra lateral mostra a etapa e o progresso, como <code>3/9</code>.</p>
+<h2 id="comandos-delegados">Comandos delegados</h2>
+<p><code>arch</code>, <code>prd</code> e <code>plan</code> rodam no <code>architect</code>; <code>canonize</code>, <code>save</code> e <code>maintainability</code>, no <code>ops</code>.
+Nenhum ocupa a conversa do <code>manager</code>, e você continua chamando-os ali.</p>
+<ol>
+<li>Você digita <code>/bkhar:save</code> no <code>manager</code>.</li>
+<li>O primeiro passo do comando consulta o perfil e recebe <code>terminal ops</code>.</li>
+<li>O <code>manager</code> grava <code>outputs/run/handoff/save.md</code> com as decisões da sessão e o que cada papel
+   produziu. O <code>ops</code> não viu a conversa: o arquivo é o canal.</li>
+<li>O <code>manager</code> limpa o <code>ops</code> e pede o comando.</li>
+<li>Toda pergunta do <code>ops</code> volta ao <code>manager</code> como portão. Você responde no <code>manager</code>, e ele devolve
+   a resposta ao <code>ops</code>.</li>
+<li>No fim, o <code>manager</code> mostra o resultado, regera a nota e arquiva o handoff.</li>
+</ol>
+<p>Enquanto o terminal delegado escreve, o <code>manager</code> não toca no <code>STATUS.md</code>, no <code>JOURNAL.md</code> nem em
+<code>decisions/</code>: há um escritor de estado por vez.</p>
+<p><strong>Confira.</strong> Depois do <code>/bkhar:save</code> delegado, o handoff está em <code>outputs/run/handoff/aplicados/</code>.</p>
+<h2 id="responder-aos-portoes">Responder aos portões</h2>
+<p>O portão sempre aparece no <code>manager</code>, inclusive o que nasce num terminal delegado. O formato é fixo:
+opções numeradas, quem defende cada uma, a fonte e o conflito exposto. Responda com o número, ou com
+"outra:" e o texto. Em pergunta de duas alternativas exclusivas, responda com a opção nomeada, não
+com "sim".</p>
+<p>O Maestri Remote, o aplicativo para celular, abre um terminal real e permitiria responder pelo
+telefone. Ele exige o Maestri Wire ligado, o que abre acesso remoto à máquina; o harness não foi
+testado com ele.</p>
+<h2 id="fora-do-maestri">Fora do Maestri</h2>
+<p>Num terminal comum, na raiz do projeto:</p>
+<ol>
+<li>Rode <code>claude</code>, ou <code>bkhar</code> para outro provedor.</li>
+<li>Use <code>/bkhar:brain</code>, os mesmos comandos e o <code>/bkhar:save</code> no fim.</li>
+<li>Os papéis rodam como subagentes: você vê o resultado, não o trabalho de cada um.</li>
+<li>Os comandos delegáveis rodam na própria sessão; o primeiro passo responde
+   <code>local: sessão fora do Maestri</code>.</li>
+<li>A nota de status vira só o arquivo <code>outputs/run/status-canvas.md</code>.</li>
+</ol>
+<p>Nada precisa ser desligado para sair do Maestri. O <code>/bkhar:maestri off</code> serve para quando você quer
+subagentes mesmo dentro dele.</p>
+<h2 id="problemas-e-recuperacao">Problemas e recuperação</h2>
+<table>
+<thead>
+<tr>
+<th>Sintoma</th>
+<th>O que fazer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Unknown command: /bkhar:maestri</code></td>
+<td>a sessão foi aberta antes de o plugin ganhar o comando; saia com <code>/exit</code> e abra de novo com <code>claude --continue</code></td>
+</tr>
+<tr>
+<td>O <code>check</code> acusa terminal faltando ou com outro nome</td>
+<td>crie ou renomeie no canvas, ou grave o nome com <code>--role vaga=nome</code></td>
+</tr>
+<tr>
+<td>O <code>manager</code> espera um terminal há muito tempo</td>
+<td><code>maestri check "&lt;nome&gt;"</code> mostra a tela; se estiver num pedido de permissão, responda lá; nunca reenvie o pedido</td>
+</tr>
+<tr>
+<td>O <code>/clear</code> chegou como <code>C:/Program Files/Git/clear/n</code></td>
+<td>foi o Git Bash; apague a linha (Ctrl-U) e envie pelo PowerShell, ou prefixe com <code>MSYS_NO_PATHCONV=1</code></td>
+</tr>
+<tr>
+<td>Um papel "esqueceu" o contexto</td>
+<td>é o <code>/clear</code> funcionando; o pedido tem de nomear os arquivos a ler</td>
+</tr>
+<tr>
+<td>O <code>save</code> delegado deixou de fora uma decisão</td>
+<td>o handoff estava incompleto; diga a decisão no <code>manager</code> e rode <code>/bkhar:save</code> de novo</td>
+</tr>
+<tr>
+<td>A nota está velha ou mudou de nome</td>
+<td><code>python ${CLAUDE_PLUGIN_ROOT}/scripts/status_note.py sync .</code>; se o nome mudou, recrie com <code>--name "status"</code></td>
+</tr>
+<tr>
+<td><code>Bloqueado no architect</code></td>
+<td>o guarda recusou um comando fora dos três usos do papel; o pedido é do <code>developer</code> ou do <code>tester</code></td>
+</tr>
+<tr>
+<td>"Invalid API key" num terminal</td>
+<td>uma <code>ANTHROPIC_API_KEY</code> inválida no ambiente da máquina; remova ou corrija a variável</td>
+</tr>
+</tbody>
+</table>
+<h2 id="exercicios">Exercícios</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Faça</th>
+<th>Resultado esperado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>/bkhar:maestri check</code></td>
+<td><code>ok: manager, 6 papéis e a nota de status conectados</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>/bkhar:ask architect qual é a fronteira de contexto do módulo principal?</code></td>
+<td>o pedido aparece no terminal do <code>architect</code>; a resposta volta ao <code>manager</code> com fonte</td>
+</tr>
+<tr>
+<td>3</td>
+<td>feche o terminal do <code>architect</code> e repita o exercício 2</td>
+<td>o <code>manager</code> avisa que o terminal não está conectado e responde por subagente</td>
+</tr>
+<tr>
+<td>4</td>
+<td>no terminal do <code>architect</code>, peça "rode <code>dotnet --version</code>"</td>
+<td><code>Bloqueado no architect</code>; um <code>git status</code> passa</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>/bkhar:save</code> no <code>manager</code></td>
+<td>o <code>ops</code> trabalha, as perguntas aparecem no <code>manager</code>, a nota é regerada</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>/bkhar:maestri off</code> e repita o exercício 2</td>
+<td>resposta por subagente, nada no terminal do <code>architect</code>; depois, <code>on</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>/bkhar:panel</code> com uma pergunta de modelagem</td>
+<td>dois ou três papéis trabalham ao mesmo tempo; o <code>manager</code> para com as opções; o <code>scribe</code> grava o ADR (registro de decisão)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>num terminal comum, <code>claude</code> e o exercício 2</td>
+<td>resposta por subagente; o primeiro passo dos comandos delegáveis responde <code>local</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="referencia-rapida">Referência rápida</h2>
+<table>
+<thead>
+<tr>
+<th>Comando</th>
+<th>Para quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>maestri list</code></td>
+<td>quem está conectado</td>
+</tr>
+<tr>
+<td><code>maestri ask "&lt;nome&gt;" "&lt;pedido&gt;"</code></td>
+<td>pedido; espera o terminal ficar ocioso (dê até 10 minutos)</td>
+</tr>
+<tr>
+<td><code>maestri ask --batch '{"A": "...", "B": "..."}'</code></td>
+<td>pedidos em paralelo</td>
+</tr>
+<tr>
+<td><code>maestri ask "&lt;nome&gt;" --raw "/clear\n"</code></td>
+<td>limpa a sessão do terminal</td>
+</tr>
+<tr>
+<td><code>maestri check "&lt;nome&gt;"</code></td>
+<td>lê a tela atual</td>
+</tr>
+<tr>
+<td><code>maestri note create --name "status"</code></td>
+<td>nota com nome fixo</td>
+</tr>
+<tr>
+<td><code>maestri floor status "&lt;texto&gt;" --state working\|blocked\|review\|done --progress n/m</code></td>
+<td>estado na barra lateral</td>
+</tr>
+<tr>
+<td><code>/bkhar:maestri [on\|off\|check]</code></td>
+<td>integração do projeto</td>
+</tr>
+<tr>
+<td><code>python ${CLAUDE_PLUGIN_ROOT}/scripts/maestri_config.py route . --role &lt;papel&gt;</code></td>
+<td>para onde o papel vai agora</td>
+</tr>
+<tr>
+<td><code>python ${CLAUDE_PLUGIN_ROOT}/scripts/status_note.py sync .</code></td>
+<td>regera a nota</td>
+</tr>
+</tbody>
+</table>
+<p>As decisões por trás deste guia estão em <code>docs/ARCHITECTURE.md</code>, nas seções sobre o Maestri.</p>
+<h2 id="historico-de-versoes">Histórico de versões</h2>
+<table>
+<thead>
+<tr>
+<th>Versão</th>
+<th>Data</th>
+<th>O que mudou</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>2026-11-06</td>
+<td>Primeira versão, com o <code>bkhar</code> 3.0.0-beta</td>
+</tr>
+</tbody>
+</table>
+</main></body></html>

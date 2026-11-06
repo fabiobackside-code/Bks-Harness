@@ -1,6 +1,6 @@
 # Treinamento do bks-harness — Instalação e uso
 
-Versão 1.3.0, testado com o Claude Code 2.1.303 e o plugin `bkhar` 0.9.0; as seções 8 e 11 seguem o `bkhar` 1.0.0.
+Versão 1.4.0, testado com o Claude Code 2.1.303 e o plugin `bkhar` 0.9.0; as seções 8 e 11 seguem o `bkhar` 1.0.0, e a 13, o `bkhar` 3.0.0-beta.
 
 ## Antes de começar
 
@@ -393,7 +393,29 @@ reconstrução da conversa.
 
 **Confira.** O `/bkhar:brain` da sessão nova responde com o estado que o `/bkhar:save` gravou.
 
-### 13. Referência rápida
+### 13. Usar com o Maestri
+
+O [Maestri](https://www.themaestri.app) é um aplicativo de área de trabalho para agentes: um canvas
+com terminais, notas e conexões. Com ele, cada papel da equipe roda no próprio terminal, e você vê o
+`architect`, o `tester` e o `developer` trabalhando, em vez de só o resultado dos subagentes. Você
+continua falando com um terminal só, o `manager`, que conduz a equipe e recebe todos os portões.
+
+O uso é opcional. Sem configurar nada, o harness segue como nos capítulos anteriores, inclusive
+dentro do Maestri. Para ligar:
+
+1. Monte no canvas os terminais `manager`, `architect`, `developer`, `tester`, `quality`, `security`,
+   `scribe` e `ops`, cada um com o seu comando e conectado só ao `manager`.
+2. No `manager`, crie a nota de status: `maestri note create --name "status"`.
+3. No `manager`, rode `/bkhar:maestri on` e siga o que ele pedir até o `check` passar.
+
+A partir daí, `arch`, `prd` e `plan` rodam no `architect`, e `canonize`, `save` e `maintainability`,
+no `ops`, sem ocupar o `manager`. A montagem completa, as rotinas e a recuperação de problemas estão
+no guia do Maestri, em `docs/artefatos/maestri/guia-maestri.html`. A integração está em beta.
+
+**Confira.** `/bkhar:maestri check` termina em `ok: manager, 6 papéis e a nota de status
+conectados`.
+
+### 14. Referência rápida
 
 | Comando | Para quê | Onde rodar |
 |---|---|---|
@@ -419,6 +441,7 @@ reconstrução da conversa.
 | `/bkhar:retro` | promover ou rejeitar o aprendizado candidato | raiz do projeto |
 | `/bkhar:harvest` | consolidar a experiência dos projetos no vault | raiz do vault |
 | `/bkhar:migrate` | trazer projeto do kit antigo `bks` | raiz do projeto |
+| `/bkhar:maestri` | ligar, desligar e conferir a equipe em terminais do Maestri | terminal `manager`, raiz do projeto |
 
 O detalhe de cada comando, com passo a passo e exemplo, está no manual de comandos.
 
@@ -429,6 +452,7 @@ O detalhe de cada comando, com passo a passo e exemplo, está no manual de coman
 
 | Versão | Data | O que mudou |
 |---|---|---|
+| 1.4.0 | 2026-11-06 | Capítulo 13, "Usar com o Maestri", com o `/bkhar:maestri` e o ponteiro para o guia do Maestri |
 | 1.3.0 | 2026-11-05 | Guia de preparação da máquina e dos provedores de modelo, apontando para o manual de comandos |
 | 1.2.0 | 2026-11-04 | Capítulo 11, "Rodar no modo autônomo": prontidão, suposições, ondas, painel e `/bkhar:retro`; referência rápida com toda a 1.0.0 |
 | 1.1.0 | 2026-11-04 | Ciclo com o plano e a arquitetura antes da especificação; biblioteca do projeto e `/bkhar:library` |
