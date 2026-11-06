@@ -22,8 +22,8 @@ Depois, manualmente: trazer material para `docs/input/`, rodar `/bkhar:canonize`
 ## O ciclo de vida do conteúdo
 
 ```
-docs/input/ + docs/design/  --/canonize-->  docs/canonical/CONTEXT.md  --/prd-->
-docs/canonical/PRD-{projeto}.md  --/spec-->  specs/  --/loop-->  app/
+docs/input/ + docs/design/  --/bkhar:canonize-->  docs/canonical/CONTEXT.md  --/bkhar:prd-->
+docs/canonical/PRD-{projeto}.md  --/bkhar:spec-->  specs/  --/bkhar:loop-->  app/
 ```
 
 `/bkhar:spec` só pode citar `docs/canonical/` — nunca `docs/input/` ou `docs/design/` direto. Se faltar
@@ -41,7 +41,7 @@ material bruto.
 | `/bkhar:canonize` | raiz do repo | `docs/input/`+`docs/design/` → `docs/canonical/CONTEXT.md` |
 | `/bkhar:prd` | raiz do repo | `CONTEXT.md` → `docs/canonical/PRD-*.md` |
 | `/bkhar:spec` | raiz do repo | PRD/CONTEXT → `specs/features/` → `specs/tests/` → `specs/tasks/` |
-| `/bkhar:arch` | raiz do repo | specs → `outputs/ARCH-*.md` |
+| `/bkhar:arch` | raiz do repo | PRD e PLAN → `docs/library/architecture/` |
 | `/bkhar:loop` | raiz do repo | implementa via LOOP-4 |
 | `/bkhar:review` | raiz do repo | revisão independente, read-only |
 | `/bkhar:save` | raiz do repo | ADR, `STATUS.md`, `JOURNAL.md` |

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "name": "openrouter",
+  "requires_key": true,
+  "base_url": "https://openrouter.ai/api",
+  "env": {
+    "base_url": "ANTHROPIC_BASE_URL",
+    "token": "ANTHROPIC_AUTH_TOKEN",
+    "labels": {
+      "opus": "ANTHROPIC_DEFAULT_OPUS_MODEL",
+      "sonnet": "ANTHROPIC_DEFAULT_SONNET_MODEL",
+      "haiku": "ANTHROPIC_DEFAULT_HAIKU_MODEL"
+    },
+    "clear": ["ANTHROPIC_API_KEY"]
+  },
+  "default_models": null,
+  "single_model": true
+}

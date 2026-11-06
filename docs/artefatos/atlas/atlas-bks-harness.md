@@ -2,11 +2,11 @@
 
 Oct 18, 2026 · @Fabio Magalhaes
 
-Versão 1.7.1, revisada contra o `bkhar` 0.9.0. A 1.7.0 ganhou a equipe construída na Fase 3: seis agentes, o Gerente como protocolo da sessão principal, os ritos `/bkhar:ask`, `/bkhar:panel` e `/bkhar:refine`, a revisão em painel e o `LEARNINGS.md`. A 1.7.1 aponta para o manual de treinamento, que ensina a instalar e usar. O histórico de versões está no Apêndice F.
+Versão 1.9.0, revisada contra o `bkhar` 1.0.0. A 1.7.0 ganhou a equipe construída na Fase 3: seis agentes, o Gerente como protocolo da sessão principal, os ritos `/bkhar:ask`, `/bkhar:panel` e `/bkhar:refine`, a revisão em painel e o `LEARNINGS.md`. A 1.7.1 aponta para o manual de treinamento, que ensina a instalar e usar. A 1.7.2 acrescenta o `/bkhar:plan`, que gera o plano macro. A 1.7.3 conta a equipe como sete papéis, seis agentes e o Gerente. A 1.8.0 põe a arquitetura como portão antes da especificação e traz a biblioteca do projeto, com dashboard e exportação para o vault. A 1.9.0 cobre o resto da 1.0.0: os modos `colaborativo` e `autonomo`, a prontidão, as ondas pelo grafo, o painel com inbox, o modelo por papel e o aprendizado candidato com `/bkhar:retro` e `/bkhar:harvest`. O histórico de versões está no Apêndice F.
 
 ## Prefácio
 
-Este manual descreve o BKS Harness: uma equipe de sete agentes de IA que trabalha com você, conversa com você e faz o seu padrão de desenvolvimento crescer a cada projeto. Ele não é uma ferramenta de vibe coding. O código é consequência de conversas, decisões registradas e verificações executadas.
+Este manual descreve o BKS Harness: uma equipe de sete papéis de IA — seis agentes e o Gerente — que trabalha com você, conversa com você e faz o seu padrão de desenvolvimento crescer a cada projeto. Ele não é uma ferramenta de vibe coding. O código é consequência de conversas, decisões registradas e verificações executadas.
 
 O harness nasce de dois projetos que já existem. O **2brains** (`${BKS_VAULT}`, template público em `bks-2brains`) é o vault: guarda o que atravessa projetos — quem você é (`workbench/`), o que você aprendeu (`knowledge/`) e os projetos em `repos/{backside|w3|private}/`, cada um com git próprio e memória própria. O **BKS kit** (`bks-sdd-kit`, plugin `bks` 0.7.0) é a ferramenta: 17 skills, 12 comandos `/bks:*`, quatro agentes (planner, builder, reviewer, scribe), guardas executáveis em `hooks/`, nove perfis de projeto e 20 casos de eval.
 
@@ -44,7 +44,7 @@ A resposta não é um prompt melhor. É a estrutura em volta do modelo.
 
 ### 3. O vault e o projeto
 
-O **vault** guarda o que atravessa projetos. `workbench/` é o que é seu: `profile.md` (quem você é e como trabalha) e `decisions/` (ADRs sobre o processo, não sobre um projeto). `knowledge/` é o que você aprendeu, no padrão LLM Wiki do Karpathy: fontes imutáveis em `raw/`, páginas curadas em `wiki/{foundations,patterns,architecture,ddd,tdd,sdd,go,...}/`, catálogo em `index.md`, registro em `log.md`. Ela é alimentada pelo `/bks:ingest` e consultada com `tools/search.sh`. Regra de ouro: antes de decidir arquitetura ou padrão, consulte a wiki e cite a página; o incerto vira `> [!uncertain]`, nunca chute.
+O **vault** guarda o que atravessa projetos. `workbench/` é o que é seu: `profile.md` (quem você é e como trabalha) e `decisions/` (ADRs sobre o processo, não sobre um projeto). `knowledge/` é o que você aprendeu, no padrão LLM Wiki do Karpathy: fontes imutáveis em `raw/`, páginas curadas em `wiki/{foundations,patterns,architecture,ddd,tdd,sdd,go,...}/`, catálogo em `index.md`, registro em `log.md`. Ela é alimentada pelo `/bkhar:ingest` e consultada com `tools/search.sh`. Regra de ouro: antes de decidir arquitetura ou padrão, consulte a wiki e cite a página; o incerto vira `> [!uncertain]`, nunca chute.
 
 O **projeto** é autossuficiente: abrir o repositório dá acesso a tudo que ele precisa, e nenhum comando de projeto lê o vault para funcionar. Cada um nasce com `STATUS.md` (onde parei, o que trava, próximo passo), `WORKFLOW.md` (o fluxo de comandos deste projeto), `JOURNAL.md` (marcos, do mais recente ao mais antigo), `.bks-profile.json` (perfil e eixos), `brain/domain/` (o que o produto é), `brain/engineering/` (como se constrói aqui), `decisions/`, `specs/{features,tests,tasks}/`, `docs/{input,design,canonical,history}/`, `outputs/` e `app/`. O hub central `brain/_bks-ai/` do template público foi abandonado: um projeto só funcionava com ele por perto, e ele envelhecia sem que ninguém percebesse.
 
@@ -56,29 +56,32 @@ Nenhuma linha de código nasce sem contexto consolidado e spec aprovada. O fluxo
 
 **Fase pesquisa (sessão na raiz do vault, depois na raiz do projeto):**
 
-1. `/bks:brain` na raiz do vault monta o panorama de todos os projetos a partir dos `STATUS.md` e diz qual tem trabalho pronto. Dentro de um projeto, lê só o `STATUS.md` dele.
-2. `/bks:new-project` (único comando de projeto que roda no vault) cria `repos/{categoria}/{nome}/` com a estrutura canônica e grava o perfil em `.bks-profile.json`. Categorias: `backside`, `w3` e `private`.
-3. Você traz o material bruto para `docs/input/` e os rascunhos para `docs/design/`; `/bks:note` escreve notas vivas em `docs/input/notas/`.
-4. `/bks:canonize` consolida tudo em `docs/canonical/CONTEXT.md`, com fontes citadas e `> [!uncertain]` nas divergências. A versão anterior vai para `docs/history/`.
-5. `/bks:prd` gera `docs/canonical/PRD-{projeto}.md`. Todo requisito rastreia para o CONTEXT.md.
+1. `/bkhar:brain` na raiz do vault monta o panorama de todos os projetos a partir dos `STATUS.md` e diz qual tem trabalho pronto. Dentro de um projeto, lê só o `STATUS.md` dele.
+2. `/bkhar:new-project` (único comando de projeto que roda no vault) cria `repos/{categoria}/{nome}/` com a estrutura canônica e grava o perfil em `.bks-profile.json`. Categorias: `backside`, `w3` e `private`.
+3. Você traz o material bruto para `docs/input/` e os rascunhos para `docs/design/`; `/bkhar:note` escreve notas vivas em `docs/input/notas/`.
+4. `/bkhar:canonize` consolida tudo em `docs/canonical/CONTEXT.md`, com fontes citadas e `> [!uncertain]` nas divergências. A versão anterior vai para `docs/history/`.
+5. `/bkhar:prd` gera `docs/canonical/PRD-{projeto}.md`. Todo requisito rastreia para o CONTEXT.md.
 
 **Fase código (raiz do repo do projeto):**
 
-1. `/bks:spec` faz a entrevista do bounded context e gera `specs/features/FEAT-*.md`; depois de aprovada, o `TEST`. A partir daqui, a spec só cita `docs/canonical/`.
-2. `/bks:arch` gera `outputs/ARCH-{projeto}.md` no renderer do perfil (Mermaid por padrão) e o README do repo.
-3. `/bks:loop` implementa sob LOOP-4, com os guardas de `hooks/` recusando escrita fora do padrão.
-4. `/bks:review` dispara o reviewer em invocação separada e read-only; `/bks:maintainability` dá o parecer de manutenibilidade por aplicação de `app/`.
-5. `/bks:save` fecha a sessão: decisões em `decisions/`, specs em `specs/`, `STATUS.md` reescrito, marco no `JOURNAL.md`, e alerta quando o canônico ficou mais velho que as decisões.
+1. `/bkhar:plan` faz o plano macro e o grafo de tasks a partir do PRD aprovado.
+2. `/bkhar:arch` elabora a arquitetura: o índice `docs/library/architecture/ARCH-{projeto}.md` e um modelo por arquivo (C4, dados, sequências, fronteiras sensíveis, implantação), desenhados pela `bks-arch` no renderer do perfil. É portão: sem ARCH e modelos aprovados, nenhuma FEAT começa, no `colaborativo` e no `autonomo`.
+3. `/bkhar:refine` (ou `/bkhar:spec`, sem rito) gera `specs/features/FEAT-*.md` apoiada nos modelos; depois de aprovada, o `TEST`. A partir daqui, a spec só cita `docs/canonical/` e a arquitetura aprovada.
+4. `/bkhar:loop` implementa sob LOOP-4, com os guardas de `hooks/` recusando escrita fora do padrão.
+5. `/bkhar:review` dispara o reviewer em invocação separada e read-only; `/bkhar:maintainability` dá o parecer de manutenibilidade por aplicação de `app/`.
+6. `/bkhar:save` fecha a sessão: decisões em `decisions/`, specs em `specs/`, `STATUS.md` reescrito, marco no `JOURNAL.md`, alerta quando o canônico ou um modelo da arquitetura ficou mais velho que as decisões, e regera a biblioteca do projeto.
+
+**A biblioteca do projeto.** `docs/library/` é a wiki do projeto: o catálogo `LIBRARY.md` lista, por referência, canônicos, arquitetura, contratos, specs, decisões, ilustrações e histórico, e o dashboard `site/index.html` apresenta tudo com os diagramas renderizados e a linha do tempo. Os modelos são vivos: o `scripts/library.py stale` aponta o que ficou para trás e o `/bkhar:arch --update` refaz. O `/bkhar:library export` leva a biblioteca para `knowledge/wiki/projetos/{projeto}/` do vault, com o filtro de dado sensível do harvest.
 
 &#91;embedded content: fluxo do 2brains · fase pesquisa e fase código\]
 
-O `/bks:canonize` é o ponto em que o entendimento vira fonte única: a partir do PRD, a spec só cita `docs/canonical/`. Quando uma decisão posterior contradiz o canônico, o `/bks:save` detecta e avisa.
+O `/bkhar:canonize` é o ponto em que o entendimento vira fonte única: a partir do PRD, a spec só cita `docs/canonical/`. Quando uma decisão posterior contradiz o canônico, o `/bkhar:save` detecta e avisa.
 
-**Dois caminhos para a spec.** O `/bks:spec` é o caminho enxuto, e é o que todos os projetos em curso usam hoje. A skill `bks-sdd` é o caminho completo, com workspace, PLAN, TASKs em pares RED/GREEN e memória de sessão em `.states/`, para produto grande ou escopo incerto. Nos dois, as specs moram em `{repo}/specs/`.
+**Dois caminhos para a spec.** O `/bkhar:spec` é o caminho enxuto, e é o que todos os projetos em curso usam hoje. A skill `bks-sdd` é o caminho completo, com workspace, PLAN, TASKs em pares RED/GREEN e memória de sessão em `.states/`, para produto grande ou escopo incerto. Nos dois, as specs moram em `{repo}/specs/`.
 
 ### 5. LOOP-4
 
-Cada task tem no máximo quatro tentativas. A cada rodada, o `/bks:loop` executa `dotnet build` e `dotnet test` e audita quatro goals: **G1** build sem erro e sem warning novo, **G2** testes 100% verdes, **G3** cenários do TEST cobertos e **G4** código fiel ao `brain/engineering/` do projeto (calisthenics e hexagonal). Quando um goal falha, o erro real volta como contexto da próxima tentativa. Na quarta falha, o loop para e gera `outputs/BLOQUEIO-[task].md` para você decidir. Quinta tentativa, relaxar o goal ou marcar como concluído são proibidos. No harness, G3 e G4 passam a ser conferidos também por execução (testes de arquitetura), não só auditados pelo modelo.
+Cada task tem no máximo quatro tentativas. A cada rodada, o `/bkhar:loop` executa `dotnet build` e `dotnet test` e audita quatro goals: **G1** build sem erro e sem warning novo, **G2** testes 100% verdes, **G3** cenários do TEST cobertos e **G4** código fiel ao `brain/engineering/` do projeto (calisthenics e hexagonal). Quando um goal falha, o erro real volta como contexto da próxima tentativa. Na quarta falha, o loop para e gera `outputs/BLOQUEIO-[task].md` para você decidir. Quinta tentativa, relaxar o goal ou marcar como concluído são proibidos. No harness, G3 e G4 passam a ser conferidos também por execução (testes de arquitetura), não só auditados pelo modelo.
 
 &#91;embedded content: LOOP-4 · tentativa, gates, revisão ou decisão humana\]
 
@@ -113,11 +116,14 @@ Trocar um fornecedor muda só a coluna da direita; o core e as portas ficam igua
 | Agent registry | Os sete perfis com persona, limites, modelo e fontes | Existe (0.9.0): seis agentes em `agents/`; o Gerente é a skill `bks-team` |
 | Skill registry | Cataloga as skills, versões e estágio de cada uma | Evolui `skills/` do kit (17 skills) |
 | Perfis de projeto | Dizem quais fases, artefatos e skills se aplicam | Existe: nove perfis + eixos em `.bks-profile.json` |
-| Orquestrador SDD | Fases e portões; impede pular etapa | Existe no `bks-sdd` e nos comandos `/bks:*` |
-| Gate runner | Build, testes, regras de arquitetura e guardas | Evolui `hooks/` e o LOOP-4 do `/bks:loop` |
-| Model router | Escolhe o modelo por agente e por zona | Novo; hoje o modelo é fixo no frontmatter do agente |
+| Orquestrador SDD | Fases e portões; impede pular etapa | Existe nos comandos `/bkhar:*`; no `autonomo`, `/bkhar:loop --wave` executa o grafo e `scripts/readiness.py` concede o modo |
+| Estado da execução | Uma task por arquivo, com tentativas, worktree e custo; um escritor só | Existe (1.0.0): `outputs/run/`, escrito por `scripts/run_state.py` |
+| Painel local | Acompanha ondas, tentativas, bloqueios e consumo; recebe sua interação | Existe (1.0.0): `scripts/dashboard.py` em `127.0.0.1`, escreve só em `outputs/run/inbox/` |
+| Biblioteca do projeto | Catálogo, dashboard e exportação dos artefatos do projeto | Existe (1.0.0): `docs/library/`, gerada por `scripts/library.py` |
+| Gate runner | Build, testes, regras de arquitetura e guardas | Evolui `hooks/` e o LOOP-4 do `/bkhar:loop` |
+| Model router | Escolhe o modelo por agente e por zona | Parcial (1.0.0): modelo no frontmatter do agente, sobrescrito pelo mapa `models` do `.bks-profile.json`; por zona, na Fase 4 |
 | Policy engine | Bloqueia zona sensível para provedor não aprovado | Novo, lê o manifesto `.claude/multiagente.md` |
-| Proposal inbox | Recebe o que os agentes aprenderam, para sua curadoria | Novo: `inbox/proposals/`, rejeitadas em `archive/` |
+| Proposal inbox | Recebe o que os agentes aprenderam, para sua curadoria | Existe (1.0.0): `inbox/proposals/` pelo `scripts/learning.py`; `/bkhar:retro` promove ou arquiva em `archive/` |
 | Telemetry | Custo e uso por agente, modelo, skill e fase | Evolui `session_cost.py`, `--cost-report` e `.logs/custo-tokens.md` |
 | Eval suite | Compara modelos e versões de skill com delta with × without | Existe: 20 casos, `claude plugin eval .`, suíte estrutural sem modelo |
 
@@ -129,19 +135,21 @@ Cada agente tem um modelo preferido, declarado em `routing.yaml`. Três regras g
 2. **Quem executa pode usar o mais barato.** O Dev é protegido pelos gates.
 3. **Quem revisa usa outro fornecedor.** Testes e Segurança rodam num fornecedor diferente do Dev, porque modelos diferentes erram de formas menos correlacionadas. É segregação de função de verdade.
 
+**O que existe na 1.0.0.** O padrão de cada papel está no frontmatter do agente: Opus para `architect` e `security`, Sonnet para `developer`, `tester` e `quality`, Haiku para o `scribe`. O mapa `models` do `.bks-profile.json` sobrescreve por projeto, e o Gerente passa o modelo em cada chamada. O painel troca o modelo de um papel por pedido na inbox. O roteamento por fornecedor e por zona continua para a Fase 4.
+
 ### 10. Política de dados
 
-Cada projeto declara em `.bks-profile.json` o perfil e o eixo `rigor` (`producao` ou `poc`). Projeto com área sensível ganha um manifesto em `{repo}/.claude/multiagente.md`, a partir do template `manifesto-projeto.md` do kit — hoje `nquantic` e `poc-sec-sdk` têm um. O manifesto traz: comandos de verificação, zonas de contenção (arquivos que só a sessão principal edita, como `Program.cs` e migrations), recursos numerados compartilhados, zonas paralelizáveis, áreas sensíveis que exigem `/bks:review` e invariantes do domínio. O policy engine do harness lê esse mesmo manifesto antes de cada chamada e troca o provedor quando a área exige. Em contexto bancário, sob BACEN e LGPD, isso não pode depender de lembrar.
+Cada projeto declara em `.bks-profile.json` o perfil e o eixo `rigor` (`producao` ou `poc`). Projeto com área sensível ganha um manifesto em `{repo}/.claude/multiagente.md`, a partir do template `manifesto-projeto.md` do kit — hoje `nquantic` e `poc-sec-sdk` têm um. O manifesto traz: comandos de verificação, zonas de contenção (arquivos que só a sessão principal edita, como `Program.cs` e migrations), recursos numerados compartilhados, zonas paralelizáveis, áreas sensíveis que exigem `/bkhar:review` e invariantes do domínio. O policy engine do harness lê esse mesmo manifesto antes de cada chamada e troca o provedor quando a área exige. Em contexto bancário, sob BACEN e LGPD, isso não pode depender de lembrar.
 
 A API hospedada do DeepSeek armazena dados fora do Brasil. Por isso, zonas sensíveis só usam provedor aprovado ou pesos abertos rodando localmente (Ollama ou vLLM). Segredos nunca entram no contexto: o harness só referencia o cofre CyberArk.
 
 ## Parte III — A Equipe
 
-A equipe tem sete agentes, e cada um tem um papel, um limite e um conjunto de perguntas que sempre faz. Nenhum agente decide por você: eles aconselham, questionam e executam, mas a decisão é sua e fica registrada.
+A equipe tem sete papéis — seis agentes e o Gerente —, e cada um tem uma função, um limite e um conjunto de perguntas que sempre faz. Nenhum agente decide por você: eles aconselham, questionam e executam, mas a decisão é sua e fica registrada.
 
 ### 11. Visão geral
 
-&#91;embedded content: a equipe · 7 agentes em 3 grupos\]
+&#91;embedded content: a equipe · 6 agentes e o Gerente em 3 grupos\]
 
 Quem revisa nunca é quem constrói, e quem decide é sempre você.
 
@@ -217,7 +225,7 @@ Depois que os gates passam, três revisores leem o diff em invocações separada
 
 ### 18. Retrospectiva
 
-O Documentador pergunta a cada agente: o que funcionou, o que travou, o que vale virar padrão. O resultado não é um relatório, mas propostas concretas para o seu cérebro (Parte V).
+O Documentador pergunta a cada agente: o que funcionou, o que travou, o que vale virar padrão. O resultado não é um relatório, mas propostas candidatas para o seu cérebro (Parte V). Quem decide o destino de cada uma é você, no `/bkhar:retro`.
 
 ### 19. O time também te provoca
 
@@ -235,14 +243,16 @@ O harness melhora porque o seu cérebro melhora, e o seu cérebro só muda com a
 
 ### 20. O ciclo em quatro passos
 
-1. **Observar.** Durante os ritos, cada agente anota padrões novos, anti-padrões encontrados, referências citadas e contradições com o padrão.
-2. **Propor.** Na retrospectiva, o Documentador transforma as anotações em propostas, uma por arquivo, em `inbox/proposals/` do repositório do harness.
-3. **Curar.** Você revisa as propostas com `/bkhar:curate`: aceita, edita ou rejeita. A rejeitada vai para `archive/` com o motivo: rejeitar também ensina.
-4. **Incorporar.** O que você aceita vira regra de skill, checklist de agente, guarda, template ou página da wiki. Uma nova versão do plugin é instalada, e a próxima sessão já começa com o padrão novo.
+1. **Observar.** Durante os ritos, cada agente anota padrões novos, anti-padrões encontrados, referências citadas e contradições com o padrão. Cada correção sua também conta.
+2. **Propor.** O `scripts/learning.py propose` grava a proposta, uma por arquivo, em `inbox/proposals/` do projeto, com `status: candidata`, evidência e origem. O `/bkhar:save` a leva ao `inbox/proposals/` do vault e recusa a que tiver dado pessoal ou segredo.
+3. **Curar.** Você revisa as candidatas com `/bkhar:retro`: promove a regra do projeto (`brain/engineering/regras/`), do vault (`workbench/regras/`) ou do kit, que espera eval antes de entrar; ou rejeita, e ela vai para `archive/` com o motivo. Rejeitar também ensina.
+4. **Incorporar.** A regra promovida passa a ser lida pelos agentes na próxima sessão, e a prontidão do `autonomo` avisa quando o projeto ainda não tem nenhuma. Na raiz do vault, o `/bkhar:harvest` consolida as decisões de todos os projetos em `knowledge/wiki/experiencia/`, por tema, com ponteiro para o ADR de origem.
 
 &#91;embedded content: ciclo de aprendizado · 4 passos\]
 
-O único passo que exige você é a curadoria; os outros três a equipe faz sozinha.
+O único passo que exige você é a curadoria; os outros três a equipe faz sozinha. Captura gravada direto como regra está recusada: suspeita viraria fato, e o agente passaria a citá-la.
+
+**O `colaborativo` treina o `autonomo`.** Cada correção que você faz no modo colaborativo vira candidata; promovida e medida, passa a valer quando o projeto roda sozinho.
 
 ### 21. Tipos de proposta
 
@@ -250,7 +260,7 @@ O único passo que exige você é a curadoria; os outros três a equipe faz sozi
 | --- | --- | --- |
 | Regra de padrão | `skills/bks-standards/` (todo projeto) ou `brain/engineering/` (um projeto) | Máscara de CPF é responsabilidade do domínio |
 | Regra de checklist | `skills/bks-team/references/` | Segurança: verificar log em nível Debug |
-| Página de conhecimento | `knowledge/wiki/` do vault, via `/bks:ingest` | Resumo de um paper citado no painel |
+| Página de conhecimento | `knowledge/wiki/` do vault, via `/bkhar:ingest` | Resumo de um paper citado no painel |
 | Template | `templates/` do plugin | Seção "Dados sensíveis" obrigatória na FEAT |
 | Guarda | `hooks/scripts/` + teste em `hooks/tests/` | Domain não referencia Dapper |
 | Sobre você ou o processo | `workbench/profile.md` ou `workbench/decisions/` | Preferência de revisão, ADR de processo |
@@ -264,10 +274,11 @@ Quando um agente traz um artigo, um livro ou um paper, ele não fica só na conv
 ```markdown
 ---
 tipo: premissa
+projeto: pix-comprovante
+status: candidata
+data: 2026-11-04
 origem: retro FEAT-comprovante-pix
-proposto-por: seguranca
-fonte: ADR-007
-status: pendente
+evidencia: ADR-007; CPF completo em log de Debug
 ---
 # Máscara de CPF na camada de domínio
 
@@ -284,48 +295,94 @@ Do escopo ao merge, cada etapa tem um dono, uma saída e um portão. Os portões
 
 | Etapa | Rito | Dono | Saída | Portão |
 | --- | --- | --- | --- | --- |
-| 1. Contexto da sessão | — | Gerente | `/bks:brain`: panorama ou STATUS do projeto | — |
-| 2. Projeto | — | Você | `/bks:new-project` cria repo e perfil | — |
-| 3. Entendimento | Refinamento do escopo | Gerente, Arquiteto | `docs/input/` → `/bks:canonize` → `CONTEXT.md` | Perguntas `[!uncertain]` respondidas |
-| 4. Requisito | — | Arquiteto | `/bks:prd` → `PRD-{projeto}.md` | Sua aprovação |
-| 5. Refinamento da feature | Refinamento | Gerente | Perguntas da equipe e suas respostas | Suas respostas |
+| 1. Contexto da sessão | — | Gerente | `/bkhar:brain`: panorama ou STATUS do projeto | — |
+| 2. Projeto | — | Você | `/bkhar:new-project` cria repo e perfil | — |
+| 3. Entendimento | Refinamento do escopo | Gerente, Arquiteto | `docs/input/` → `/bkhar:canonize` → `CONTEXT.md` | Perguntas `[!uncertain]` respondidas |
+| 4. Requisito | — | Arquiteto | `/bkhar:prd` → `PRD-{projeto}.md` | Sua aprovação |
+| 4a. Plano e arquitetura | — | Arquiteto | `/bkhar:plan` → PLAN e grafo; `/bkhar:arch` → ARCH e modelos em `docs/library/architecture/` | Sua aprovação do PLAN, do ARCH e de cada modelo |
+| 5. Refinamento da feature | Refinamento | Gerente | Perguntas da equipe, apoiadas nos modelos, e suas respostas | Suas respostas |
 | 6. FEAT | — | Arquiteto | FEAT com critérios e dados sensíveis | Sua aprovação |
 | 7. TEST | — | Testes | TEST e testes xUnit em RED | Sua aprovação |
 | 8. TASK | — | Gerente | TASK-n em pares RED/GREEN (`bks-create-plan-tasks`) | — |
 | 9. Implementação | — | Dev | Código e explicação das escolhas | G1–G4, LOOP-4, guardas |
 | 10. Revisão | Revisão em painel | Testes, Segurança, Qualidade | Achados com `arquivo:linha` | Sem crítica aberta |
-| 11. Registro | — | Documentador | ADR, C4, README, ARCHITECTURE.md, STATUS, JOURNAL (`/bks:save`) | — |
+| 11. Registro | — | Documentador | ADR, README, ARCHITECTURE.md, STATUS, JOURNAL, biblioteca regerada (`/bkhar:save`) | Modelo defasado vira aviso para o `/bkhar:arch --update` |
 | 12. Aprendizado | Retrospectiva | Documentador | Propostas em `inbox/proposals/` | Sua curadoria |
 
-### 25. Comandos
+### 25. Modos de condução
+
+O projeto escolhe como é conduzido, em `axes.mode` do `.bks-profile.json`. O `colaborativo` é o padrão; o `autonomo` é opcional e com limites.
+
+| Onde | `colaborativo` | `autonomo` |
+| --- | --- | --- |
+| `/bkhar:refine`, `/bkhar:spec` | os agentes perguntam e esperam você | o Arquiteto responde as próprias perguntas pelas fontes e grava cada resposta como suposição em `decisions/SUPOSICOES.md` |
+| Portões seus | FEAT, TEST e cada tentativa | três: PRD, PLAN e ARCH aprovados; contratos da onda de desenho; entrega final |
+| `/bkhar:loop` | decisão fora da FEAT para e pergunta | decisão fora da FEAT vira suposição; para só em `BLOQUEIO` |
+| `/bkhar:review` | achados voltam para você | bloqueante volta ao loop; sugestão vai para o relatório da onda |
+| Paralelismo | não | ondas em worktree |
+
+**Prontidão.** O `/bkhar:mode autonomo` só troca o modo quando o `scripts/readiness.py`, sem chamar modelo, concede: CONTEXT revisado ou aprovado, PRD e PLAN aprovados, grafo válido, ARCH e modelos aprovados e em dia, nenhuma questão em aberto e a stack no perfil. A recusa lista o que falta por nível e o comando que resolve. A troca grava ADR; sem ADR, não houve troca.
+
+**O que nenhum modo afrouxa:** os guardas de `hooks/`, build e testes verdes, o RED antes do código, o máximo de 4 tentativas, nada de push na `main` e a Segurança em área sensível. Dado pessoal, autorização e segredo não se presumem: param em `BLOQUEIO`. Em `rigor: producao`, os contratos da onda de desenho continuam com você.
+
+### 26. Ondas e painel
+
+O `/bkhar:plan` grava o grafo `outputs/GRAPH-{projeto}.json`. Cada task declara o que `consome`, o que `produz` e os `arquivos` que escreve. As ondas são calculadas, não declaradas: a task vem depois de quem produz o que ela consome, e só começa quando tudo o que consome existe com `status: aprovado`.
+
+| Onda | Produz | Quem faz |
+| --- | --- | --- |
+| 0 · Contexto | canônico, PRD, PLAN, ARCH | você aprova |
+| 1 · Desenho | contratos por lente: banco, API, infra, telemetria, ameaças | Arquiteto por lente, em paralelo; Segurança no modelo de ameaças |
+| 2 · Construção | apps e serviços | LOOP-4 por task, cada uma na sua worktree |
+| 3 · Front e integração | telas, testes de ponta a ponta | LOOP-4 por task |
+
+O `/bkhar:loop --wave next` libera até 4 tasks simultâneas. No fim da onda, a sessão principal faz o merge das worktrees, roda build e suíte completos, chama o `/bkhar:review` sobre a onda inteira, confere a arquitetura viva e grava `outputs/run/onda-N/RELATORIO.md`. Conflito de merge para a onda; `BLOQUEIO` de uma task segura só a cadeia que depende dela.
+
+O estado vive em `outputs/run/`, e só o orquestrador o escreve, pelo `scripts/run_state.py`, que recusa transição inválida: 5ª tentativa, task não liberada, execução pausada. O `/bkhar:status` mostra a tabela no terminal.
+
+O painel acompanha e conversa com a execução:
+
+```
+python ${CLAUDE_PLUGIN_ROOT}/scripts/dashboard.py .     # http://127.0.0.1:8765
+```
+
+Ele mostra as ondas, as tasks e as tentativas ao vivo, os bloqueios, o modelo de cada papel e o consumo por modelo, agente e dia, e avisa pelo navegador quando uma task trava. Por ele você responde a um `BLOQUEIO`, pausa ou retoma a onda, deixa mensagem para a próxima tentativa e troca o modelo de um papel. Tudo vira pedido em `outputs/run/inbox/`, que o orquestrador aplica no próximo ponto de controle, entre tentativas e entre tasks: subagente em execução não recebe mensagem de fora, e o painel não finge controle em tempo real.
+
+### 27. Comandos
 
 Os comandos já existem e só existem no plugin: a cópia global em `~/.claude/commands/` foi removida em 2026-09-15, porque divergia da do kit e vencia na resolução de nome. O prefixo de um comando de plugin é o nome do plugin, e nenhum frontmatter o remove. Por isso `/bkhar:*` exige que o plugin se chame `bkhar` (opção A, recomendada): o kit é rebatizado, e durante a migração o plugin `bks` continua instalado para os projetos que ainda não mudaram. Não há executável `bkhar` separado: um motor de execução só, o `/bkhar:loop`, que evolui o `/bks:loop`.
 
 | Comando | Hoje no kit | Onde roda | O que faz | Status |
 | --- | --- | --- | --- | --- |
-| `/bkhar:brain` | `/bks:brain` | Vault ou repo | Panorama dos projetos, ou o STATUS do projeto | Existe, renomeia |
-| `/bkhar:new-project` | `/bks:new-project` | Vault | Cria repo canônico e grava o perfil | Existe, renomeia |
+| `/bkhar:brain` | `/bks:brain` | Vault ou repo | Panorama dos projetos, ou o STATUS do projeto; avisa modelo defasado | Existe |
+| `/bkhar:new-project` | `/bks:new-project` | Vault | Cria repo canônico e grava o perfil | Existe |
 | `/bkhar:migrate` | — | Repo | Traz um projeto do `bks` para o `bkhar` e grava o `.bkhar.json` | Existe (Fase 1) |
-| `/bkhar:note` | `/bks:note` | Repo | Nota viva em `docs/input/notas/` | Existe, renomeia |
-| `/bkhar:canonize` | `/bks:canonize` | Repo | `docs/input/` + `docs/design/` → `CONTEXT.md` | Existe, renomeia |
-| `/bkhar:prd` | `/bks:prd` | Repo | `CONTEXT.md` → `PRD-{projeto}.md` | Existe, renomeia |
+| `/bkhar:note` | `/bks:note` | Repo | Nota viva em `docs/input/notas/` | Existe |
+| `/bkhar:canonize` | `/bks:canonize` | Repo | `docs/input/` + `docs/design/` → `CONTEXT.md` | Existe |
+| `/bkhar:prd` | `/bks:prd` | Repo | `CONTEXT.md` → `PRD-{projeto}.md` | Existe |
+| `/bkhar:plan` | — | Repo | PRD → `outputs/PLAN-{projeto}.md` e o grafo `outputs/GRAPH-{projeto}.json` | Existe (1.0.0, com grafo) |
+| `/bkhar:arch` | `/bks:arch` | Repo | Portão: ARCH e um modelo por arquivo em `docs/library/architecture/`, pela `bks-arch`, para aprovar; `--update` refaz o defasado | Existe (1.0.0, portão) |
+| `/bkhar:library` | — | Repo | Catálogo e dashboard da biblioteca; `export` para `knowledge/` do vault | Existe (1.0.0) |
+| `/bkhar:refine` | — | Repo | Rito de refinamento: perguntas da equipe, FEAT com `Refinamento: sim`, TEST; no `autonomo`, as perguntas viram suposições | Existe (0.9.0; ramo `autonomo` na 1.0.0) |
 | `/bkhar:spec` | `/bks:spec` | Repo | Entrevista → FEAT → TEST, sem rito | Existe; exceção ao `/bkhar:refine` |
-| `/bkhar:arch` | `/bks:arch` | Repo | ARCH no renderer do perfil + README | Existe, renomeia |
-| `/bkhar:loop` | `/bks:loop` | Repo | Passo 0 com o RED do Testes; LOOP-4 com o Dev, G1–G4 ou `BLOQUEIO-*.md` | Existe (0.9.0); ganha model router na Fase 4 |
-| `/bkhar:review` | `/bks:review` | Repo | Revisão em painel: Testes, Qualidade e, em área sensível, Segurança | Existe, em painel (0.9.0) |
-| `/bkhar:maintainability` | `/bks:maintainability` | Repo | Parecer de manutenibilidade por aplicação | Existe, renomeia |
-| `/bkhar:save` | `/bks:save` | Repo | Decisões, specs, STATUS, JOURNAL, alerta do canônico | Existe, renomeia |
-| `/bkhar:ingest` | `/bks:ingest` | Vault | Fonte ou lote → página em `knowledge/wiki/` | Existe, renomeia |
-| skill `bks-sdd` + flags | idem | Repo | Fluxo completo: workspace, PLAN, TASKs, `--context`, `--cost-report` | Existe |
-| `/bkhar:refine` | — | Repo | Rito de refinamento: perguntas da equipe, FEAT com `Refinamento: sim`, TEST | Existe (0.9.0) |
+| `/bkhar:loop` | `/bks:loop` | Repo | Passo 0 com o RED do Testes; LOOP-4 com o Dev; com `--wave N`, a onda do grafo com até 4 tasks em paralelo, cada uma em worktree | Existe (`--wave` na 1.0.0) |
+| `/bkhar:review` | `/bks:review` | Repo | Revisão em painel: Testes, Qualidade e, em área sensível, Segurança | Existe |
+| `/bkhar:status` | — | Repo | Tabela da execução em ondas: liberado, em curso, bloqueado, suposições abertas | Existe (1.0.0) |
+| `/bkhar:mode` | — | Repo | Troca entre `colaborativo` e `autonomo` pela prontidão, com ADR | Existe (1.0.0) |
+| `/bkhar:maintainability` | `/bks:maintainability` | Repo | Parecer de manutenibilidade por aplicação | Existe |
+| `/bkhar:save` | `/bks:save` | Repo | Decisões, specs, STATUS, JOURNAL, alertas do canônico e da arquitetura, candidatas ao vault, biblioteca regerada | Existe |
+| `/bkhar:retro` | — | Repo | Promove cada proposta candidata a regra do projeto, do vault ou do kit, ou a rejeita com motivo | Existe (1.0.0) |
+| `/bkhar:harvest` | — | Vault | Indexa ADRs e `LEARNINGS.md` de `repos/` e consolida por tema em `knowledge/wiki/experiencia/` | Existe (1.0.0) |
+| `/bkhar:ingest` | `/bks:ingest` | Vault | Fonte ou lote → página em `knowledge/wiki/` | Existe |
 | `/bkhar:panel` | — | Repo | Painel com 2 ou 3 agentes independentes; ADR com as opções descartadas | Existe (0.9.0) |
-| `/bkhar:brainstorm` | — | Qualquer pasta | Rito de brainstorming com a skill de mesmo nome | Proposto |
 | `/bkhar:ask <agent>` | — | Repo | Pergunta direta a um papel, com resposta que cita a fonte | Existe (0.9.0) |
-| `/bkhar:retro` | — | Repo | Retrospectiva da FEAT atual | Proposto |
-| `/bkhar:curate` | — | Repo do harness | Revisa as propostas pendentes | Proposto |
+| skill `bks-sdd` + flags | idem | Repo | Fluxo completo: workspace, PLAN, TASKs, `--context`, `--cost-report` | Existe |
+| `/bkhar:brainstorm` | — | Qualquer pasta | Rito de brainstorming com a skill de mesmo nome | Proposto |
 | `/bkhar:skill new / list / promote` | — | Repo do harness | Cria, lista e promove skills | Proposto |
-| `/bkhar:cost` | `--cost-report` + `session_cost.py` | Repo | Custo por agente, modelo, skill e fase | Evolui o que existe |
+| `/bkhar:cost` | `--cost-report` + `session_cost.py` | Repo | Custo por agente, modelo, skill e fase; o painel já mostra o consumo por modelo, agente e dia | Evolui o que existe |
 | `claude plugin eval .` | idem | Repo do harness | Evals de skill com delta with × without | Existe, falta a baseline |
+
+O `/bkhar:curate` previsto nas versões anteriores foi absorvido pelo `/bkhar:retro`: a curadoria é a promoção ou a rejeição de cada candidata.
 
 Como usar cada comando, com passo a passo e exemplo: Parte X, Manual de comandos.
 
@@ -333,7 +390,7 @@ Como usar cada comando, com passo a passo e exemplo: Parte X, Manual de comandos
 
 Este case é fictício. Ele acompanha uma feature do pedido à retrospectiva: um endpoint de consulta de comprovante PIX numa API .NET 10 em hexagonal, com Dapper e SQL Server. O projeto já passou pela fase pesquisa: `docs/canonical/CONTEXT.md` e `PRD-{projeto}.md` existem. O `.bks-profile.json` declara perfil `backend` com rigor `producao`, e o manifesto `.claude/multiagente.md` lista pagamentos e dado pessoal como áreas sensíveis.
 
-### 26. Pedido e refinamento
+### 28. Pedido e refinamento
 
 > **Você:** `/bkhar:refine` endpoint para consultar comprovante PIX por id.
 >
@@ -349,11 +406,11 @@ Este case é fictício. Ele acompanha uma feature do pedido à retrospectiva: um
 
 Você responde: pagador e recebedor podem consultar; as duas situações retornam 404; leitura direta basta por enquanto; Result Pattern em todo o fluxo. O Arquiteto registra a escolha de leitura direta como ADR, com CQRS como alternativa descartada e o gatilho para revisitar.
 
-### 27. FEAT e TEST
+### 29. FEAT e TEST
 
 A FEAT nasce com os critérios: 404 para inexistente ou alheio, CPF sempre mascarado, autorização por pagador ou recebedor, p95 abaixo de \[\_\_\] ms. O agente de Testes escreve o TEST e os testes xUnit em RED, um por critério. Você aprova os dois.
 
-### 28. Implementação sob LOOP-4
+### 30. Implementação sob LOOP-4
 
 O routing.yaml pede DeepSeek como Dev, mas a zona é sensível. O policy engine troca para o modelo local e registra a troca.
 
@@ -365,7 +422,7 @@ O routing.yaml pede DeepSeek como Dev, mas a zona é sensível. O policy engine 
 
 A cada tentativa, o Dev explica o que mudou e por quê. Na tentativa 2, ele registra: "Coloquei a query no domínio para simplificar; o gate mostrou que viola a premissa. Movi para o adapter."
 
-### 29. Revisão em painel
+### 31. Revisão em painel
 
 - **Segurança (bloqueante):** um log em nível Debug grava o comprovante completo, com CPF. Vira nova task.
 - **Qualidade (sugestão):** o handler tem 40 linhas; propõe extrair a autorização num serviço de domínio. Você aceita.
@@ -373,7 +430,7 @@ A cada tentativa, o Dev explica o que mudou e por quê. Na tentativa 2, ele regi
 
 O Dev corrige, os gates passam de novo, e o painel aprova.
 
-### 30. Registro e retrospectiva
+### 32. Registro e retrospectiva
 
 O Documentador grava o ADR "Leitura direta para comprovante", atualiza o diagrama C4 de componentes, marca a FEAT como concluída e registra o custo: Arquiteto \[US$ \_\_\], Dev local, revisores \[US$ \_\_\].
 
@@ -383,26 +440,26 @@ Na retrospectiva, saem três propostas:
 2. **Checklist de Segurança:** verificar logs em nível Debug em todo diff de zona sensível.
 3. **Template de FEAT:** seção "Quem pode ver" obrigatória em toda consulta.
 
-Você aceita as três com `/bkhar:curate`. Na próxima feature, o Segurança já pergunta sobre log Debug no refinamento, e o template já pede "Quem pode ver". Você aprovou cinco vezes e não reexplicou nada.
+Você promove as três com `/bkhar:retro`: a premissa e o checklist como regras do kit, à espera de eval, e o template como regra do projeto. Na próxima feature, o Segurança já pergunta sobre log Debug no refinamento, e o template já pede "Quem pode ver". Você aprovou cinco vezes e não reexplicou nada.
 
 ## Parte VIII — Implantação
 
 A implantação parte do kit que já funciona e nunca para os projetos em curso. O repositório do harness é público no GitHub, `fabiobackside-code/Bks-Harness`. Neste Atlas, `<harness>` é a pasta onde você o clonou: por exemplo, `C:\dev\bks-harness` no Windows ou `~/dev/bks-harness` no Linux e no macOS. Cada fase já é útil sozinha, e o plugin `bks` continua instalado até o último projeto migrar. Para instalar e começar a usar, o roteiro passo a passo é o manual de treinamento, em `docs/artefatos/treinamento/treinamento-bks-harness.html`.
 
-### 31. Fases
+### 33. Fases
 
 | Fase | Entrega | Critério de saída | Risco para projetos em curso |
 | --- | --- | --- | --- |
 | 0. Planejar | Plano, decisões fechadas, ADR-001 (nomenclatura A) | Decisões da seção 7 do plano respondidas | Nenhum |
 | 1. Importar | Kit trazido com os 44 commits, renomeado `bkhar`, suíte estrutural verde, `/bkhar:migrate` escrito | `claude plugin validate` e testes estruturais passam | Nenhum: `bks` segue instalado |
 | 2. Instalar lado a lado | `bkhar` instalado no escopo do usuário, aliases dos comandos antigos | Os dois plugins respondem sem colisão | Baixo |
-| 3. Equipe e ritos | Seis agentes e o Gerente (skill `bks-team`); `/bkhar:ask`, `panel`, `refine`; `review` em painel; `LEARNINGS.md`. `retro`, `curate` e `inbox/proposals/` ficaram para a fase da retrospectiva | Uma FEAT real com refinamento e painel | Nenhum até um projeto migrar |
+| 3. Equipe e ritos | Seis agentes e o Gerente (skill `bks-team`); `/bkhar:ask`, `panel`, `refine`; `review` em painel; `LEARNINGS.md`. A 1.0.0 trouxe depois os modos, as ondas, o painel, o aprendizado candidato com `retro` e `harvest`, o portão de arquitetura e a biblioteca | Uma FEAT real com refinamento e painel | Nenhum até um projeto migrar |
 | 4. Modelo plugável | `providers/`, Modo Contexto como primeiro adapter, policy engine lendo o manifesto | Um agente rodando em DeepSeek num projeto `poc` | Nenhum |
-| 5. Piloto | Um projeto migrado e usado por uma semana | Retomar e fechar sessão sem atrito | Baixo, reversível |
+| 5. Piloto | O `poc-treino-harness` como teste do `autonomo` da 1.0.0, com as travas de consumo medidas | Retomar e fechar sessão sem atrito | Baixo, reversível |
 | 6. Migrar os demais | Um por vez, entre fases; `nquantic` por último | Todos com `.bks-profile.json` e `/bkhar:*` | Baixo |
 | 7. Medir e aposentar | Baseline das evals, delta por skill e modelo; `bks` desinstalado | Skill ou modelo só promovido com delta medido | — |
 
-### 32. Estrutura de pastas
+### 34. Estrutura de pastas
 
 ```
 <harness>\                               o harness (plugin bkhar), ex.: C:\dev\bks-harness
@@ -414,23 +471,25 @@ A implantação parte do kit que já funciona e nunca para os projetos em curso.
 ├── hooks\                               guardas que recusam a escrita, com testes
 ├── profiles\ · templates\               nove perfis e eixos; layout de projeto
 ├── providers\                           claude (padrão), deepseek, ollama
+├── scripts\                             readiness, wave_graph, run_state, dashboard,
+│                                        learning, harvest, library, publish
 ├── inbox\proposals\ · archive\          propostas da retro e rejeitadas
 ├── evals\ · tests\                      casos com delta e suíte estrutural
 └── docs\                                PLANO-MIGRACAO, ARCHITECTURE, handoff\
 
 ${BKS_VAULT}\                              o vault, só conteúdo
 ├── workbench\                           profile.md, decisions\
-├── knowledge\                           wiki\, raw\, tools\ (search.sh)
+├── knowledge\                           wiki\ (experiencia\, projetos\), raw\, tools\
 ├── repos\{backside,w3,private,old}\     os projetos, cada um com git próprio
 │   └── {projeto}\                       STATUS, WORKFLOW, JOURNAL, .bks-profile.json,
 │                                        brain\{domain,engineering}\, decisions\,
-│                                        specs\, docs\, outputs\, app\
+│                                        specs\, docs\ (library\), outputs\ (run\), app\
 └── docs\                                guias do vault
 
 ~\.claude\settings.json                   env BKS_VAULT (raiz do vault), BKS_KNOWLEDGE
 ```
 
-### 33. Primeiros passos
+### 35. Primeiros passos
 
 - [x] Criar `<harness>` com git local e o plano de migração
 - [ ] Fechar as decisões: nomenclatura A, histórico do kit, merge da `feat/maintainability`, projeto piloto
@@ -440,7 +499,10 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 - [ ] Dar `.bks-profile.json` ao `nquantic` e ao `layan` (o `/bkhar:migrate` pergunta o perfil)
 - [x] Instalar `bkhar` ao lado do `bks` com `/plugin marketplace add <harness>` (ex.: `C:\dev\bks-harness`)
 - [x] Escrever a equipe, o Gerente e os ritos `/bkhar:ask`, `panel`, `refine` (0.9.0)
-- [ ] Escrever a retrospectiva e a curadoria: `/bkhar:retro`, `curate`
+- [x] Escrever a retrospectiva e a curadoria: `/bkhar:retro` e `/bkhar:harvest` (1.0.0); o `curate` foi absorvido pelo `retro`
+- [x] Modos `colaborativo` e `autonomo`, ondas pelo grafo e painel com inbox (1.0.0)
+- [x] Portão de arquitetura e biblioteca do projeto (1.0.0)
+- [ ] Piloto do `autonomo` no `poc-treino-harness`
 - [ ] Migrar o piloto (`mcp-sql` ou `bks-motor-sdk`) e usar uma semana
 - [ ] Rodar a baseline das evals quando houver crédito
 
@@ -448,13 +510,13 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 
 O harness foi feito para crescer. Cada capacidade nova entra como uma skill versionada, que qualquer agente pode carregar, sem mexer no core nem nos perfis.
 
-### 34. Agente e skill
+### 36. Agente e skill
 
 O agente é o papel: **quem** pergunta, decide ou revisa. A skill é a capacidade: **como** se faz brainstorming, análise de ameaças ou profiling. Um mesmo agente ganha competência nova quando você liga uma skill ao perfil dele, e uma mesma skill pode servir a vários agentes.
 
 As skills carregam sob demanda. Só o nome e a descrição ficam sempre no contexto; o corpo, as referências e os scripts entram quando a skill é acionada. É a mesma economia de tokens que motivou o BKS-TXC.
 
-### 35. Catálogo inicial
+### 37. Catálogo inicial
 
 | Skill | O que traz | Usada por | Situação |
 | --- | --- | --- | --- |
@@ -476,7 +538,7 @@ As skills carregam sob demanda. Só o nome e a descrição ficam sempre no conte
 | `lang-java-spring` · `lang-php` | Convenções por linguagem no padrão hexagonal | Dev, Qualidade | Proposta |
 | `legado-interop` | Mainframe, COBOL, TCP binário, Anti-Corruption Layer | Arquiteto, Dev | Proposta |
 
-### 36. Anatomia de uma skill
+### 38. Anatomia de uma skill
 
 ```
 skills\performance\
@@ -489,7 +551,7 @@ skills\performance\
 
 O SKILL.md é o formato que o Claude já entende, com progressive disclosure: o corpo fica curto e o detalhe mora em `references/`. Para outros modelos, o primeiro adapter é o Modo Contexto (`--context`) do `bks-sdd`: o Claude monta o pacote de contexto da task e o agente externo executa, sem reescrever a skill.
 
-### 37. Ciclo de vida
+### 39. Ciclo de vida
 
 | Estágio | Critério de entrada | Onde pode ser usada |
 | --- | --- | --- |
@@ -502,7 +564,7 @@ O SKILL.md é o formato que o Claude já entende, com progressive disclosure: o 
 
 Os critérios ficam entre os estágios: uma skill só avança quando cumpre o que está escrito embaixo da seta.
 
-### 38. Versionamento
+### 40. Versionamento
 
 Toda skill segue versionamento semântico:
 
@@ -512,7 +574,7 @@ Toda skill segue versionamento semântico:
 
 Os perfis de agente declaram a faixa aceita, como `security-audit@^1`. Cada projeto tem um `skills.lock` que fixa a versão exata usada, para que uma FEAT de seis meses atrás possa ser revisada com as mesmas regras. No Git, cada versão ganha uma tag `skill/<nome>/v<versão>`.
 
-### 39. Como uma skill nasce
+### 41. Como uma skill nasce
 
 Uma skill nasce do ciclo de aprendizado. Quando a retrospectiva acumula três ou mais propostas sobre o mesmo tema, o Documentador sugere transformá-las numa skill.
 
@@ -523,7 +585,7 @@ Uma skill nasce do ciclo de aprendizado. Quando a retrospectiva acumula três ou
 
 **Exemplo: Go já fez esse caminho.** A `bks-go-solutions` nasceu das suas convenções: hexagonal em pacotes, erro idiomático no lugar de `Result[T]`, testes de tabela. Ela alimenta e consome a base `knowledge/wiki/go/`, com lições anonimizadas dos projetos. Falta o caso de eval, que espera a baseline. O próximo candidato é `lang-java-spring`, pelo mesmo caminho.
 
-### 40. O harness também evolui
+### 42. O harness também evolui
 
 O próprio harness segue o padrão que ele aplica. Agentes, comandos, skills, guardas e perfis são versionados em `<harness>`, e o ciclo dele é o mesmo do kit hoje: **mudar → provar → medir**. Uma mudança vive no diretório da sua natureza, a suíte estrutural prova que nada quebrou, e o eval mede se a skill muda a decisão do agente. Decisão sobre o harness vira ADR em `<harness>\decisions\`; decisão sobre como você trabalha, em `workbench/decisions/` do vault.
 
@@ -613,7 +675,7 @@ zones:
 | STATUS, WORKFLOW, JOURNAL | Onde parei; o fluxo de comandos do projeto; os marcos, do mais recente ao mais antigo |
 | Perfil | O que o projeto gera (`backend`, `fullstack`, `component`...), em `.bks-profile.json` |
 | Rigor | Eixo do perfil: `producao` ou `poc`; dimensiona a revisão |
-| CONTEXT.md | Contexto canônico do projeto, gerado pelo `/bks:canonize` a partir de `docs/input/` |
+| CONTEXT.md | Contexto canônico do projeto, gerado pelo `/bkhar:canonize` a partir de `docs/input/` |
 | FEAT, TEST, TASK | Spec da feature, cenários de teste e unidades de trabalho, em `specs/` |
 | LOOP-4 | Até quatro tentativas com goals G1–G4; depois, `BLOQUEIO-*.md` e decisão sua |
 | Gate | Verificação executada pela máquina, não declarada pelo modelo |
@@ -623,7 +685,13 @@ zones:
 | Área sensível | Parte do manifesto que exige revisão independente e restringe provedor |
 | PBQ | Tipo do papel: orquestrador, implementador ou validador |
 | Rito | Formato de conversa com papéis, começo e fim |
-| Proposta | Aprendizado de um agente aguardando sua curadoria em `inbox/proposals/` |
+| Proposta | Aprendizado candidato (`status: candidata`) em `inbox/proposals/`, à espera do `/bkhar:retro` |
+| Modo | `colaborativo` (padrão) ou `autonomo`, em `axes.mode` do perfil |
+| Prontidão | Checagem por script que concede o `autonomo`: entradas aprovadas e nada em aberto |
+| Suposição | Resposta que o Arquiteto presumiu no `autonomo`, registrada em `decisions/SUPOSICOES.md` |
+| Onda | Conjunto de tasks do grafo liberadas juntas, até 4 em paralelo |
+| ARCH | Índice da arquitetura em `docs/library/architecture/`, que aponta um modelo por arquivo |
+| Biblioteca | `docs/library/`: catálogo e dashboard dos artefatos do projeto |
 | Skill | Capacidade versionada que um ou mais agentes carregam sob demanda |
 | Eval | Caso que mede o delta de uma skill: o agente com ela contra o agente sem ela |
 | TXC | Transaction Context: record imutável que flui pelos estágios do pipeline |
@@ -682,6 +750,13 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 
 | Artefato | Versão | Data | O que mudou |
 | --- | --- | --- | --- |
+| Atlas do BKS Harness | 1.9.0 | 2026-11-04 | Modos de condução e prontidão (seção 25), ondas e painel (seção 26), modelo por papel, Parte V com o aprendizado candidato, `/bkhar:retro` e `/bkhar:harvest`; tabela de comandos com toda a 1.0.0; prefixo `/bkhar:` no texto do estado atual; Parte X com o manual 1.4.1 |
+| Apresentação BKS Harness | 2.0.0 | 2026-11-04 | Slides novos de modos e de ondas e painel; aprendizado com retro e harvest; roadmap com a 1.0.0 |
+| Apresentação BKS Harness | 1.9.0 | 2026-11-04 | Fluxo com a arquitetura antes da especificação; `/bkhar:library` nos comandos e no manual de uso |
+| Atlas do BKS Harness | 1.8.0 | 2026-11-04 | Arquitetura como portão antes da especificação nos dois modos; biblioteca do projeto em `docs/library/` com dashboard e exportação para `knowledge/`; `/bkhar:library` na tabela de comandos; Parte X com o manual 1.4.0 |
+| Atlas do BKS Harness | 1.7.3 | 2026-10-22 | Equipe contada como sete papéis, seis agentes e o Gerente, no prefácio, na Parte III e na Figura 4 |
+| Apresentação BKS Harness | 1.8.3 | 2026-10-22 | Capa, case e slide de versões contam a equipe como seis agentes e o Gerente |
+| Atlas do BKS Harness | 1.7.2 | 2026-10-20 | `/bkhar:plan` na tabela de comandos; Parte X com o manual de comandos 1.2.0 |
 | Atlas do BKS Harness | 1.7.0 | 2026-10-19 | Partes III e IV ajustadas à equipe construída na Fase 3: seis agentes, Gerente como skill `bks-team`, `/bkhar:ask`, `panel` e `refine` existentes, revisão em painel, `LEARNINGS.md`, sem o atalho com arroba; Apêndice A no formato real do perfil |
 | Atlas do BKS Harness | 1.6.1 | 2026-10-19 | Caminhos da máquina do autor trocados por `<harness>`, com exemplo de pasta; o repositório passa a constar como público no GitHub |
 | Atlas do BKS Harness | 1.6.0 | 2026-10-18 | Parte X, Manual de comandos, com cada comando explicado e exemplificado; diagramas do fluxo e da arquitetura atualizados; mantido no repositório `bks-harness` e gerado em HTML pronto para PDF |
@@ -692,6 +767,7 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 | Atlas do BKS Harness | 1.1.0 | 2026-10-17 | Parte IX (skills plugáveis), skill registry, apêndices E e F |
 | Atlas do BKS Harness | 1.0.0 | 2026-10-17 | Primeira versão: Partes I a VIII, equipe de sete agentes, ritos, ciclo de aprendizado, case |
 | Treinamento do bks-harness | 1.0.0 | 2026-10-19 | Primeira versão do manual de instalação e uso, para quem instala pelo repositório público |
+| Apresentação BKS Harness | 1.8.2 | 2026-10-20 | `/bkhar:plan` nos slides de comandos e de manual do repo |
 | Apresentação BKS Harness | 1.8.1 | 2026-10-19 | Slide de versões com o manual de treinamento |
 | Atlas do BKS Harness | 1.7.1 | 2026-10-19 | Aponta para o manual de treinamento na Parte VIII; o template do vault passa a ser o `bks-2brains` |
 | Apresentação BKS Harness | 1.8.0 | 2026-10-19 | Slides de equipe, ritos, comandos e manual do repo com a equipe da Fase 3; conceitos e roteamento sem os agentes antigos como estado atual |

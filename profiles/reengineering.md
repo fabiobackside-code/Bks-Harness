@@ -23,7 +23,7 @@ Tudo o que `legacy-docs` gera, e mais:
 | caracterização | testes que capturam o comportamento atual |
 | paridade | `outputs/PARIDADE-{projeto}.md` — regra do legado por destino no novo |
 | especificação | `specs/features/`, `specs/tests/`, `specs/tasks/` |
-| arquitetura | `outputs/ARCH-{projeto}.md` — o sistema novo |
+| arquitetura | `docs/library/architecture/ARCH-{projeto}.md` + `models/` — o sistema novo |
 | implementação | `app/` |
 | corte | plano de virada e de retorno |
 | revisão | independente |

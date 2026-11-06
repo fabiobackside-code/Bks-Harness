@@ -23,7 +23,7 @@ Interface, design, mock de tela. Consumidor da API é outro projeto ou outro per
 | produto | `docs/canonical/PRD-{projeto}.md` |
 | modelagem | modelo de domínio e de dados; DDL em `app/db/` |
 | especificação | `specs/features/`, `specs/tests/`, `specs/tasks/` |
-| arquitetura | `outputs/ARCH-{projeto}.md` |
+| arquitetura | `docs/library/architecture/ARCH-{projeto}.md` + `models/` |
 | implementação | `app/` — domínio, portas, adapters |
 | revisão | independente |
 | fechamento | `STATUS.md`, `JOURNAL.md` |

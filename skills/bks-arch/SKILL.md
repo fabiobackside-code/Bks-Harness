@@ -33,6 +33,9 @@ sequência vira caixa com seta demais.
 
 Detalhes em `references/topologias.md`.
 
+Para o conteúdo do desenho (dado, API, mensageria, infra, telemetria, resiliência), não só a
+forma, veja as lentes de system design em `references/lentes-system-design.md`.
+
 ## Depois: qual motor
 
 Le `.bks-profile.json` do projeto, campo `axes.architecture_renderer`. Sem o arquivo, pergunte.

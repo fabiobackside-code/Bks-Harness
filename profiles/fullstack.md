@@ -20,8 +20,8 @@ escopo. Fase que não está no plano não entra sozinha.
 | entrada | `docs/input/` |
 | consolidação | `docs/canonical/CONTEXT.md` |
 | produto | `docs/canonical/PRD-{projeto}.md` |
-| plano macro | `outputs/PLAN-{projeto}.md` — o faseamento |
-| arquitetura | `outputs/ARCH-{projeto}.md` |
+| plano macro | `outputs/PLAN-{projeto}.md` — o faseamento, pelo `/bkhar:plan` |
+| arquitetura | `docs/library/architecture/ARCH-{projeto}.md` + `models/` |
 | modelagem | domínio, dados, DDL |
 | design | telas, fluxos, sistema visual |
 | especificação | `specs/features/`, `specs/tests/`, `specs/tasks/` — por fase |
@@ -30,7 +30,7 @@ escopo. Fase que não está no plano não entra sozinha.
 | revisão | independente, por fase |
 | fechamento | `STATUS.md`, `JOURNAL.md` |
 
-O plano macro é obrigatório aqui. Sem ele, um projeto deste tamanho vira lista de tarefas sem
+O plano macro é obrigatório aqui e sai do `/bkhar:plan`, depois do `/bkhar:prd`. Sem ele, um projeto deste tamanho vira lista de tarefas sem
 ordem, e a primeira fase nunca fecha.
 
 ## Eixos

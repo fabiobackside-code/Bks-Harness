@@ -22,7 +22,7 @@ propósito — sem escopo real, sem stack definida, sem specs preenchidas.
 ├── docs/
 │   ├── input/             material bruto: notas, entrevistas, pesquisa, escopo
 │   ├── design/            bancada de trabalho
-│   ├── canonical/         contexto consolidado — a fonte após o /canonize
+│   ├── canonical/         contexto consolidado — a fonte após o /bkhar:canonize
 │   ├── history/           o que foi superado
 │   └── prompts/           registro de auditoria do próprio processo
 │
@@ -48,10 +48,11 @@ propósito — sem escopo real, sem stack definida, sem specs preenchidas.
 
 ## Como usar de verdade
 
-Rode `/new-project {{nome}} {{categoria}}` com a sessão aberta na **raiz do vault** para gerar a
+Rode `/bkhar:new-project {{nome}} {{categoria}}` com a sessão aberta na **raiz do vault** para gerar a
 sua versão preenchida. Depois traga material para `docs/input/` e siga o ciclo descrito no
-`WORKFLOW.md` gerado: `/bkhar:note` → `/bkhar:canonize` → `/bkhar:prd` → `/bkhar:spec` → `/bkhar:arch` → `/bkhar:loop` → `/bkhar:review` →
-`/bkhar:save`.
+`WORKFLOW.md` gerado: `/bkhar:note` → `/bkhar:canonize` → `/bkhar:prd` → `/bkhar:plan` → `/bkhar:arch` → `/bkhar:refine` → `/bkhar:loop` →
+`/bkhar:review` → `/bkhar:save`. A arquitetura aprovada é portão antes da especificação; a biblioteca
+do projeto fica em `docs/library/`.
 
 Todos os comandos de projeto rodam com a sessão aberta na raiz do repositório do projeto — não no
 vault.

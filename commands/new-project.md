@@ -47,6 +47,7 @@ Pergunte apenas os eixos que o perfil usa:
 | `architecture_renderer` | ver `profiles/architecture-renderers/` | `mermaid` |
 | `frontend_target` | `web`, `mobile`, `both` | `web` — só em `frontend` e `fullstack` |
 | `rigor` | `producao`, `poc` | `producao` |
+| `mode` | `colaborativo`, `autonomo` | `colaborativo` — o `autonomo` não se escolhe aqui: o projeto nasce sem as entradas que a prontidão exige; depois, `/bkhar:mode autonomo` |
 
 Mais as perguntas específicas que o arquivo do perfil lista em "O que perguntar na criação".
 
@@ -73,12 +74,18 @@ Copie `${CLAUDE_PLUGIN_ROOT}/templates/project-skeleton/` para
     "output": "md",
     "architecture_renderer": "mermaid",
     "frontend_target": null,
-    "rigor": "producao"
-  }
+    "rigor": "producao",
+    "mode": "colaborativo"
+  },
+  "library": { "export": "knowledge/wiki/projetos/{projeto}" }
 }
 ```
 
-Acrescente `stack` e `architecture_template` quando a conversa os tiver definido.
+`library.export` é o destino, relativo ao vault, do `/bkhar:library export`. Pergunte se o usuário
+quer exportar a biblioteca para o vault; sem exportação, omita a chave.
+
+Acrescente `stack` e `architecture_template` quando a conversa os tiver definido. O mapa `models`
+só entra se o usuário quiser outro modelo que o padrão de algum papel.
 
 **`STATUS.md`** — o estado inicial. Fase: levantamento. Próximo passo: a primeira ação concreta do
 perfil escolhido, que costuma ser `/bkhar:note` ou reunir o material de entrada. Não escreva "definir o

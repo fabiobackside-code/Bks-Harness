@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel bkhar</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%232a78d6%22/%3E%3Cpath d=%22M4 11V7M8 11V4M12 11V9%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E">
+<style>
+:root {
+  color-scheme: light;
+  --surface-0: #f4f4f2; --surface-1: #fcfcfb; --border: #e2e1dc;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #77766f;
+  --accent: #2a78d6; --accent-ink: #ffffff;
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-other: #9a9992;
+  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --grid: #ecebe6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-0: #121211; --surface-1: #1a1a19; --border: #2e2e2c;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+    --accent: #3987e5; --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+    --series-other: #6f6e68; --grid: #262624;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-0: #121211; --surface-1: #1a1a19; --border: #2e2e2c;
+  --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+  --accent: #3987e5; --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+  --series-other: #6f6e68; --grid: #262624;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+  padding: 16px; border-bottom: 1px solid var(--border); background: var(--surface-1); }
+h1 { font-size: 18px; margin: 0; }
+h2 { font-size: 15px; margin: 0 0 12px; }
+main { max-width: 1280px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.muted { color: var(--text-muted); }
+.secondary { color: var(--text-secondary); }
+.badge { display: inline-flex; gap: 6px; align-items: center; padding: 2px 10px; border-radius: 999px;
+  border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+button, select, textarea { font: inherit; color: var(--text-primary); background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; }
+button { cursor: pointer; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; min-height: 64px; resize: vertical; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile .v { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tile .l { font-size: 12px; color: var(--text-secondary); }
+.waves { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 4px; }
+.wave h3 { font-size: 13px; margin: 0 0 8px; color: var(--text-secondary); }
+.task { border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 8px; cursor: pointer; background: var(--surface-1); }
+.task:hover, .task.sel { border-color: var(--accent); }
+.task .t { font-weight: 600; }
+.meter { height: 4px; background: var(--grid); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--text-secondary); border-radius: 4px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); }
+th { color: var(--text-secondary); font-weight: 500; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.events { max-height: 220px; overflow: auto; font-size: 12px; }
+.chart { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: -1px; }
+#tip { position: fixed; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.12); display: none; z-index: 10; }
+.toast { font-size: 12px; color: var(--text-secondary); min-height: 18px; }
+pre.block { white-space: pre-wrap; font-size: 12px; background: var(--surface-0); border-radius: 8px; padding: 8px; max-height: 160px; overflow: auto; }
+@media (max-width: 600px) { header { padding: 12px 16px; } .tile .v { font-size: 22px; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 id="proj">Painel bkhar</h1>
+    <div class="row" id="badges"></div>
+  </div>
+  <div class="row">
+    <button id="pause">Pausar</button>
+    <button id="resume">Retomar</button>
+    <button id="notify">Avisar bloqueios</button>
+    <button id="theme" aria-label="Alternar tema">Tema</button>
+  </div>
+</header>
+<main>
+  <section class="tiles" id="tiles"></section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>Ondas</h2><span class="muted" id="ready"></span></div>
+    <div class="waves" id="waves"></div>
+    <p class="muted" id="nowave" hidden>Nenhuma onda começou. A primeira roda com <code>/bkhar:loop --wave next</code>, no modo <code>autonomo</code>.</p>
+  </section>
+
+  <section class="grid2">
+    <div class="card" id="detail">
+      <h2>Task</h2>
+      <p class="muted">Clique numa task para ver os eventos e deixar mensagem para a próxima tentativa.</p>
+    </div>
+    <div class="card">
+      <h2>Bloqueios</h2>
+      <div id="blocks"></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Modelo por papel</h2>
+      <table id="models"></table>
+      <p class="muted" style="font-size:12px">A troca vira pedido na inbox e vale a partir da próxima chamada do papel.</p>
+    </div>
+    <div class="card">
+      <h2>Inbox pendente</h2>
+      <div id="inbox"></div>
+      <div class="toast" id="toast" role="status"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>Consumo</h2>
+      <button id="tableview" aria-pressed="false">Ver como tabela</button></div>
+    <div class="grid2">
+      <div><h3 class="secondary" style="font-size:13px;margin:0 0 8px">Custo por dia, por modelo (US$)</h3>
+        <div class="legend" id="daylegend"></div><div id="daychart"></div></div>
+      <div><h3 class="secondary" style="font-size:13px;margin:0 0 8px">Custo por agente (US$)</h3>
+        <div id="agentchart"></div></div>
+    </div>
+    <div id="costtable" hidden></div>
+    <p class="muted" id="unpriced" style="font-size:12px"></p>
+  </section>
+</main>
+<div id="tip"></div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const usd = v => 'US$ ' + (v || 0).toFixed(2);
+const FAM = ['opus', 'sonnet', 'haiku'];
+const famColor = f => ({opus: 'var(--series-1)', sonnet: 'var(--series-2)', haiku: 'var(--series-3)'}[f] || 'var(--series-other)');
+const STATUS = {
+  'pendente': ['var(--text-muted)', '○'], 'em curso': ['var(--warning)', '◐'],
+  'passou': ['var(--good)', '✓'], 'bloqueada': ['var(--critical)', '✕']
+};
+let selected = null, lastState = null, lastCost = null;
+let knownBlocks = null;
+$('#notify').onclick = async () => {
+  if (!('Notification' in window)) { $('#toast').textContent = 'Este navegador não tem notificação.'; return; }
+  const p = await Notification.requestPermission();
+  $('#toast').textContent = p === 'granted' ? 'Você será avisado quando uma task travar.' : 'Notificação recusada pelo navegador.';
+};
+function notifyBlocks(blocks) {
+  const ids = blocks.map(b => b.task);
+  if (knownBlocks && 'Notification' in window && Notification.permission === 'granted')
+    ids.filter(id => !knownBlocks.includes(id)).forEach(id => new Notification('bkhar: task travada', {body: id + ' gerou BLOQUEIO e espera resposta.'}));
+  knownBlocks = ids;
+}
+
+try { const t = localStorage.getItem('bkhar-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+$('#theme').onclick = () => {
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const cur = document.documentElement.dataset.theme || (dark ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('bkhar-theme', next); } catch (e) {}
+};
+
+async function send(req) {
+  const r = await fetch('/api/inbox', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(req)});
+  const body = await r.json();
+  $('#toast').textContent = r.ok ? 'Pedido ' + req.tipo + ' na inbox; o orquestrador aplica no próximo ponto de controle.' : 'Recusado: ' + body.erro;
+  refresh();
+}
+$('#pause').onclick = () => send({tipo: 'pausar'});
+$('#resume').onclick = () => send({tipo: 'retomar'});
+
+function statusOf(e) { return STATUS[e] || (e.startsWith('tentativa') ? STATUS['em curso'] : ['var(--text-muted)', '·']); }
+
+function renderState(s) {
+  lastState = s;
+  notifyBlocks(s.blocks);
+  $('#proj').textContent = 'Painel bkhar · ' + s.projeto;
+  document.title = 'Painel bkhar · ' + s.projeto;
+  $('#badges').innerHTML = [
+    'modo <b>' + esc(s.mode) + '</b>', s.rigor ? 'rigor ' + esc(s.rigor) : '',
+    s.run.paused ? '<span class="dot" style="background:var(--warning)"></span> execução pausada' : '<span class="dot" style="background:var(--good)"></span> execução ativa'
+  ].filter(Boolean).map(b => '<span class="badge">' + b + '</span>').join('');
+  const tasks = s.run.tasks;
+  const done = tasks.filter(t => t.estado === 'passou').length;
+  const tiles = [
+    [done + '/' + tasks.length, 'tasks concluídas'],
+    [tasks.filter(t => t.estado.startsWith('tentativa') || t.estado === 'em curso').length, 'em curso (teto 4)'],
+    [s.blocks.length, 'bloqueios'],
+    [s.assumptions_open, 'suposições abertas'],
+    [lastCost ? usd(lastCost.total_usd) : '…', 'custo total do projeto']
+  ];
+  $('#tiles').innerHTML = tiles.map(([v, l]) => '<div class="card tile"><div class="v">' + esc(v) + '</div><div class="l">' + esc(l) + '</div></div>').join('');
+  $('#ready').textContent = 'liberadas agora: ' + (s.run.ready.join(', ') || 'nenhuma');
+  $('#nowave').hidden = tasks.length > 0;
+  const byWave = {};
+  tasks.forEach(t => (byWave[t.onda] = byWave[t.onda] || []).push(t));
+  $('#waves').innerHTML = Object.keys(byWave).sort((a, b) => a - b).map(n =>
+    '<div class="wave"><h3>Onda ' + esc(n) + '</h3>' + byWave[n].map(t => {
+      const [c, ic] = statusOf(t.estado);
+      return '<div class="task' + (t.id === selected ? ' sel' : '') + '" data-id="' + esc(t.id) + '" tabindex="0">' +
+        '<div class="row" style="justify-content:space-between"><span class="t">' + esc(t.id) + '</span>' +
+        '<span class="badge"><span style="color:' + c + '">' + ic + '</span>' + esc(t.estado) + '</span></div>' +
+        '<div class="secondary">' + esc(t.titulo || '') + '</div>' +
+        '<div class="muted" style="font-size:12px">' + esc(t.papel) + ' · ' + esc(t.modelo || 'modelo a definir') + (t.lente ? ' · lente ' + esc(t.lente) : '') + '</div>' +
+        '<div class="meter" title="tentativa ' + t.tentativa + ' de 4"><i style="width:' + (t.tentativa / 4 * 100) + '%"></i></div></div>';
+    }).join('') + '</div>').join('');
+  document.querySelectorAll('.task').forEach(el => {
+    const pick = () => { selected = el.dataset.id; renderState(lastState); };
+    el.onclick = pick; el.onkeydown = e => { if (e.key === 'Enter') pick(); };
+  });
+  renderDetail(s);
+  $('#blocks').innerHTML = s.blocks.length ? s.blocks.map(b =>
+    '<div style="margin-bottom:12px"><div class="row"><span style="color:var(--critical)">✕</span><b>' + esc(b.task) + '</b></div>' +
+    '<pre class="block">' + esc(b.texto) + '</pre><textarea data-block="' + esc(b.task) + '" placeholder="Sua resposta destrava a cadeia"></textarea>' +
+    '<button class="primary" data-answer="' + esc(b.task) + '" style="margin-top:6px">Responder</button></div>').join('')
+    : '<p class="muted">Nenhum bloqueio.</p>';
+  document.querySelectorAll('[data-answer]').forEach(btn => btn.onclick = () => {
+    const ta = document.querySelector('textarea[data-block="' + btn.dataset.answer + '"]');
+    if (ta.value.trim()) send({tipo: 'resposta_bloqueio', task: btn.dataset.answer, texto: ta.value.trim()});
+  });
+  $('#models').innerHTML = '<tr><th>Papel</th><th>Padrão</th><th>Neste projeto</th></tr>' +
+    Object.entries(s.models).map(([role, m]) =>
+      '<tr><td>' + esc(role) + '</td><td class="muted">' + esc(m.padrao) + '</td><td><select data-role="' + esc(role) + '" aria-label="Modelo de ' + esc(role) + '">' +
+      FAM.map(f => '<option' + (f === m.efetivo ? ' selected' : '') + '>' + f + '</option>').join('') + '</select></td></tr>').join('');
+  document.querySelectorAll('select[data-role]').forEach(sel => sel.onchange = () => send({tipo: 'modelo', papel: sel.dataset.role, modelo: sel.value}));
+  $('#inbox').innerHTML = s.inbox.length ? '<table><tr><th>Pedido</th><th>Detalhe</th></tr>' + s.inbox.map(r =>
+    '<tr><td>' + esc(r.tipo) + '</td><td class="secondary">' + esc(r.task || r.papel || '') + ' ' + esc(r.modelo || (r.texto || '').slice(0, 60)) + '</td></tr>').join('') + '</table>'
+    : '<p class="muted">Nada pendente.</p>';
+}
+
+function renderDetail(s) {
+  const t = s.run.tasks.find(x => x.id === selected);
+  if (!t) return;
+  $('#detail').innerHTML = '<h2>' + esc(t.id) + ' · ' + esc(t.titulo || '') + '</h2>' +
+    '<p class="secondary">' + esc(t.tipo) + ' · ' + esc(t.papel) + ' · ' + esc(t.modelo || '-') + ' · ' + esc(t.estado) +
+    (t.worktree ? ' · <code>' + esc(t.worktree) + '</code>' : '') + (t.custo_usd != null ? ' · ' + usd(t.custo_usd) : '') + '</p>' +
+    '<div class="events"><table>' + t.eventos.slice().reverse().map(e => '<tr><td class="muted">' + esc(e.em) + '</td><td>' + esc(e.o_que) + '</td></tr>').join('') + '</table></div>' +
+    '<textarea id="msg" placeholder="Mensagem para a próxima tentativa desta task" style="margin-top:8px"></textarea>' +
+    '<button class="primary" id="sendmsg" style="margin-top:6px">Enviar</button>';
+  $('#sendmsg').onclick = () => { const v = $('#msg').value.trim(); if (v) send({tipo: 'mensagem', task: t.id, texto: v}); };
+}
+
+function tip(e, html) { const el = $('#tip'); el.innerHTML = html; el.style.display = 'block';
+  el.style.left = Math.min(e.clientX + 12, innerWidth - el.offsetWidth - 8) + 'px'; el.style.top = (e.clientY + 12) + 'px'; }
+function untip() { $('#tip').style.display = 'none'; }
+
+function renderCost(c) {
+  lastCost = c;
+  const days = c.by_day, W = 560, H = 220, P = {l: 48, r: 8, t: 8, b: 28};
+  const max = Math.max(0.01, ...days.map(d => Object.values(d.por_modelo).reduce((a, b) => a + b, 0)));
+  const bw = Math.max(6, Math.min(36, (W - P.l - P.r) / Math.max(1, days.length) - 8));
+  const y = v => P.t + (H - P.t - P.b) * (1 - v / max);
+  const ticks = [0, max / 2, max];
+  let svg = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Custo por dia, por modelo">';
+  ticks.forEach(v => svg += '<line x1="' + P.l + '" x2="' + (W - P.r) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--grid)"/>' +
+    '<text x="' + (P.l - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="11" fill="var(--text-muted)">' + v.toFixed(2) + '</text>');
+  days.forEach((d, i) => {
+    const x = P.l + 4 + i * ((W - P.l - P.r) / Math.max(1, days.length));
+    let base = 0;
+    const fams = FAM.concat(Object.keys(d.por_modelo).filter(f => !FAM.includes(f)));
+    fams.forEach(f => { const v = d.por_modelo[f] || 0; if (!v) return;
+      const y0 = y(base), y1 = y(base + v); base += v;
+      svg += '<rect x="' + x + '" y="' + y1 + '" width="' + bw + '" height="' + Math.max(1, y0 - y1 - 2) + '" rx="2" fill="' + famColor(f) + '"/>'; });
+    svg += '<rect class="hit" data-i="' + i + '" x="' + (x - 4) + '" y="' + P.t + '" width="' + (bw + 8) + '" height="' + (H - P.t - P.b) + '" fill="transparent"/>';
+    if (days.length <= 14 || i % Math.ceil(days.length / 7) === 0)
+      svg += '<text x="' + (x + bw / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="var(--text-muted)">' + esc(d.dia.slice(5)) + '</text>';
+  });
+  $('#daychart').innerHTML = days.length ? svg + '</svg>' : '<p class="muted">Sem transcript deste projeto.</p>';
+  $('#daylegend').innerHTML = FAM.map(f => '<span><span class="sw" style="background:' + famColor(f) + '"></span>' + f + '</span>').join('');
+  document.querySelectorAll('#daychart .hit').forEach(r => {
+    r.onmousemove = e => { const d = days[r.dataset.i];
+      tip(e, '<b>' + esc(d.dia) + '</b><br>' + Object.entries(d.por_modelo).map(([f, v]) => '<span class="sw" style="background:' + famColor(f) + '"></span>' + esc(f) + ' ' + usd(v)).join('<br>')); };
+    r.onmouseleave = untip; });
+  const ag = c.by_agent, rowH = 26, AW = 560, lw = 130, AH = Math.max(40, ag.length * rowH + 8);
+  const amax = Math.max(0.01, ...ag.map(a => a.usd));
+  let asvg = '<svg class="chart" viewBox="0 0 ' + AW + ' ' + AH + '" role="img" aria-label="Custo por agente">';
+  ag.forEach((a, i) => { const w = (AW - lw - 80) * a.usd / amax, yy = 4 + i * rowH;
+    asvg += '<text x="' + (lw - 8) + '" y="' + (yy + 15) + '" text-anchor="end" font-size="12" fill="var(--text-secondary)">' + esc(a.agente) + '</text>' +
+      '<rect x="' + lw + '" y="' + (yy + 4) + '" width="' + Math.max(2, w) + '" height="14" rx="3" fill="var(--series-1)"/>' +
+      '<text x="' + (lw + Math.max(2, w) + 6) + '" y="' + (yy + 15) + '" font-size="12" fill="var(--text-primary)">' + usd(a.usd) + '</text>' +
+      '<rect class="hit" data-i="' + i + '" x="0" y="' + yy + '" width="' + AW + '" height="' + rowH + '" fill="transparent"/>'; });
+  $('#agentchart').innerHTML = ag.length ? asvg + '</svg>' : '<p class="muted">Sem consumo registrado.</p>';
+  document.querySelectorAll('#agentchart .hit').forEach(r => {
+    r.onmousemove = e => { const a = ag[r.dataset.i]; tip(e, '<b>' + esc(a.agente) + '</b><br>' + usd(a.usd) + '<br>' + a.tokens.toLocaleString('pt-BR') + ' tokens'); };
+    r.onmouseleave = untip; });
+  $('#costtable').innerHTML = '<table><tr><th>Modelo</th><th class="n">US$</th><th class="n">Tokens</th></tr>' +
+    c.by_model.map(m => '<tr><td>' + esc(m.familia) + '</td><td class="n">' + m.usd.toFixed(2) + '</td><td class="n">' + m.tokens.toLocaleString('pt-BR') + '</td></tr>').join('') +
+    '</table><table style="margin-top:12px"><tr><th>Agente</th><th class="n">US$</th><th class="n">Tokens</th></tr>' +
+    ag.map(a => '<tr><td>' + esc(a.agente) + '</td><td class="n">' + a.usd.toFixed(2) + '</td><td class="n">' + a.tokens.toLocaleString('pt-BR') + '</td></tr>').join('') + '</table>';
+  $('#unpriced').textContent = c.sem_preco.length ? 'Sem preço em pricing.json (contado como zero): ' + c.sem_preco.join(', ') : '';
+  if (lastState) renderState(lastState);
+}
+$('#tableview').onclick = () => { const t = $('#costtable'); t.hidden = !t.hidden;
+  $('#tableview').setAttribute('aria-pressed', String(!t.hidden)); $('#tableview').textContent = t.hidden ? 'Ver como tabela' : 'Ocultar tabela'; };
+
+async function refresh() { try { renderState(await (await fetch('/api/state')).json()); } catch (e) { $('#toast').textContent = 'Painel sem conexão com o servidor.'; } }
+async function refreshCost() { try { renderCost(await (await fetch('/api/cost')).json()); } catch (e) {} }
+refresh(); refreshCost();
+setInterval(refresh, 3000); setInterval(refreshCost, 30000);
+</script>
+</body>
+</html>

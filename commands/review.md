@@ -51,3 +51,15 @@ Saída: os achados agrupados pelo Gerente, cada um com `arquivo:linha` e classif
 
 Revisão sem achado declara o escopo verificado por agente. A correção volta ao `developer`, em
 invocação separada.
+
+## Modo `autonomo`
+
+Com `axes.mode: autonomo`, a revisão roda sobre a onda inteira, no fim dela, e o destino dos
+achados muda:
+
+- **bloqueante** vira TASK sem esperar o ok e volta ao `/bkhar:loop`, com o mesmo teto de 4
+  tentativas;
+- **crítica do `security`** não volta ao loop: para a cadeia em `outputs/BLOQUEIO-[task].md`, que
+  só o usuário destrava;
+- **sugestão** vai para `outputs/run/<onda>/RELATORIO.md`, que o usuário lê na entrega da onda;
+- **aprendizado** segue como no colaborativo.

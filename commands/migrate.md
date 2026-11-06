@@ -26,6 +26,7 @@ funcionando com `/bks:*`; os dois plugins convivem até o fim da migração.
 | `.bks-profile.json` | pergunta o perfil (Passo 2) |
 | `brain/` | cria a pasta pelo template |
 | `specs/features/`, `specs/tests/`, `specs/tasks/` | cria as pastas vazias |
+| `docs/library/architecture/models/`, `docs/library/architecture/render/`, `docs/library/site/` | cria as pastas vazias; `outputs/ARCH-*.md` antigo não se move: o próximo `/bkhar:arch` o lê como entrada |
 
 Mostre a tabela e espere o ok antes de criar qualquer coisa.
 
@@ -38,6 +39,11 @@ nunca é sobrescrito, nem para "atualizar o modelo".
 cada, como o `/bkhar:new-project` faz, e grave a escolha conforme
 `${CLAUDE_PLUGIN_ROOT}/profiles/bks-profile.schema.json`. Leia o `STATUS.md` e o `README.md` do
 projeto antes de sugerir: o perfil tem que casar com o que o projeto já gera.
+
+**Com `.bks-profile.json` sem `axes.mode`:** acrescente `"mode": "colaborativo"` em `axes`; o
+`autonomo` vem depois, pelo `/bkhar:mode`. **Sem `library`:** pergunte se a biblioteca vai ser
+exportada para o vault e, com sim, acrescente `"library": {"export": "knowledge/wiki/projetos/{projeto}"}`.
+São as únicas chaves que a migração escreve num perfil existente.
 
 ## Passo 3 — trocar o prefixo
 

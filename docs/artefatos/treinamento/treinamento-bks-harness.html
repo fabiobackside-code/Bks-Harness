@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Treinamento do bks-harness — Instalação e uso · v1.0.0</title>
+<title>Treinamento do bks-harness — Instalação e uso · v1.3.0</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,7 +39,7 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">BKS HARNESS · TREINAMENTO</div>
 <div><h1>Treinamento do bks-harness</h1><p class="sub">Instalação e uso: do zero à primeira sessão produtiva e a um ciclo completo com a equipe de agentes.</p></div>
-<div class="meta">Versão 1.0.0 · para quem instala pelo repositório público</div></section>
+<div class="meta">Versão 1.3.0 · para quem instala pelo repositório público</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#antes-de-comecar">Antes de começar</a></li><li><a href="#parte-1-instalacao">Parte 1 — Instalação</a></li><li><a href="#parte-2-uso">Parte 2 — Uso</a></li><li><a href="#historico-de-versoes">Histórico de versões</a></li></ol></nav>
 <h2 id="antes-de-comecar">Antes de começar</h2>
 <p>Este manual leva você do zero até a primeira sessão produtiva e, depois, a um ciclo completo com a
@@ -103,6 +103,9 @@ escrita de arquivo; se o comando <code>python</code> não existir, eles falham e
 <p>No Windows, o instalador do Python tem a opção de pôr o <code>python.exe</code> no <code>PATH</code>. Marque. Se o terminal
 responder <code>python3</code> mas não <code>python</code>, crie o alias ou reinstale com a opção marcada.</p>
 <p><strong>Confira.</strong> Os três comandos da tabela respondem com uma versão, sem erro.</p>
+<h3>Preparar a máquina e o provedor de modelo</h3>
+<p>Antes de instalar, escolha o caminho: Claude Code (padrão), DeepSeek ou OpenRouter. Os dois últimos usam o lançador <code>bkhar</code>, que precisa do Python, do <code>pip install -r requirements.txt</code> e do Node.js. O passo a passo, o <code>setup-path</code> e a guarda da chave estão na seção "Antes de instalar o harness" do manual de comandos (<code>docs/artefatos/manual/manual-comandos.md</code>). Este Treinamento não repete a seção.</p>
+<p><strong>Confira.</strong> Você sabe qual dos três caminhos vai usar e onde está o guia dele.</p>
 <h3>3. Instalar o plugin</h3>
 <p>Dentro de uma sessão do Claude Code:</p>
 <pre><code>/plugin marketplace add fabiobackside-code/Bks-Harness
@@ -330,14 +333,19 @@ rode <code>/bkhar:brain</code>.</p>
 <td>o PRD (documento de requisitos do produto)</td>
 </tr>
 <tr>
-<td>Especificação</td>
-<td><code>/bkhar:refine</code> ou <code>/bkhar:spec</code></td>
-<td>a FEAT (especificação da feature) e o TEST (os cenários)</td>
+<td>Plano</td>
+<td><code>/bkhar:plan</code></td>
+<td>o PLAN (plano macro) e o grafo de tasks</td>
 </tr>
 <tr>
 <td>Arquitetura</td>
 <td><code>/bkhar:arch</code></td>
-<td>a visão C4 (os níveis contexto, container e componente) e o README</td>
+<td>o índice ARCH e os modelos (C4 nos níveis contexto e container, dados, sequências, fronteiras sensíveis) em <code>docs/library/architecture/</code>, e o README</td>
+</tr>
+<tr>
+<td>Especificação</td>
+<td><code>/bkhar:refine</code> ou <code>/bkhar:spec</code></td>
+<td>a FEAT (especificação da feature) e o TEST (os cenários), apoiados nos modelos</td>
 </tr>
 <tr>
 <td>Implementação</td>
@@ -356,8 +364,14 @@ rode <code>/bkhar:brain</code>.</p>
 </tr>
 </tbody>
 </table>
-<p>Projeto pequeno pode começar na especificação. O que não se pula é a aprovação: nenhuma etapa gera
-artefato sem você aprovar a anterior.</p>
+<p>O que não se pula é a aprovação: nenhuma etapa gera artefato sem você aprovar a anterior. A
+arquitetura é portão: o <code>/bkhar:refine</code> e o <code>/bkhar:spec</code> recusam começar sem o ARCH e os modelos em
+<code>status: aprovado</code>.</p>
+<p><strong>A biblioteca do projeto.</strong> Tudo o que o projeto produz fica catalogado em <code>docs/library/LIBRARY.md</code>
+e aparece no dashboard <code>docs/library/site/index.html</code>, que você abre no navegador. O <code>/bkhar:save</code>
+regera os dois e avisa quando um modelo ficou mais velho que um ADR ou contrato; o
+<code>/bkhar:arch --update</code> o refaz. O <code>/bkhar:library export</code> copia a biblioteca para
+<code>knowledge/wiki/projetos/</code> do vault.</p>
 <p><strong>Refine ou spec?</strong> O <code>/bkhar:refine</code> é o caminho com a equipe: <code>architect</code>, <code>tester</code> e
 <code>security</code> fazem até três perguntas cada antes de escrever. O <code>/bkhar:spec</code> é o caminho direto,
 para quando a feature já está clara.</p>
@@ -453,7 +467,64 @@ bloqueante, sugestão ou aprendizado.</p>
 <p><strong>Exercício.</strong> Pergunte <code>/bkhar:ask tester o que é o portão RED confirmado do /bkhar:loop?</code></p>
 <p><strong>Confira.</strong> A resposta cita o <code>loop.md</code> como fonte, e você sabe dizer o que acontece na quarta
 falha: o loop para e a decisão é sua.</p>
-<h3>11. Uma sessão de trabalho</h3>
+<h3>11. Rodar no modo autônomo</h3>
+<p>Todo projeto nasce <code>colaborativo</code>: a equipe pergunta e espera você em cada FEAT, TEST e tentativa.
+O <code>autonomo</code> deixa a equipe seguir sozinha entre três portões seus: PRD, PLAN e ARCH aprovados; os
+contratos da onda de desenho; a entrega final.</p>
+<p>O modo não se pede, se concede. O <code>/bkhar:mode autonomo</code> roda o <code>scripts/readiness.py</code>, que confere,
+sem chamar modelo:</p>
+<table>
+<thead>
+<tr>
+<th>Nível</th>
+<th>O que precisa estar pronto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Contexto</td>
+<td><code>CONTEXT.md</code> revisado ou aprovado e o PRD aprovado</td>
+</tr>
+<tr>
+<td>Plano</td>
+<td>o PLAN aprovado e o grafo <code>outputs/GRAPH-{projeto}.json</code> válido</td>
+</tr>
+<tr>
+<td>Arquitetura</td>
+<td>o ARCH e os modelos aprovados e em dia</td>
+</tr>
+<tr>
+<td>Abertos</td>
+<td>nenhuma questão em aberto no PRD nem no PLAN</td>
+</tr>
+<tr>
+<td>Execução</td>
+<td>a stack declarada no <code>.bks-profile.json</code></td>
+</tr>
+</tbody>
+</table>
+<p>Faltando algo, a resposta lista o que é e o comando que resolve. Concedido, o modo muda no perfil e
+vira um ADR em <code>decisions/</code>.</p>
+<p><strong>O que muda.</strong> No <code>autonomo</code>, o <code>architect</code> responde as próprias perguntas pelas fontes do projeto
+e grava cada resposta em <code>decisions/SUPOSICOES.md</code>, para você revisar depois. Dado pessoal,
+autorização e segredo não se presumem: param num <code>BLOQUEIO</code>. O <code>/bkhar:loop --wave next</code> roda a
+próxima onda do grafo, com até quatro tasks em paralelo, cada uma na sua worktree. No fim da onda,
+a sessão principal integra, roda a suíte inteira e revisa a onda.</p>
+<p><strong>O painel.</strong> Para acompanhar, abra noutro terminal:</p>
+<pre><code>python ${CLAUDE_PLUGIN_ROOT}/scripts/dashboard.py .
+</code></pre>
+<p>Ele abre em <code>http://127.0.0.1:8765</code> e mostra as ondas, as tentativas, os bloqueios e o consumo por
+modelo e agente. Por ele você responde a um bloqueio, pausa a onda ou troca o modelo de um papel; o
+pedido é aplicado entre tentativas. O <code>/bkhar:status</code> mostra a mesma tabela no terminal.</p>
+<p>Nenhum modo afrouxa os guardas, o RED antes do código, as quatro tentativas e a revisão de
+segurança em área sensível. A volta para o <code>colaborativo</code> é sempre permitida.</p>
+<p><strong>O que você ensina.</strong> Cada correção sua vira proposta candidata em <code>inbox/proposals/</code>. O
+<code>/bkhar:retro</code> mostra as candidatas, e você promove cada uma a regra do projeto, do vault ou do kit,
+ou a rejeita com motivo. É assim que o <code>colaborativo</code> treina o <code>autonomo</code>.</p>
+<p><strong>Exercício.</strong> No <code>treino-harness</code>, rode <code>/bkhar:mode</code> sem argumento.</p>
+<p><strong>Confira.</strong> A resposta mostra o modo atual, <code>colaborativo</code>, e a prontidão recusada, com o que falta
+em cada nível. Você sabe dizer qual comando resolve cada item.</p>
+<h3>12. Uma sessão de trabalho</h3>
 <p>Toda sessão segue o mesmo desenho:</p>
 <ol>
 <li><strong>Abrir</strong> com <code>/bkhar:brain</code>. Ele lê o <code>STATUS.md</code> e diz onde o projeto parou.</li>
@@ -470,7 +541,7 @@ reconstrução da conversa.</p>
 <p><strong>Exercício.</strong> No <code>treino-harness</code>, rode <code>/bkhar:save</code>. Feche a sessão, abra outra e rode
 <code>/bkhar:brain</code>.</p>
 <p><strong>Confira.</strong> O <code>/bkhar:brain</code> da sessão nova responde com o estado que o <code>/bkhar:save</code> gravou.</p>
-<h3>12. Referência rápida</h3>
+<h3>13. Referência rápida</h3>
 <table>
 <thead>
 <tr>
@@ -511,6 +582,16 @@ reconstrução da conversa.</p>
 <td>raiz do projeto</td>
 </tr>
 <tr>
+<td><code>/bkhar:plan</code></td>
+<td>gerar o plano macro e o grafo</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:arch</code></td>
+<td>elaborar a arquitetura para aprovar</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
 <td><code>/bkhar:refine</code></td>
 <td>especificar com a equipe</td>
 <td>raiz do projeto</td>
@@ -521,8 +602,8 @@ reconstrução da conversa.</p>
 <td>raiz do projeto</td>
 </tr>
 <tr>
-<td><code>/bkhar:arch</code></td>
-<td>arquitetura e README</td>
+<td><code>/bkhar:library</code></td>
+<td>catálogo, dashboard e exportação para o vault</td>
 <td>raiz do projeto</td>
 </tr>
 <tr>
@@ -556,6 +637,26 @@ reconstrução da conversa.</p>
 <td>raiz do projeto</td>
 </tr>
 <tr>
+<td><code>/bkhar:mode</code></td>
+<td>ver ou trocar o modo de condução</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:status</code></td>
+<td>estado da execução em ondas</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:retro</code></td>
+<td>promover ou rejeitar o aprendizado candidato</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
+<td><code>/bkhar:harvest</code></td>
+<td>consolidar a experiência dos projetos no vault</td>
+<td>raiz do vault</td>
+</tr>
+<tr>
 <td><code>/bkhar:migrate</code></td>
 <td>trazer projeto do kit antigo <code>bks</code></td>
 <td>raiz do projeto</td>
@@ -575,6 +676,21 @@ reconstrução da conversa.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.3.0</td>
+<td>2026-11-05</td>
+<td>Guia de preparação da máquina e dos provedores de modelo, apontando para o manual de comandos</td>
+</tr>
+<tr>
+<td>1.2.0</td>
+<td>2026-11-04</td>
+<td>Capítulo 11, "Rodar no modo autônomo": prontidão, suposições, ondas, painel e <code>/bkhar:retro</code>; referência rápida com toda a 1.0.0</td>
+</tr>
+<tr>
+<td>1.1.0</td>
+<td>2026-11-04</td>
+<td>Ciclo com o plano e a arquitetura antes da especificação; biblioteca do projeto e <code>/bkhar:library</code></td>
+</tr>
 <tr>
 <td>1.0.0</td>
 <td>2026-10-19</td>

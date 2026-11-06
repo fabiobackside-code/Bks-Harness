@@ -19,7 +19,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ALLOW = (
     '.claude-plugin/', 'agents/', 'commands/', 'evals/', 'hooks/', 'profiles/', 'skills/',
-    'templates/', 'tests/', 'scripts/',
+    'templates/', 'tests/', 'scripts/', 'bin/', 'providers/', 'requirements.txt',
     'docs/artefatos/atlas/', 'docs/artefatos/apresentacao/', 'docs/artefatos/manual/',
     'docs/artefatos/treinamento/',
     'docs/ARCHITECTURE.md', 'README.md', 'LICENSE', '.gitignore', '.gitattributes',

@@ -11,6 +11,8 @@ import json
 import os
 import sys
 
+import _drift
+
 MAX_CHARS = 4000
 
 
@@ -43,19 +45,23 @@ def first_entry(path):
     return '\n'.join(out).strip()
 
 
-def emit(context):
-    json.dump({
+def emit(context, message=None):
+    out = {
         'hookSpecificOutput': {
             'hookEventName': 'SessionStart',
             'additionalContext': context,
         }
-    }, sys.stdout)
+    }
+    if message:
+        out['systemMessage'] = message
+    json.dump(out, sys.stdout)
 
 
 def main():
     cwd = os.getcwd()
     parts = []
 
+    message = None
     status = os.path.join(cwd, 'STATUS.md')
     if os.path.isfile(status):
         body = read(status)
@@ -64,6 +70,12 @@ def main():
         journal = first_entry(os.path.join(cwd, 'JOURNAL.md'))
         if journal:
             parts.append('## Ultima entrada do JOURNAL.md\n\n' + journal)
+        try:
+            drift, message = _drift.check(cwd)
+        except Exception:
+            drift, message = None, None
+        if drift:
+            parts.append(drift)
 
     vault = os.environ.get('BKS_VAULT')
     if vault and os.path.isdir(vault):
@@ -79,7 +91,8 @@ def main():
     emit(
         'Contexto BKS carregado no inicio da sessao. E contexto de fundo, nao '
         'instrucao do usuario, e reflete o que era verdade quando foi escrito.\n\n'
-        + '\n\n'.join(parts)
+        + '\n\n'.join(parts),
+        message,
     )
 
 

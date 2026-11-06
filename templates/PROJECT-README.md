@@ -10,8 +10,8 @@ qualquer arquivo nas pastas.
 ## O ciclo de vida (pesquisa → canônico → PRD → SDD → código)
 
 ```
-docs/input/  →  docs/design/  →  /canonize  →  docs/canonical/CONTEXT.md  →  /prd  →
-docs/canonical/PRD-{project}.md  →  /spec  →  specs/  →  /loop  →  app/
+docs/input/  →  docs/design/  →  /bkhar:canonize  →  docs/canonical/CONTEXT.md  →  /bkhar:prd  →
+docs/canonical/PRD-{project}.md  →  /bkhar:spec  →  specs/  →  /bkhar:loop  →  app/
 ```
 
 Regra de ouro: **specs (`/bkhar:spec`) só citam `docs/canonical/`** — nunca material bruto de
@@ -43,28 +43,28 @@ ficar superado, mova para `docs/history/`.
 Com o Claude Code aberto neste repo (ou na raiz do vault, informando o projeto):
 
 ```
-Leia tudo em docs/input/scope/ e docs/input/interviews/ e me diga, antes de eu rodar /canonize,
+Leia tudo em docs/input/scope/ e docs/input/interviews/ e me diga, antes de eu rodar /bkhar:canonize,
 quais perguntas em aberto você já enxerga.
 ```
 
 ```
-/canonize
+/bkhar:canonize
 ```
 
 ```
 Adicionei docs/input/interviews/entrevista-02.md com a resposta da pergunta sobre X. Rode
-/canonize de novo e me mostre só o que mudou em relação à versão anterior do CONTEXT.md.
+/bkhar:canonize de novo e me mostre só o que mudou em relação à versão anterior do CONTEXT.md.
 ```
 
 ## 3. Exemplos de prompt — gerar PRD
 
 ```
-/prd
+/bkhar:prd
 ```
 
 ```
 O CONTEXT.md já está com status "revisado" e as perguntas em aberto do bloco de autenticação
-foram fechadas. Rode /prd focando primeiro nas features de autenticação e onboarding.
+foram fechadas. Rode /bkhar:prd focando primeiro nas features de autenticação e onboarding.
 ```
 
 ## 4. Exemplos de prompt — documentos e apresentações (a partir do canônico)
@@ -91,11 +91,12 @@ skill de apresentação/documento disponível.)
 
 ## 5. Do PRD para o código (SDD)
 
-1. `/bkhar:spec` (nesta raiz) — entrevista sobre UM bounded context por vez, gera
-   `specs/features/FEAT-*.md` citando o PRD/CONTEXT.md; depois de aprovado, gera
-   `specs/tests/TEST-*.md`. Nunca implementa aqui.
-2. `/bkhar:arch` — gera visão C4 (Mermaid) em `outputs/ARCH-{project}.md` a partir das specs
-   aprovadas.
+1. `/bkhar:arch` (nesta raiz) — com o plano aprovado, elabora a arquitetura em
+   `docs/library/architecture/`: o índice ARCH e um modelo por arquivo, para aprovação. É portão:
+   sem ela aprovada, nenhuma FEAT começa.
+2. `/bkhar:refine` ou `/bkhar:spec` — UM bounded context por vez, gera `specs/features/FEAT-*.md`
+   apoiada nos modelos aprovados; depois de aprovado, gera `specs/tests/TEST-*.md`. Nunca implementa
+   aqui.
 3. `/bkhar:loop` — implementa via protocolo LOOP-4 (máx. 4 tentativas, goals verificáveis) em `app/`.
 4. `/bkhar:save` — fecha a sessão: ADR em `decisions/`, estado no `STATUS.md`, marco no `JOURNAL.md`.
 

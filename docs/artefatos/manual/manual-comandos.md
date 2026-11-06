@@ -1,7 +1,7 @@
 ---
 tipo: manual
-versao: 1.1.0
-atualizado: 2026-10-19
+versao: 1.6.0
+atualizado: 2026-11-06
 ---
 
 # Manual de comandos do `bkhar`
@@ -13,11 +13,12 @@ Todo comando responde com o prefixo do plugin: `/bkhar:brain`, `/bkhar:save`. Os
 | Grupo | Comandos | Onde rodar |
 |---|---|---|
 | Entrada e vault | `brain`, `new-project`, `ingest` | raiz do vault (`brain` também roda na raiz do repo) |
-| Contexto e requisito | `note`, `canonize`, `prd` | raiz do repo (`canonize` e `prd` aceitam a raiz do vault e perguntam o projeto) |
-| Especificação e arquitetura | `refine`, `spec`, `arch` | raiz do repo |
-| Execução e qualidade | `loop`, `review`, `maintainability` | raiz do repo |
+| Contexto e requisito | `note`, `canonize`, `prd`, `plan` | raiz do repo (`canonize` e `prd` aceitam a raiz do vault e perguntam o projeto) |
+| Arquitetura, biblioteca e especificação | `arch`, `library`, `refine`, `spec` | raiz do repo |
+| Execução e qualidade | `loop`, `review`, `maintainability`, `status` | raiz do repo |
 | A equipe e os ritos | `ask`, `panel` | raiz do repo |
-| Fechamento e migração | `save`, `migrate` | raiz do repo |
+| Fechamento e migração | `save`, `migrate`, `mode`, `retro` | raiz do repo |
+| Experiência | `harvest` | raiz do vault |
 
 > Os comandos de projeto escrevem no repositório onde a sessão está aberta. Rodar da pasta errada grava no lugar errado. Na dúvida, abra uma sessão nova na pasta do projeto.
 
@@ -40,6 +41,113 @@ Todos os exemplos usam o mesmo projeto fictício: `pix-comprovante`, categoria `
 
 ---
 
+## Antes de instalar o harness
+
+Esta seção prepara a máquina e escolhe de onde vêm os modelos. São três caminhos: o A é o padrão; o B e o C trocam o provedor de modelo. Em todos, o plugin `bkhar` é o mesmo.
+
+| Caminho | Para quem | O que muda |
+|---|---|---|
+| A · Claude Code | padrão | nada: o `claude` usa a sua conta Anthropic |
+| B · DeepSeek | quem usa créditos DeepSeek | o lançador `bkhar` aponta o Claude Code para a API (interface de programação) do DeepSeek |
+| C · OpenRouter | quem quer variar de modelo com créditos OpenRouter | o lançador `bkhar` aponta o Claude Code para o OpenRouter, com o modelo que você escolher |
+
+### Pré-requisitos
+
+| Requisito | Para quê | Como conferir |
+|---|---|---|
+| Git | clonar o repositório do harness | `git --version` |
+| Python 3 | scripts do harness e o lançador `bkhar` | `python --version` |
+| Node.js | CLI (interface de linha de comando) do `design.md`, chamada por `npx` | `node --version` |
+
+Docker não é pré-requisito da 1.1.0.
+
+Depois de clonar o repositório do harness, instale as dependências do lançador:
+
+```
+python -m pip install -r requirements.txt
+```
+
+### Caminho A: Claude Code
+
+1. Instale o Claude Code e autentique com `claude`.
+2. Instale o plugin `bkhar` (comandos na seção de instalação do Treinamento).
+3. Abra uma sessão num projeto e rode `/bkhar:brain`. Se responder com o estado do projeto, está de pé.
+
+O `claude` direto continua funcionando como hoje. Para o lançador não injetar nada, deixe o provedor em `claude`:
+
+```
+bkhar provider set claude
+```
+
+### Chamar o `bkhar` de qualquer pasta
+
+O lançador vive em `bin/`. Para chamar `bkhar` de qualquer pasta, ponha `bin/` no PATH (a lista de pastas onde o sistema procura executáveis). Um script faz isso, no escopo do usuário, sem duplicar a entrada.
+
+No Windows (PowerShell):
+
+```
+powershell -ExecutionPolicy Bypass -File <pasta-do-harness>\bin\setup-path.ps1
+```
+
+Em shell POSIX (Linux e macOS):
+
+```
+sh <pasta-do-harness>/bin/setup-path.sh
+```
+
+Para desfazer: `-Remove` no `.ps1` e `--remove` no `.sh`. Abra um terminal novo depois de rodar.
+
+Sem o script, o equivalente manual: no Windows, acrescente `<pasta-do-harness>\bin` ao PATH do usuário em Configurações, Variáveis de ambiente; em shell POSIX, acrescente ao `~/.bashrc` ou `~/.zshrc` a linha `export PATH="<pasta-do-harness>/bin:$PATH"`.
+
+### Caminho B: DeepSeek
+
+Faça o caminho A e depois configure o provedor:
+
+```
+bkhar provider set deepseek
+```
+
+Sem `--key`, a chave é pedida sem eco no terminal. Prefira assim: a chave não fica no histórico do shell. `--key <chave>` existe, mas deixa a chave no histórico.
+
+O DeepSeek responde por dois modelos, e os dois raciocinam. A diferença é entre o `deepseek-v4-pro` (o mais forte) e o `deepseek-flash` (o mais rápido e barato). O harness liga cada rótulo de modelo do Claude Code a um deles:
+
+| Rótulo | Modelo padrão | Flag que troca |
+|---|---|---|
+| `opus` | `deepseek-v4-pro` | `--reasoning <modelo>` |
+| `sonnet` e `haiku` | `deepseek-flash` | `--chat <modelo>` |
+
+Flag omitida mantém o padrão. O endereço e os modelos padrão vêm de `providers/deepseek.json`.
+
+### Caminho C: OpenRouter
+
+Faça o caminho A e depois configure o provedor. O modelo é obrigatório e vale para os três rótulos (`opus`, `sonnet` e `haiku`):
+
+```
+bkhar provider set openrouter --model <modelo>
+```
+
+A chave é pedida sem eco, como no caminho B.
+
+### Usar e conferir
+
+```
+bkhar provider show
+bkhar
+bkhar -- <args do claude>
+```
+
+`provider show` mostra o provedor ativo e os modelos, com a chave mascarada. `bkhar` abre o `claude` com o provedor ativo. Tudo depois de `--` vai para o `claude` sem mudança.
+
+### Onde fica a chave
+
+A chave fica cifrada (AES-256-GCM) em `~/.bkhar/providers.json`. A chave mestra que a decifra não fica no arquivo: vive no cofre de credenciais do sistema (Windows Credential Manager, macOS Keychain ou Linux Secret Service), acessado pela biblioteca `keyring`. Nos provedores `deepseek` e `openrouter`, uma `ANTHROPIC_API_KEY` herdada do shell é esvaziada para não vazar para o provedor errado.
+
+A cifra protege a chave em disco. Durante a sessão, a chave decifrada fica no ambiente do `claude`, na variável `ANTHROPIC_AUTH_TOKEN`. Tudo o que o `claude` inicia herda esse ambiente: comandos da ferramenta Bash, hooks e servidores MCP (Model Context Protocol). Instale só hooks e servidores MCP em que você confia.
+
+### Nota: OpenClaude
+
+O OpenClaude é um projeto de terceiros, com vários forks; alguns declaram derivar de código-fonte vazado do Claude Code. O harness não o configura nem o suporta. Um exemplo: <https://github.com/Twigpine/openclaude>. Se for usar, confira a licença antes.
+
 ## 1. O ciclo em uma passada
 
 A ordem típica, do projeto novo ao fechamento de sessão. O PRD (Product Requirements Document, documento de requisitos de produto) é a ponte entre o contexto e a especificação.
@@ -51,12 +159,14 @@ A ordem típica, do projeto novo ao fechamento de sessão. O PRD (Product Requir
 | 3 | `/bkhar:note` | repo | material bruto do autor entra em `docs/input/notas/` |
 | 4 | `/bkhar:canonize` | repo | `docs/input/` e `docs/design/` viram `docs/canonical/CONTEXT.md` |
 | 5 | `/bkhar:prd` | repo | o contexto canônico vira `PRD-{projeto}.md` |
-| 6 | `/bkhar:refine` | repo | a equipe pergunta antes; o `architect` escreve a `FEAT` e o `tester`, o `TEST` |
-| 7 | `/bkhar:arch` | repo | as specs viram a visão de arquitetura e o README |
+| 5a | `/bkhar:plan` | repo | o PRD vira o plano macro `outputs/PLAN-{projeto}.md`; obrigatório no perfil `fullstack` |
+| 6 | `/bkhar:arch` | repo | o PLAN aprovado vira o índice ARCH e os modelos de arquitetura, para você aprovar; é portão da especificação |
+| 7 | `/bkhar:refine` | repo | a equipe pergunta antes, apoiada nos modelos aprovados; o `architect` escreve a `FEAT` e o `tester`, o `TEST` |
 | 8 | `/bkhar:loop` | repo | o `tester` escreve o teste que falha, o `developer` implementa; no máximo 4 tentativas |
 | 9 | `/bkhar:review` | repo | revisão em painel: `tester`, `quality` e, em área sensível, `security` |
 | 10 | `/bkhar:maintainability` | repo | parecer por aplicação de `app/` e a fundamentação do projeto |
-| 11 | `/bkhar:save` | repo | roteia decisões e specs, reescreve o `STATUS.md`, acrescenta ao `JOURNAL.md` |
+| 11 | `/bkhar:save` | repo | roteia decisões e specs, reescreve o `STATUS.md`, acrescenta ao `JOURNAL.md`, regera a biblioteca |
+| 12 | `/bkhar:library` | repo | catálogo e dashboard da biblioteca; com `export`, leva a biblioteca para `knowledge/` do vault |
 
 Projeto que veio do kit antigo passa uma vez pelo `/bkhar:migrate` antes de entrar no ciclo com `/bkhar:*`.
 
@@ -430,9 +540,136 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 - PRD nunca sai direto de `docs/input/` ou `docs/design/`.
 - A partir daqui, o `/bkhar:spec` cita só `docs/canonical/`. Se uma spec precisar de algo de `docs/input/`, o canônico ficou incompleto: rode o `/bkhar:canonize` de novo.
 
+### `/bkhar:plan`
+
+**Para que serve.** Gera o plano macro do projeto a partir do PRD: em que ordem as partes entram e o que fecha cada fase. É a ponte entre o `/bkhar:prd` e a especificação por fase.
+
+**Onde rodar.** Raiz do repo do projeto.
+
+**Quando usar.** No perfil `fullstack`, sempre, logo depois do PRD revisado: o plano é obrigatório ali. Nos outros perfis, quando o escopo é grande o bastante para pedir faseamento; o comando avisa que é opcional e pergunta se segue.
+
+**Pré-requisito.** `docs/canonical/PRD-{projeto}.md` existe. Sem ele, o comando para e manda rodar o `/bkhar:prd`.
+
+**O que ele faz, passo a passo.**
+
+1. Lê o `.bks-profile.json` para saber se o plano é obrigatório.
+2. Lê o PRD, o `CONTEXT.md` e o plano anterior, se houver.
+3. Gera o plano pela estrutura da skill `bks-sdd` (`plan-structure.md`): visão geral, fases, features previstas, dependências externas, assunções, questões em aberto e fontes.
+4. No `fullstack`, ordena banco, backend, frontend (conforme o `frontend_target`), componentes e infraestrutura. Fase que não está no PRD não entra.
+5. Rastreia cada fase e cada feature até um requisito do PRD. Lacuna é apontada antes de qualquer suposição.
+6. Arquiva o plano anterior em `docs/history/` e grava o novo com frontmatter.
+
+**O que produz.**
+
+- `outputs/PLAN-{projeto}.md`, com frontmatter `projeto`, `version`, `baseado_em`, `status` e `atualizado`
+- `docs/history/PLAN-v{N}-{YYYY-MM-DD}.md`, quando havia versão anterior
+
+**Exemplo.**
+
+```
+cd ${BKS_VAULT}/repos/private/poc-wrh-ponto
+/bkhar:plan
+→ Gerado outputs/PLAN-poc-wrh-ponto.md v1
+  (baseado_em: docs/canonical/PRD-poc-wrh-ponto.md v1, status: rascunho).
+→ Fase 1 — banco e API de registro de ponto (RF-01, RF-02)
+  Fase 2 — web em React (RF-03)
+  Fase 3 — mobile em Flutter (RF-04)
+  Fase 4 — Docker Compose e observabilidade (RNF-02)
+→ Próximo passo: revise o plano; aprovado, rode /bkhar:arch e depois
+  /bkhar:refine para as features da Fase 1.
+```
+
+**Cuidados.**
+
+- O plano não escreve FEAT, TEST nem TASK. Diz a ordem; a especificação acontece por fase.
+- Refasear não pede PRD novo: rode o `/bkhar:plan` de novo, e a versão anterior vai para o histórico.
+
 ---
 
-## 4. Especificação e arquitetura
+## 4. Arquitetura, biblioteca e especificação
+
+### `/bkhar:arch`
+
+**Para que serve.** Elabora a arquitetura do projeto para aprovação: o índice ARCH (`docs/library/architecture/ARCH-{projeto}.md`) e um modelo por arquivo em `docs/library/architecture/models/`. É portão nos dois modos: sem ARCH e modelos aprovados, nenhuma FEAT começa.
+
+**Onde rodar.** Raiz do repo do projeto.
+
+**Quando usar.** Com o PRD e o PLAN aprovados, antes do primeiro `/bkhar:refine` ou `/bkhar:spec`. De novo com `--update` sempre que o aviso de defasagem aparecer.
+
+**Pré-requisito.** `PRD-{projeto}.md` e `PLAN-{projeto}.md` com `status: aprovado`.
+
+**O que ele faz, passo a passo.**
+
+1. Confere o PRD e o PLAN aprovados. Um `outputs/ARCH-{projeto}.md` do layout anterior entra como insumo e vai para `docs/history/`.
+2. Carrega a skill `bks-arch`: notação, paleta, escolha do diagrama e o motor de `axes.architecture_renderer` (Mermaid por padrão; archify, C4 ou TOGAF quando o perfil pede). As lentes de system design dão o conteúdo de dado, API, mensageria, infraestrutura e telemetria.
+3. Escolhe os modelos que o PRD justifica, um por pergunta: `c4-contexto`, `c4-container`, `dados`, `sequencia-<fluxo>`, `fronteiras-sensiveis`, `implantacao`; `c4-componente` e `ciclo-de-vida-<entidade>` quando a pergunta existe.
+4. Escreve cada modelo com frontmatter (`modelo`, `version`, `status: rascunho`, `baseado_em`, `fontes`, `atualizado`), a pergunta, o diagrama, a legenda e as decisões com o requisito de origem. Saída que não é texto vai para `render/`.
+5. Escreve o índice ARCH: visão, bounded contexts, tabela dos modelos, decisões de pipeline, riscos e questões em aberto. Decisão estrutural nova vira ADR.
+6. Atualiza o `README.md` e roda `library.py index` e `library.py build`.
+7. Pede a aprovação: você muda `status` para `aprovado` no ARCH e em cada modelo.
+
+Com `--update`, roda antes `library.py stale` e refaz só os documentos apontados.
+
+**O que produz.**
+
+- `docs/library/architecture/ARCH-{projeto}.md` e `docs/library/architecture/models/*.md`
+- `docs/library/architecture/render/`, quando o motor gera imagem ou HTML
+- `README.md`, `docs/library/LIBRARY.md` e `docs/library/site/index.html` atualizados
+
+**Exemplo.**
+
+```
+cd ${BKS_VAULT}/repos/backside/pix-comprovante
+/bkhar:arch
+→ PRD v2 e PLAN v1 aprovados; motor: mermaid
+→ Modelos (status: rascunho):
+    c4-contexto            quem usa a emissão e com quem ela fala
+    c4-container           API .NET · worker de emissão · PostgreSQL · fila
+    dados                  comprovante, transação, assinatura
+    sequencia-emissao      do pedido à liquidação
+    fronteiras-sensiveis   onde vivem CPF e chave PIX
+→ Índice: docs/library/architecture/ARCH-pix-comprovante.md
+→ Aprove o ARCH e cada modelo para liberar o /bkhar:refine.
+```
+
+**Cuidados.**
+
+- A aprovação é sua, nos dois modos. No `autonomo`, a prontidão só concede o modo com o ARCH e os modelos aprovados e em dia.
+- Um modelo fica defasado quando um ADR, um contrato ou o PLAN muda depois do `atualizado` dele. O `/bkhar:save`, o `/bkhar:brain` e o fim de cada onda avisam; o `--update` refaz.
+- FEAT que contradiz um modelo aprovado não entra: a mudança vira ADR e `--update`.
+
+### `/bkhar:library`
+
+**Para que serve.** Mantém a biblioteca do projeto, a wiki que reúne canônicos, arquitetura, contratos, specs, decisões, ilustrações e histórico, e a leva para o vault.
+
+**Onde rodar.** Raiz do repo do projeto.
+
+**Subcomandos.**
+
+| Uso | Faz |
+|---|---|
+| `/bkhar:library` ou `build` | regera o catálogo `docs/library/LIBRARY.md` e o dashboard `docs/library/site/index.html`, e mostra o que está defasado |
+| `/bkhar:library stale` | lista os modelos da arquitetura defasados e o motivo |
+| `/bkhar:library export` | escreve a biblioteca em `${BKS_VAULT}/knowledge/wiki/projetos/{projeto}/` |
+
+**O dashboard.** Página estática, sem servidor: visão (a frase do `STATUS.md`), canônicos, arquitetura com os diagramas renderizados, contratos, linha do tempo das specs, das decisões e do diário, decisões, histórico e ilustrações. O catálogo lista cada artefato com status, versão, data e caminho. Os dois são versionados e o `/bkhar:save` os regera.
+
+**A exportação.** O destino vem de `library.export` no `.bks-profile.json`; sem a chave, o comando recusa. Cada documento vira uma página com o frontmatter da knowledge, as imagens vão para `assets/`, o `index.md` do projeto liga tudo por wikilink, e o `knowledge/wiki/index.md` e o `log.md` ganham a linha do projeto. Antes de escrever, toda página passa pelo filtro do harvest: um termo da lista de bloqueio ou um dado sensível recusa a exportação inteira.
+
+**Exemplo.**
+
+```
+/bkhar:library export
+→ Destino: ${BKS_VAULT}/knowledge/wiki/projetos/pix-comprovante — ok? sim
+→ exportado: 18 arquivos
+→ knowledge/wiki/index.md: linha do projeto em ## Projetos
+→ knowledge/wiki/log.md: [2026-11-04] export | pix-comprovante
+```
+
+**Cuidados.**
+
+- A exportação só roda quando você pede e confirma o destino. O vault não é commitado pelo comando.
+- Página que saiu do catálogo é removida do destino na exportação seguinte.
 
 ### `/bkhar:refine`
 
@@ -442,7 +679,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 
 **Quando usar.** É o caminho padrão para especificar uma feature. O `/bkhar:spec` fica para a exceção, quando a feature é pequena e você já sabe tudo que a equipe perguntaria.
 
-**Pré-requisito.** O PRD ou o `CONTEXT.md` em `docs/canonical/`.
+**Pré-requisito.** O PRD ou o `CONTEXT.md` em `docs/canonical/`, e o ARCH e os modelos de `docs/library/architecture/` aprovados. Sem eles, o comando para e manda rodar o `/bkhar:arch`.
 
 **Argumentos.** O pedido, em uma frase: `/bkhar:refine emitir comprovante de Pix liquidado`.
 
@@ -498,7 +735,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 
 **Quando usar.** Como exceção ao `/bkhar:refine`: feature pequena, que você já entende, num projeto que já existe. Uma feature por vez.
 
-**Pré-requisito.** O PRD ou o `CONTEXT.md` em `docs/canonical/`.
+**Pré-requisito.** O PRD ou o `CONTEXT.md` em `docs/canonical/`, e o ARCH e os modelos de `docs/library/architecture/` aprovados. Sem eles, o comando para e manda rodar o `/bkhar:arch`.
 
 **O que ele faz, passo a passo.**
 
@@ -536,49 +773,6 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 - O comando nunca implementa. Código é etapa do `/bkhar:loop`.
 - FEAT, TEST e TASK são escritos em português com acentuação. Nome de arquivo fica sem acento: `FEAT-emissao-comprovante.md`.
 - Se os arquivos do repo estiverem sem acento, o comando escreve certo mesmo assim e avisa em uma linha.
-
-### `/bkhar:arch`
-
-**Para que serve.** Gera a visão de arquitetura do projeto e o README do repositório a partir das specs.
-
-**Onde rodar.** Raiz do repo do projeto.
-
-**Quando usar.** Com specs aprovadas, antes ou durante a implementação.
-
-**Pré-requisito.** Specs em `specs/` do próprio repo.
-
-**O que ele faz, passo a passo.**
-
-1. Lê as specs em `specs/`.
-2. Gera a visão C4 (modelo de diagramas Context, Container e Component) em Mermaid.
-3. Acrescenta o mapa de bounded contexts, as decisões de pipeline e SEDA, e o contrato do protocolo TCP, quando houver.
-4. Gera o README do repositório: o que é, arquitetura resumida, como rodar, como testar, estrutura de pastas.
-5. Usa a skill `bks-c4-diagrams`, se disponível.
-
-**O que produz.**
-
-- `outputs/ARCH-[projeto].md`
-- `README.md` na raiz do repo
-
-**Exemplo.**
-
-```
-cd ${BKS_VAULT}/repos/backside/pix-comprovante
-/bkhar:arch
-→ Lidas: specs/features/FEAT-emissao-comprovante.md, specs/tests/TEST-emissao-comprovante.md
-→ Gerado outputs/ARCH-pix-comprovante.md:
-    Context    — cliente do banco → API pix-comprovante → fila de liquidação
-    Container  — API .NET · worker de emissão · PostgreSQL
-    Component  — Adapter Inbound → UseCase EmitirComprovante → Port de persistência
-→ Atualizado README.md.
-```
-
-**Cuidados.**
-
-- O comando não recebe o nome do projeto como argumento. Ele usa o repo onde a sessão está.
-- A arquitetura sai das specs. Spec ausente ou em rascunho gera uma visão pobre.
-
----
 
 ## 5. Execução e qualidade
 
@@ -644,6 +838,27 @@ Caso de bloqueio:
 - Decisão que foge da FEAT volta do `developer` para a sessão, que pergunta a você antes da próxima tentativa.
 - Os goals padrão são de .NET. Em outra stack, ajuste `G1` e `G2` na task.
 - O registro de cada tentativa fica na própria task, não em arquivo solto: quem retoma o trabalho lê a task e vê o que já foi tentado.
+
+**Em ondas: `/bkhar:loop --wave N`.** No modo `autonomo`, o loop executa o grafo `outputs/GRAPH-{projeto}.json` onda por onda (`N` é o número da onda, ou `next`).
+
+1. **Ponto de controle.** Aplica os pedidos do painel em `outputs/run/inbox/` (`run_state.py inbox`).
+2. **Liberação.** `wave_graph.py ready` devolve as tasks da onda cujas entradas (`consome`) estão aprovadas, até 4 simultâneas.
+3. **Disparo em paralelo.** Task de `desenho` chama o `architect` com a lente da task e escreve o contrato em `specs/contracts/`, em rascunho; task de construção, front ou integração ganha worktree própria (`git worktree add ../{repo}-wt/T-00X -b wave/N/T-00X`) e roda o LOOP-4 acima, com FEAT e TEST escritos pelo `/bkhar:refine` no modo `autonomo` quando faltam. Cada passo vira estado em `outputs/run/`, pelo `run_state.py start`, `attempt` e `finish`.
+4. **Task travada.** `bloqueada` gera `outputs/BLOQUEIO-[task].md`, segura só a cadeia que depende dela e avisa você por notificação e pelo painel.
+5. **Fim da onda.** Merge de cada `wave/N/T-00X` em ordem de id (conflito para a onda), build e suíte completos, `/bkhar:review` sobre o diff da onda, `library.py stale` para a arquitetura viva, remoção das worktrees e `outputs/run/onda-N/RELATORIO.md` com tentativas, modelo, custo, suposições novas e bloqueios.
+6. **Próxima onda.** Só segue sem portão aberto: em `rigor: producao`, os contratos da onda de desenho e a entrega final esperam você.
+
+**O painel.** Para acompanhar a onda, rode noutro terminal `python ${CLAUDE_PLUGIN_ROOT}/scripts/dashboard.py .` e abra `http://127.0.0.1:8765`. Ele mostra ondas, tasks, tentativas, bloqueios, o modelo de cada papel e o consumo por modelo, agente e dia. Por ele você responde a um `BLOQUEIO`, pausa ou retoma a onda, deixa mensagem para a próxima tentativa e troca o modelo de um papel; o painel escreve só o pedido na inbox, e o loop o aplica no próximo ponto de controle.
+
+```
+/bkhar:loop --wave next
+→ Inbox: 1 pedido aplicado (architect → opus).
+→ Onda 2 · liberadas T-006, T-007, T-008 (T-009 espera specs/contracts/api.md aprovado).
+→ T-006 · worktree ../pix-comprovante-wt/T-006 · RED confirmado · tentativa 1 passou.
+→ T-007 · tentativa 4 falhou · BLOQUEIO-T-007.md; T-010 segurada.
+→ Fim da onda: merge T-006, T-008; suíte verde; review sem bloqueante; arquitetura em dia.
+→ outputs/run/onda-2/RELATORIO.md gravado.
+```
 
 ### `/bkhar:review`
 
@@ -768,6 +983,27 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 
 ---
 
+### `/bkhar:status`
+
+**Para que serve.** Mostra onde a execução em ondas está: cada task com onda, papel, modelo, estado, início e custo; o que está liberado agora; os bloqueios e as suposições abertas.
+
+**Onde rodar.** Raiz do repo do projeto. Só lê.
+
+**O que ele faz.** Roda `scripts/run_state.py show` e `scripts/wave_graph.py waves`, lista os `outputs/BLOQUEIO-*.md`, conta as suposições abertas e indica o painel em `http://127.0.0.1:8765`.
+
+**Exemplo.**
+
+```
+/bkhar:status
+→ onda task   papel      modelo  estado       início
+→ 1    T-001  architect  opus    passou       2026-11-05T10:02:11Z
+→ 2    T-003  developer  sonnet  tentativa 2  2026-11-05T10:40:52Z
+→ liberadas agora: T-004
+→ bloqueios: nenhum · suposições abertas: 3
+```
+
+---
+
 ## 6. Fechamento e migração
 
 ### `/bkhar:save`
@@ -886,6 +1122,118 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 - Nomes de skill (`bks-sdd`...) e as variáveis `BKS_*` ficam como estão.
 - Até o commit, tudo é reversível: `git checkout -- .` e `git clean -fd` desfazem a migração.
 - Projeto não migrado continua funcionando com `/bks:*`. Não há prazo para migrar antes da Fase 7.
+
+---
+
+### `/bkhar:maestri`
+
+**Para que serve.** Liga, desliga e confere a integração do projeto com o Maestri. Ligada, os papéis da equipe rodam cada um no seu terminal; `arch`, `prd` e `plan` rodam delegados no `architect`, e `canonize`, `save` e `maintainability`, num terminal executor (`ops`), sem ocupar o `manager`. Desligada, tudo roda como fora do Maestri.
+
+**Onde rodar.** No terminal `manager` do Maestri, na raiz do repo do projeto.
+
+**Quando usar.** Uma vez por projeto, depois de montar os terminais no canvas; de novo sempre que trocar um terminal, para conferir; e com `off`, quando quiser voltar aos subagentes.
+
+**O que ele faz, passo a passo.**
+
+1. Sem argumento ou com `check`: mostra o bloco `maestri` do `.bks-profile.json` e roda `scripts/maestri_config.py check`, que confere este terminal (`manager`), os seis papéis, o executor `ops` e a nota `status`.
+2. Com `on`: lê o `maestri list`, compara com o mapa padrão, pergunta pelo terminal de nome diferente, mostra o bloco e espera o ok. Grava com `maestri_config.py on` e termina com o `check`.
+3. Para cada falta, diz o que montar no canvas: terminal, nome, comando e conexão só com o `manager`. A criação é sua; o harness não cria terminal.
+4. Com o seu ok, cria a nota `status` com nome fixo e regera a nota.
+5. Com `off`: desliga e guarda o mapa para o próximo `on`.
+
+**O que produz.** O bloco `maestri` no `.bks-profile.json`: `enabled`, os nomes dos terminais, a nota e o mapa `delegate` (comando → terminal).
+
+**Exemplo.**
+
+```
+/bkhar:maestri on
+→ falta: executor ops: terminal 'ops' não está conectado a este
+→ crie no canvas: Terminal, preset "Claude Code", nome ops, comando claude --model opus, Connect com o manager
+/bkhar:maestri check
+→ ok: manager, 6 papéis e a nota de status conectados
+```
+
+**Cuidados.**
+
+- O script recusa delegar ao `quality`, `security` ou `scribe` um comando que precisa de Bash (`arch`, `plan`, `save`). O `architect` tem Bash limitado por guarda: scripts do plugin, `git` de leitura e `maestri ask`.
+- Comando delegado continua seu: toda pergunta do terminal delegado volta ao `manager` como gate.
+- O Maestro Mode fica desligado; os terminais nascem da partitura que você salva.
+
+---
+
+### `/bkhar:mode`
+
+**Para que serve.** Troca o modo de condução do projeto: `colaborativo`, em que a equipe pergunta e espera, ou `autonomo`, em que a pergunta vira suposição registrada e a construção roda em ondas.
+
+**Onde rodar.** Raiz do repo do projeto.
+
+**Quando usar.** Sem argumento, para ver o modo atual e a prontidão. Com `autonomo`, depois de canônico, PRD, PLAN, grafo, ARCH e modelos aprovados.
+
+**O que ele faz, passo a passo.**
+
+1. Lê o `.bks-profile.json`; `axes.mode` ausente vale `colaborativo`.
+2. Roda `scripts/readiness.py` e cola a saída: Contexto, Plano, Arquitetura, Abertos e Execução, cada um `ok` ou com o que falta.
+3. Recusada a prontidão, não troca e diz qual comando resolve cada item.
+4. Concedida, mostra o que muda e espera o ok.
+5. Grava `axes.mode`, um ADR em `decisions/` com a saída da prontidão como evidência e uma entrada no `JOURNAL.md`. Não commita.
+
+**O que produz.** `axes.mode` no perfil, o ADR da troca e a entrada no `JOURNAL.md`.
+
+**Exemplo.**
+
+```
+/bkhar:mode autonomo
+→ prontidão RECUSADA
+→ Plano: PLAN com status rascunho · outputs/GRAPH-{projeto}.json não existe
+→ Abertos: PLAN-p.md: Pergunta 1 do PRD: forma do mobile.
+→ resolva com /bkhar:plan e respondendo às questões; nada foi alterado
+```
+
+**Cuidados.**
+
+- O comando nunca aprova documento para passar na prontidão; aprovar é decisão sua.
+- Nenhum modo afrouxa os guardas, o RED antes do código, as 4 tentativas e o `security` em área sensível.
+
+---
+
+### `/bkhar:retro`
+
+**Para que serve.** Decide o que vira regra. Cada correção sua e cada aprendizado com evidência viram proposta candidata em `inbox/proposals/`; o `retro` mostra as candidatas e você escolhe o destino de cada uma.
+
+**Onde rodar.** Raiz do repo do projeto.
+
+**O que ele faz, passo a passo.**
+
+1. Lista as candidatas com `scripts/learning.py list` e junta as que dizem a mesma coisa.
+2. Para cada uma, pergunta o destino: `projeto` (`brain/engineering/regras/`), `vault` (`${BKS_VAULT}/workbench/regras/`), `kit` (`inbox/proposals/` do harness, esperando eval) ou rejeitar (`archive/proposals/`, com motivo).
+3. Aplica com `learning.py promote` ou `learning.py reject`. Não commita.
+
+**Cuidados.**
+
+- Só você promove. Regra promovida passa a valer no modo `autonomo`.
+- Regra do kit só fica se o `claude plugin eval` mostrar delta entre os braços `with` e `without`.
+- Vault e kit recusam proposta com dado pessoal ou segredo.
+
+### `/bkhar:harvest`
+
+**Para que serve.** Junta a experiência dos projetos: o que foi decidido, descartado e revertido em cada tema, com ponteiro para o ADR de origem.
+
+**Onde rodar.** Raiz do vault.
+
+**O que ele faz, passo a passo.**
+
+1. Atualiza o índice com `scripts/harvest.py index`, sem modelo e incremental; `themes` conta as entradas por tema.
+2. Pergunta quais temas consolidar.
+3. Escreve `knowledge/wiki/experiencia/<tema>.md`, uma linha por decisão, cada uma apontando o ADR.
+4. Confere a página com `harvest.py check` antes de gravar.
+
+**Escopo.** `backside/` e `private/` por inteiro; `old/` como histórico; de `w3/`, só o `nquantic`, só conceito; `backup/` fora.
+
+**Cuidados.**
+
+- Do `nquantic`, o índice guarda só tema e data. A página que citar termo da lista de bloqueio (`knowledge/wiki/experiencia/_bloqueio.txt`) é recusada.
+- O ADR do projeto continua sendo a fonte; a página só sintetiza.
+- O `/bkhar:save` lembra do harvest quando o projeto tem ADR mais novo que o índice.
 
 ---
 
@@ -1065,18 +1413,24 @@ python hooks/scripts/writing_guard.py docs/ARCHITECTURE.md
 | `/bkhar:note` | raiz do repo | nenhum | nota viva em `docs/input/notas/` |
 | `/bkhar:canonize` | raiz do repo, ou vault perguntando o projeto | material em `docs/input/` ou `docs/design/` | `docs/canonical/CONTEXT.md` |
 | `/bkhar:prd` | raiz do repo, ou vault perguntando o projeto | `CONTEXT.md` consolidado | `docs/canonical/PRD-{projeto}.md` |
-| `/bkhar:refine` | raiz do repo | PRD ou `CONTEXT.md` | perguntas da equipe, `FEAT-*.md` com `Refinamento: sim`, depois `TEST-*.md` |
-| `/bkhar:spec` | raiz do repo | PRD ou `CONTEXT.md` | `specs/features/FEAT-*.md` com `Refinamento: não (exceção)`, depois `specs/tests/TEST-*.md` |
-| `/bkhar:arch` | raiz do repo | specs em `specs/` | `outputs/ARCH-[projeto].md` e `README.md` |
+| `/bkhar:plan` | raiz do repo | `PRD-{projeto}.md` | `outputs/PLAN-{projeto}.md` |
+| `/bkhar:arch` | raiz do repo | PRD e PLAN aprovados | `docs/library/architecture/ARCH-{projeto}.md`, `models/*.md`, `README.md` |
+| `/bkhar:library` | raiz do repo | `docs/library/`; `library.export` no perfil para exportar | `LIBRARY.md`, `site/index.html`; com `export`, páginas em `knowledge/wiki/projetos/` |
+| `/bkhar:refine` | raiz do repo | ARCH e modelos aprovados | perguntas da equipe, `FEAT-*.md` com `Refinamento: sim`, depois `TEST-*.md` |
+| `/bkhar:spec` | raiz do repo | ARCH e modelos aprovados | `specs/features/FEAT-*.md` com `Refinamento: não (exceção)`, depois `specs/tests/TEST-*.md` |
 | `/bkhar:loop` | raiz do repo | FEAT e TEST aprovados | RED do `tester`, código do `developer`, ou `outputs/BLOQUEIO-[task].md` |
 | `/bkhar:review` | raiz do repo | diff da entrega; manifesto para o `security` | achados classificados, propostas de task, casos para o `LEARNINGS.md` |
 | `/bkhar:ask` | raiz do repo | nenhum | resposta de um agente, com fonte |
 | `/bkhar:panel` | raiz do repo | nenhum | `decisions/ADR-NNN-*.md` com as opções descartadas |
 | `/bkhar:maintainability` | raiz do repo | código em `app/` | `outputs/maintainability/*.html`, `outputs/references/` |
 | `/bkhar:save` | raiz do repo | `STATUS.md` | `STATUS.md` reescrito, `JOURNAL.md` acrescido, `LEARNINGS.md`, ADRs, specs e consumo |
+| `/bkhar:retro` | raiz do repo | propostas em `inbox/proposals/` | regras em `brain/engineering/regras/`, no vault ou no kit; rejeitadas em `archive/` |
+| `/bkhar:harvest` | raiz do vault | ADRs em `repos/` | `knowledge/wiki/experiencia/_index.json` e uma página por tema |
+| `/bkhar:status` | raiz do repo | nenhum | tabela da execução em ondas, só na conversa |
+| `/bkhar:mode` | raiz do repo | canônico, PRD, PLAN, grafo e ARCH aprovados, para `autonomo` | `axes.mode` no perfil, ADR da troca, entrada no `JOURNAL.md` |
 | `/bkhar:migrate` | raiz do repo | árvore limpa, projeto no `bks` | `.bkhar.json`, prefixo trocado no `WORKFLOW.md` e no `CLAUDE.md` |
 
-Só `/bkhar:brain` e `/bkhar:new-project` são de vault. Todos os outros escrevem no repositório onde a sessão está aberta.
+Só `/bkhar:brain`, `/bkhar:new-project` e `/bkhar:harvest` são de vault. Todos os outros escrevem no repositório onde a sessão está aberta.
 
 ---
 
@@ -1087,7 +1441,6 @@ Ainda não existem. Estão no desenho do harness e podem mudar antes de nascer.
 | Comando | Onde rodaria | O que faria | Status |
 |---|---|---|---|
 | `/bkhar:brainstorm` | qualquer pasta | rito de brainstorming com a skill de mesmo nome | *proposto* |
-| `/bkhar:retro` | repo | retrospectiva da FEAT atual | *proposto* |
 | `/bkhar:curate` | repo do harness | revisa as propostas pendentes | *proposto* |
 | `/bkhar:skill new / list / promote` | repo do harness | cria, lista e promove skills | *proposto* |
 | `/bkhar:cost` | repo | custo por agente, modelo, skill e fase, evoluindo o `--cost-report` | *proposto* |

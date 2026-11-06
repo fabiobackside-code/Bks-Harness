@@ -16,8 +16,9 @@ empacotamento existe para dar a essas peças uma única fonte da verdade, versio
 skills/             skills, cada uma com SKILL.md + references/
 commands/           slash commands
 agents/             subagentes com papel e modelo declarados
-scripts/            utilitarios chamados pelas skills (medição de custo)
+scripts/            utilitários chamados pelas skills e comandos (custo, prontidão, ondas, painel, biblioteca)
 hooks/              guardas executáveis de regra
+providers/          definição de cada provedor de modelo, lida pelo lançador bkhar
 evals/              suites de eval das skills, um diretório por caso
 docs/               está documentação
 ```
@@ -109,8 +110,10 @@ conversa, e quem decide é o usuário").
   nos outros três.
 - `scribe` roda em Haiku e só registra o que foi confirmado com evidência. Documentação que infere
   resultado é pior que documentação ausente.
-- `architect` não tem Bash nem escreve código de produção. Separar quem especifica de quem
-  implementa evita spec escrita para caber no que já foi codado.
+- `architect` não escreve código de produção. Separar quem especifica de quem implementa evita
+  spec escrita para caber no que já foi codado. Desde o `decisions/ADR-011` ele tem Bash, limitado
+  pelo guarda `architect_bash.py` aos scripts do plugin, ao `git` de leitura e ao `maestri ask`:
+  a arquitetura e o plano rodam scripts, e são artefatos dele.
 - `developer` implementa uma tentativa do LOOP-4 por vez, contra goals verificáveis (build limpo,
   testes verdes, cenários de teste cobertos).
 
@@ -369,6 +372,29 @@ rubrica, com confiança baixa. Cofre de credenciais e OpenShift saíram do núcl
 O `/bkhar:canonize` sugere o comando no fim quando `app/` tem código. Antes disso, não há aplicação
 para avaliar, e a sugestão seria ruído.
 
+### O plano macro tem comando próprio, entre o PRD e a spec
+
+O perfil `fullstack` declarava o plano macro obrigatório, mas nenhum comando o produzia. A forma
+existia, na `plan-structure.md` da skill `bks-sdd`, presa ao fluxo de workspace dela. Na prática, o
+projeto `fullstack` saía do `/bkhar:prd` direto para a spec, e o faseamento ficava a cargo de quem
+lembrasse de pedi-lo.
+
+O `/bkhar:plan` é a porta de entrada dessa forma dentro do repositório. Lê o PRD, grava
+`outputs/PLAN-{projeto}.md` e versiona como o `/bkhar:prd`: a versão anterior vai para
+`docs/history/`. Só parte do PRD. Plano que nasce do `CONTEXT.md` pula a etapa em que o escopo
+virou requisito, e o faseamento deixa de ter de onde rastrear.
+
+Duas alternativas foram descartadas. Instruir o perfil a "pedir o plano à skill" deixa a regra
+numa frase de documento, sem guarda e sem lugar fixo para o arquivo, que é o que já falhava.
+Gerar o plano dentro do `/bkhar:prd` mistura o que o produto é com a ordem de construção, e
+obriga a regerar o PRD para refasear.
+
+Fora do `fullstack`, o comando roda e avisa que o plano é opcional. Não escreve FEAT, TEST nem
+TASK: o plano diz a ordem, e a especificação acontece por fase, nos comandos de spec.
+
+Os templates do esqueleto ganharam guarda na suíte estrutural: comando citado sem o prefixo
+`/bkhar:` falha. O `WORKFLOW.md` gerado ainda mandava rodar `/note`, que não existe no plugin.
+
 ### A equipe conversa, e quem decide é o usuário
 
 Até a 0.8.0, o `bkhar` tinha quatro executores: recebiam uma tarefa e devolviam um resultado. A
@@ -415,6 +441,25 @@ filtro por tags segura o custo até lá.
 **Checklists fora de `agents/`.** Arquivo dentro de `agents/` aparece como subagente, e os
 checklists apareciam como `bkhar:references:*`. Eles moram em `skills/bks-team/references/`.
 
+### A deriva do `STATUS.md` é conferida na abertura da sessão
+
+O `STATUS.md` é a memória curta do projeto, e o `/bkhar:save` é o único caminho que o atualiza.
+Commit feito fora do `/bkhar:save` deixa o arquivo para trás sem aviso. Em 2026-11-02 o
+`/bkhar:brain` achou o `STATUS.md` do harness em 2026-10-19 com dois commits depois dele, e só
+porque a leitura foi atenta.
+
+O `session_memory.py` passou a comparar a data de `Última atualização` com o commit mais recente
+que toca a pasta do projeto e com a entrada mais recente do `JOURNAL.md`. Havendo deriva, entra
+uma seção no contexto do modelo e um `systemMessage` de uma linha para o usuário. A lógica mora
+em `hooks/scripts/_drift.py`; o prefixo `_` a mantém fora da lista de guardas do `hooks.json`.
+
+O `git log` é limitado à pasta (`-- .`) porque projeto do vault sem repositório próprio herdaria
+os commits do vault inteiro. Sem linha de data, fora do Git ou com erro, a guarda fica calada.
+
+A ideia vem do `ai-memory` (checagem de contradição sem chamar modelo). O que o harness copia e o
+que recusa desse desenho está em `docs/specs/2026-11-02-memoria-design.md`. A principal recusa é a
+captura gravada direto na memória: ela contraria o portão de evidência do `LEARNINGS.md`.
+
 ### O público recebe uma lista, não uma cópia
 
 O trabalho vive num repositório privado; o público só recebe versão concluída. A cópia é do
@@ -430,7 +475,200 @@ do estado do projeto.
 O script não faz commit nem push. A publicação chega numa branch `release` do público, e o merge
 para a `main`, que é a branch que o marketplace lê, é um pull request do Fabio.
 
+### O modo `autonomo` é concedido por script, não por pedido
+
+A 1.0.0 deixa o projeto escolher como é conduzido (`decisions/ADR-003`). O `colaborativo` segue
+padrão; o `autonomo` só é concedido pelo `scripts/readiness.py`, que confere canônico, PRD, PLAN (plano macro) e
+grafo aprovados, nenhuma questão em aberto e a stack no perfil. Agente sem entrada escrita inventa
+a entrada, e a prontidão é o portão que impede isso sem chamar modelo.
+
+Os contratos não entram na prontidão: no `autonomo` é a onda de desenho que os produz. Quem
+impede a construção de começar sem contrato aprovado é o `consome` da task, conferido pelo
+`scripts/wave_graph.py`. FEAT e TEST também ficam de fora, porque o `refine` os escreve no modo
+`autonomo`. A pergunta que o agente faria vira linha em `decisions/SUPOSICOES.md`: revisável,
+nunca decisão. Dado pessoal, autorização e segredo não se presumem e param em `BLOQUEIO`.
+
+### As ondas saem do grafo, e o estado tem um escritor só
+
+O `/bkhar:plan` grava `outputs/GRAPH-{projeto}.json`: cada task declara `consome`, `produz` e
+`arquivos`. As ondas são calculadas, não declaradas: a task vem depois de quem produz o que ela
+consome. Duas tasks da mesma onda no mesmo arquivo são recusadas, porque o merge da onda
+conflitaria. O teto de 4 tasks simultâneas e o de 4 tentativas são travas provisórias, a medir no
+piloto.
+
+O estado vive em `outputs/run/onda-N/T-NNN.json` e só o orquestrador o escreve, pelo
+`scripts/run_state.py`, que recusa transição inválida: 5ª tentativa, task não liberada, execução
+pausada. O motor continua um só (decisão 10 do desenho): o `/bkhar:loop` ganhou o `--wave`, e não
+nasceu um `bkhar run`.
+
+### O painel escreve só na inbox
+
+O painel (`scripts/dashboard.py`) é Python stdlib, escuta só em `127.0.0.1` e recusa `Host` e
+`Origin` de fora, contra DNS rebinding. Ele lê o estado, os transcripts do projeto (o consumo por
+modelo, agente e dia vem de `subagents/agent-*.jsonl` e do `meta.json` de cada subagente) e o
+perfil. A interação vira pedido em `outputs/run/inbox/`, de tipos fechados, que o orquestrador
+aplica entre tentativas e entre tasks (`decisions/ADR-004`). Subagente em execução não recebe
+mensagem de fora; a inbox respeita isso em vez de fingir controle em tempo real.
+
+O modelo de cada papel vem do frontmatter do agente. O mapa `models` do `.bks-profile.json`
+sobrescreve por projeto, e o Gerente passa o parâmetro `model` em cada chamada. Assim o padrão
+fica no kit e a exceção, no projeto que a pediu.
+
+### O aprendizado volta como candidato, e só o usuário promove
+
+Correção do usuário vira proposta em `inbox/proposals/` pelo `scripts/learning.py`; o
+`/bkhar:save` a leva ao vault com filtro de dado pessoal e segredo; o `/bkhar:retro` promove a
+regra do projeto (`brain/engineering/regras/`), do vault (`workbench/regras/`) ou do kit (à espera
+de eval). Captura gravada direto como regra está recusada pelo mesmo motivo da 0.10.0: suspeita
+vira fato e o agente passa a citá-la.
+
+O `/bkhar:harvest` consolida as decisões de `repos/` em `knowledge/wiki/experiencia/`. O índice é
+script, incremental e sem modelo; a consolidação por tema usa modelo e passa pela lista de
+bloqueio. Do `nquantic`, o índice guarda só tema e data, com a chave em hash para o nome do arquivo
+não vazar.
+
+### Texto de terceiro entra como lente, não como skill
+
+Os 20 blocos da system-design-skills (MIT) vivem em `skills/bks-arch/third-party/`, como a
+`bks-writing` fez antes. Instalados, trariam um orquestrador e um agente concorrendo com o Gerente e
+o `architect`. O mapa `references/lentes-system-design.md` liga cada lente do grafo aos blocos que o
+`architect` lê, e as premissas do kit prevalecem sobre a recomendação do bloco. A taste-skill fica no
+escopo do usuário, fora do kit: o `frontend-design` a usa quando ela existe e segue sem ela.
+
+### A arquitetura é portão, e o modelo sabe quando ficou para trás
+
+Até a 1.0.0, o `/bkhar:arch` documentava depois da spec, sem `status`, e nada o exigia. A
+arquitetura passou a ser portão nos dois modos (`decisions/ADR-005`): `prd → plan → arch (aprovado)
+→ refine/spec`. O índice `docs/library/architecture/ARCH-{projeto}.md` aponta para um modelo por
+arquivo em `models/`, porque cada modelo é aprovado, versionado e marcado como defasado sozinho. A
+aprovação é sempre do usuário; no `autonomo`, a prontidão ganhou o nível Arquitetura e toda task de
+`desenho` do grafo consome o ARCH, recusada pelo `wave_graph.py` quando não consome.
+
+A defasagem é calculada pelo `scripts/library.py stale`, sem modelo: um documento da arquitetura
+está defasado quando uma de suas `fontes` (padrão: ADRs e contratos) tem data posterior ao
+`atualizado` dele, ou quando o PLAN passou da versão citada no `baseado_em`. A data vem do
+frontmatter, não do arquivo: o checkout do git reescreve a data de modificação. O aviso aparece no
+`/bkhar:save`, no `/bkhar:brain` e no fim de cada onda, e não bloqueia; quem bloqueia é a prontidão.
+
+### A biblioteca cataloga por referência
+
+O catálogo `docs/library/LIBRARY.md` e o dashboard `docs/library/site/index.html` são gerados pelo
+`scripts/library.py` e versionados, como o HTML do Atlas. Os artefatos ficam onde já estavam: o
+`readiness.py`, o grafo, os ritos e os perfis dependem desses caminhos, e mover tudo para dentro da
+biblioteca trocaria um lugar de consulta por uma migração. O HTML é determinístico, sem data de
+geração, para o `--check` acusar defasagem. O Mermaid vem do jsdelivr com versão fixa; sem rede, o
+diagrama aparece como código, e a página continua legível.
+
+A exportação para `knowledge/wiki/projetos/{projeto}/` do vault só roda por comando, porque
+escrever no vault é publicar para fora do repositório. Ela reusa o filtro do harvest (lista de
+bloqueio e dado sensível) e recusa a exportação inteira com um achado: meia exportação deixa no
+vault uma biblioteca que parece completa e não é. O destino tem um `_export.json`, e a página que
+saiu do catálogo sai do vault.
+
+### O provedor troca o endereço, não o cliente
+
+DeepSeek e OpenRouter entram pelo lançador `bkhar`, não por adapter próprio (`decisions/ADR-006`).
+O motor continua sendo o Claude Code. Os dois provedores oferecem endereço compatível com a
+API (interface de programação) da Anthropic, e o Claude Code resolve cada rótulo de modelo por
+variável de ambiente. Por isso os arquivos em `agents/` seguem declarando `opus`, `sonnet` ou
+`haiku`, e o provedor decide quem responde por cada rótulo.
+
+`providers/` guarda só a definição de cada provedor: endereço, nomes das variáveis e mapa padrão por
+rótulo, no formato `version: 1`. A chave e o provedor ativo ficam fora do repositório, porque a
+definição é ferramenta e a chave é da máquina. O provedor `claude` tem `env` nulo. Assim o `claude`
+direto e o lançador com `claude` ativo rodam com o mesmo ambiente. O campo opcional `env.clear`
+lista as variáveis que o lançador deixa vazias no filho; ausente, vale lista vazia. Todo provedor
+que pede chave traz `ANTHROPIC_API_KEY` ali. Herdada do shell, ela iria ao endereço de terceiro.
+
+O mapa é por rótulo, não por agente: todos os agentes de um rótulo seguem juntos. O OpenRouter usa
+um modelo só para os três rótulos nesta versão. Ollama saiu do escopo por decisão do desenho
+da 1.1.0. O `--context` do `bks-sdd` ficou como recurso manual, porque não roda ferramentas nem o
+LOOP-4.
+
+### O lançador monta o ambiente e entrega o terminal ao claude
+
+O `bkhar` (`scripts/bkhar.py`) lê o provedor ativo em `~/.bkhar/providers.json`, decifra a chave no
+`keyvault` e monta o ambiente do filho a partir da definição em `providers/`. Em seguida inicia o
+`claude` com esse ambiente e repassa os argumentos depois de `--`. Sem arquivo de configuração, o
+provedor é `claude` e nada muda em relação ao `claude` direto. A chave é cifrada com AES-256-GCM
+(cifra autenticada); a chave mestra fica no cofre do sistema operacional, via `keyring`. Dependência ausente faz o `bkhar` recusar qualquer comando, com o nome do pacote que falta; o `claude` direto não é afetado.
+
+O Ctrl+C vai para o `claude`, que decide o que fazer com ele. O lançador ignora a interrupção
+enquanto espera o filho e devolve o código de saída dele, sem traceback.
+
+Risco aceito: o `claude` filho repassa o ambiente aos processos que inicia: ferramenta Bash, hooks
+e servidores MCP (Model Context Protocol). Esses processos enxergam o `ANTHROPIC_AUTH_TOKEN` em
+claro. A cifra protege a chave em disco, não dentro da sessão (`decisions/ADR-006`).
+
+### A skill de design system existe ao lado da taste-skill
+
+A `bks-design-system` escreve e mantém o `DESIGN.md` do projeto (formato Google Labs, validado pelo
+`@google/design.md`). Existe porque a marca precisa de uma fonte única que serve ao app web, ao PWA
+(aplicação web instalável), ao mobile e aos slides. A taste-skill continua dona da direção de arte
+de páginas públicas. Quando há `DESIGN.md`, ela roda com `--keep palette,type`: a marca vem do
+arquivo e a skill decide só composição e ritmo. A `frontend-design` lê o `DESIGN.md` antes de gerar
+interface. O `DESIGN.md` da Backside vive em `skills/bks-design-system/assets/backside/`.
+
+### O Maestri é a camada visual, e o Gerente continua no comando
+
+Na 3.0.0, cada papel da equipe roda num terminal do Maestri com role, e o Gerente fala com eles por
+`maestri ask`. Fora do Maestri, o mesmo protocolo despacha por subagentes, como até a 1.1.0: o
+harness não depende do aplicativo para funcionar. O Maestro Mode não é usado, os terminais nascem de
+uma partitura salva pelo usuário, e a nota de status do canvas espelha o `STATUS.md`, sem virar uma
+segunda memória (`decisions/ADR-008`).
+
+A troca custa o que o subagente dava de graça: contexto novo a cada chamada, ferramentas restritas
+por papel e retorno completo ao Gerente. Cada uma tem compensação a provar no piloto, e o `ADR-008`
+as lista. Histórico em banco, consumo por agente e perfis de acesso, que a 2.0.0 trazia, ficam sem
+equivalente.
+
+### O despacho escolhe o transporte por papel, e a nota de status é gerada
+
+O Gerente segue um protocolo só (skill `bks-team`, seção "Despacho") e escolhe o transporte a cada
+chamada: terminal do Maestri quando há `MAESTRI_TERMINAL_ID` e o papel está conectado, subagente
+no resto. Assim, a mesma partitura funciona com parte dos terminais fechados, e o harness segue
+inteiro fora do Maestri (`decisions/ADR-009`).
+
+A identidade do papel no terminal vem do `claude --agent bkhar:<papel>`, e não do role do Maestri.
+O `--agent` aplica as ferramentas e o modelo do `agents/*.md`, a mesma fonte do subagente. O role
+abriria o agente num subdiretório, longe do `STATUS.md` e do `.bks-profile.json`.
+
+O retorno completo exige Bash (o agente responde com `maestri ask "manager"`). Por isso só o
+`developer` e o `tester` usam o ask back. Os papéis só de leitura não ganham shell para responder:
+devolvem a última tela e gravam o que for longo no arquivo do rito. O `--allowedTools` não serve
+para isso, porque aprova ferramenta e não a acrescenta.
+
+Contexto novo vem do `/clear` antes de cada rito, e o pedido seguinte carrega o que o papel precisa
+ler. A reinjeção do `SessionStart` ajuda, mas o protocolo não depende dela.
+
+A nota do canvas não é escrita por agente. O `scripts/status_note.py` a monta só a partir do
+`STATUS.md`, do perfil e de `outputs/run/`, grava `outputs/run/status-canvas.md` e copia o texto
+para a nota `status` com nome fixo. Uma nota sem nome fixo é renomeada pela própria primeira linha.
+Como a nota é regerada inteira a cada ponto de controle, ela não diverge da fonte nem vira uma
+segunda memória.
+
+### A integração com o Maestri é configuração, e o `manager` concentra os comandos delegados
+
+O Maestri entra por um bloco opcional no `.bks-profile.json`, escrito pelo `/bkhar:maestri`, e não
+por convenção de nome (`decisions/ADR-010`). O script `scripts/maestri_config.py` é o único que
+decide a rota: papel para terminal ou subagente, comando para outro terminal ou para a própria
+sessão. Desligar é um campo, e o mapa fica guardado para o próximo `on`. O harness segue sem
+dependência do aplicativo.
+
+Os comandos que não chamam a equipe e ocupariam o `manager` rodam noutro terminal. `arch`, `prd` e
+`plan` vão ao `architect`, porque são artefatos dele. `canonize`, `save` e `maintainability` vão ao
+executor `ops`, que não é papel: só executa. Para rodar o `arch` e o `plan`, o `architect` ganhou
+Bash, limitado por um guarda do plugin que lê o `agent_type` do evento (`decisions/ADR-011`). O
+`tools:` do agente não aceita escopo, e hook no frontmatter de agente de plugin é ignorado; o guarda
+em `hooks/` é a única restrição por papel que o Claude Code respeita.
+
+A delegação preserva duas regras. Uma: o usuário decide num lugar só, porque toda pergunta do
+terminal delegado volta como gate do `manager`. Outra: o contexto passa por arquivo, já que o
+terminal delegado não viu a conversa. O handoff em `outputs/run/handoff/` leva as decisões da
+sessão, e o `save` delegado o lê como a conversa que não acompanhou. Enquanto o delegado escreve, o
+`manager` não toca no estado do projeto.
+
 ## Consumidores
 
-O kit foi extraido de um vault em uso. Os projetos que o consomem continuam sendo a fonte de
+O kit foi extraído de um vault em uso. Os projetos que o consomem continuam sendo a fonte de
 validação — mudança de contrato aqui precisa ser verificada contra eles antes de virar versão.

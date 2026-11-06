@@ -148,6 +148,18 @@ def test_commands():
           'no repositorio mas nao no README: %s'
           % ', '.join(sorted(present - documented)))
 
+    # o template vira arquivo do projeto; comando sem prefixo nao existe no bkhar
+    bare_cmd = re.compile(r'(?<![\w.}:/])(?<!\w-)/(%s)\b(?!/)' % '|'.join(sorted(present)))
+    bare = []
+    for dirpath, _, filenames in os.walk(os.path.join(ROOT, 'templates')):
+        for fn in filenames:
+            if fn.endswith('.md'):
+                full = os.path.join(dirpath, fn)
+                for m in bare_cmd.findall(io.open(full, encoding='utf-8').read()):
+                    bare.append('%s: /%s' % (os.path.relpath(full, ROOT).replace(BS, '/'), m))
+    check('templates citam comando com o prefixo /bkhar:', not bare,
+          'sem prefixo: %s' % ', '.join(sorted(set(bare))))
+
 
 def test_pointers():
     """Toda referencia a arquivo do repositorio citada em texto existe em disco.
@@ -311,6 +323,18 @@ def test_invariants():
     check('/bkhar:migrate não commita', 'Não commite' in migrate)
     check('/bkhar:migrate preserva BKS_VAULT e o JOURNAL.md',
           'BKS_VAULT' in migrate and 'o `JOURNAL.md`, as ADRs' in migrate)
+
+    plan = read('commands', 'plan.md')
+    check('/bkhar:plan exige o PRD e para sem ele',
+          'docs/canonical/PRD-{projeto}.md' in plan and 'PARE' in plan and '/bkhar:prd' in plan)
+    check('/bkhar:plan segue a estrutura de plano do bks-sdd',
+          'skills/bks-sdd/references/plan-structure.md' in plan)
+    check('/bkhar:plan grava outputs/PLAN-{projeto}.md versionado',
+          'outputs/PLAN-{projeto}.md' in plan and 'docs/history/PLAN-v{N}' in plan)
+    check('/bkhar:plan é obrigatório só no fullstack', 'fullstack' in plan and 'opcional' in plan)
+    check('/bkhar:plan não escreve spec', 'Não escreva FEAT, TEST nem TASK' in plan)
+    check('perfil fullstack aponta o /bkhar:plan', '/bkhar:plan' in read('profiles', 'fullstack.md'))
+    check('/bkhar:prd indica o /bkhar:plan no fullstack', '/bkhar:plan' in read('commands', 'prd.md'))
 
 
 def test_profiles():
@@ -578,8 +602,13 @@ def test_team():
     arch = read('docs', 'ARCHITECTURE.md')
     check('ARCHITECTURE registra a equipe da Fase 3',
           '### A equipe conversa' in arch and 'protocolo da sessão principal' in arch)
+    versions = {}
     for manifest in ('plugin.json', 'marketplace.json'):
-        check('%s em 0.9.0' % manifest, '"version": "0.9.0"' in read('.claude-plugin', manifest))
+        m = re.search(r'"version": "(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z.]+)?"', read('.claude-plugin', manifest))
+        versions[manifest] = tuple(int(x) for x in m.groups()) if m else (0, 0, 0)
+        check('%s em 0.9.0 ou acima' % manifest, versions[manifest] >= (0, 9, 0))
+    check('plugin.json e marketplace.json na mesma versão',
+          versions['plugin.json'] == versions['marketplace.json'])
 
     left = [a for a in ('planner', 'builder', 'reviewer')
             if os.path.isfile(os.path.join(ROOT, 'agents', a + '.md'))]
@@ -626,7 +655,7 @@ def test_training():
     text = read(*(base + ('treinamento-bks-harness.md',))) if os.path.isfile(path) else ''
     check('treinamento tem linha de versão', bool(re.search(r'^Versão \d+\.\d+\.\d+', text, re.M)))
     chapters = re.split(r'^### (?=\d+\. )', text, flags=re.M)[1:]
-    check('treinamento tem doze capítulos', len(chapters) == 12, 'encontrados: %d' % len(chapters))
+    check('treinamento tem treze capítulos', len(chapters) == 13, 'encontrados: %d' % len(chapters))
     no_check = [c.split('\n', 1)[0] for c in chapters if '**Confira.**' not in c]
     check('todo capítulo fecha com Confira', not no_check, 'sem: %s' % '; '.join(no_check))
     no_ex = [c.split('\n', 1)[0] for c in chapters[6:11] if '**Exercício.**' not in c]
@@ -649,12 +678,213 @@ def test_training():
           'treinamento/treinamento-bks-harness' in read('docs', 'artefatos', 'atlas', 'atlas-bks-harness.md'))
 
 
+def test_mode_and_models():
+    print('\nmodo de condução e modelo por papel')
+    schema = json.loads(read('profiles', 'bks-profile.schema.json'))
+    mode = schema['properties']['axes']['properties'].get('mode', {})
+    check('schema declara o eixo mode', mode.get('enum') == ['colaborativo', 'autonomo'])
+    check('o padrão do mode é colaborativo', mode.get('default') == 'colaborativo')
+
+    models = schema['properties'].get('models', {})
+    roles = set(models.get('properties', {}))
+    agents = {os.path.splitext(f)[0] for f in listdir('agents') if f.endswith('.md')}
+    check('schema declara o mapa models', bool(roles))
+    check('todo agente pode ter modelo no mapa', agents <= roles,
+          'faltam: %s' % ', '.join(sorted(agents - roles)))
+    check('o mapa models não aceita papel desconhecido', models.get('additionalProperties') is False)
+
+    new_project = read('commands', 'new-project.md')
+    check('/bkhar:new-project pergunta o mode', '`mode`' in new_project and '"mode"' in new_project)
+    migrate = read('commands', 'migrate.md')
+    check('/bkhar:migrate grava o mode ausente como colaborativo',
+          '"mode": "colaborativo"' in migrate)
+
+    mode_cmd = read('commands', 'mode.md') if os.path.isfile(os.path.join(ROOT, 'commands', 'mode.md')) else ''
+    check('/bkhar:mode existe', bool(mode_cmd))
+    check('/bkhar:mode roda a prontidão', 'scripts/readiness.py' in mode_cmd)
+    check('/bkhar:mode grava ADR na troca', 'decisions/' in mode_cmd and 'ADR' in mode_cmd)
+    check('/bkhar:mode espera confirmação antes de escrever', 'espere o ok' in mode_cmd)
+
+
+def test_autonomous_branches():
+    print('\nramo autonomo dos comandos')
+    team = read('skills', 'bks-team', 'SKILL.md')
+    check('bks-team lê o mapa models', '`models`' in team and 'parâmetro `model`' in team)
+    check('bks-team define o modo autonomo', '## Modo `autonomo`' in team and 'SUPOSICOES.md' in team)
+    for name in ('refine', 'spec', 'loop', 'review'):
+        text = read('commands', name + '.md')
+        check('/bkhar:%s tem o ramo autonomo' % name, '## Modo `autonomo`' in text)
+    for name in ('refine', 'spec', 'loop'):
+        check('/bkhar:%s registra suposição' % name, 'SUPOSICOES.md' in read('commands', name + '.md'))
+    review = read('commands', 'review.md')
+    check('/bkhar:review manda sugestão ao relatório da onda', 'RELATORIO.md' in review)
+    check('/bkhar:review: crítica do security para a cadeia no autonomo', 'BLOQUEIO' in review)
+    plan = read('commands', 'plan.md')
+    check('/bkhar:plan gera o grafo', 'outputs/GRAPH-{projeto}.json' in plan)
+    check('/bkhar:plan valida o grafo pelo script', 'scripts/wave_graph.py validate' in plan)
+    check('/bkhar:plan exige o plano no autonomo', 'autonomo' in plan)
+    loop = read('commands', 'loop.md')
+    check('/bkhar:loop tem o modo onda', '--wave' in loop)
+    check('/bkhar:loop --wave usa o estado e o grafo', 'scripts/run_state.py' in loop and 'scripts/wave_graph.py ready' in loop)
+    check('/bkhar:loop --wave isola cada task em worktree', 'git worktree add' in loop)
+    check('/bkhar:loop --wave integra e revisa a onda', 'RELATORIO.md' in loop and '/bkhar:review' in loop)
+    check('/bkhar:loop --wave respeita o teto de 4 tasks', '4 tasks' in loop)
+    status_path = os.path.join(ROOT, 'commands', 'status.md')
+    status = read('commands', 'status.md') if os.path.isfile(status_path) else ''
+    check('/bkhar:status existe e lê o estado', 'scripts/run_state.py show' in status)
+    check('/bkhar:loop --wave notifica a task travada', 'notificação' in loop)
+    dash = read('scripts', 'dashboard.html')
+    check('o painel avisa bloqueio novo pelo navegador', 'new Notification(' in dash)
+    check('o painel não carrega script de fora', 'src="http' not in dash)
+    team = read('skills', 'bks-team', 'SKILL.md')
+    check('bks-team captura a correção do usuário', 'scripts/learning.py propose' in team)
+    save = read('commands', 'save.md')
+    check('/bkhar:save leva candidatos ao vault com filtro', 'scripts/learning.py export' in save)
+    check('/bkhar:save lembra do harvest pendente', 'scripts/harvest.py stale' in save)
+    for name, musts in (('retro', ('scripts/learning.py promote', 'scripts/learning.py reject', 'archive/')),
+                        ('harvest', ('scripts/harvest.py index', 'scripts/harvest.py check', 'nquantic'))):
+        path = os.path.join(ROOT, 'commands', name + '.md')
+        text = read('commands', name + '.md') if os.path.isfile(path) else ''
+        check('/bkhar:%s existe' % name, bool(text))
+        check('/bkhar:%s usa o script e a regra' % name, all(m in text for m in musts),
+              'faltando: %s' % ', '.join(m for m in musts if m not in text))
+    tp = os.path.join(ROOT, 'skills', 'bks-arch', 'third-party', 'system-design-skills')
+    check('system-design-skills copiada com licença e origem',
+          os.path.isfile(os.path.join(tp, 'LICENSE')) and os.path.isfile(os.path.join(tp, 'ORIGEM.md')))
+    blocks = [d for d in listdir('skills', 'bks-arch', 'third-party', 'system-design-skills')
+              if os.path.isdir(os.path.join(tp, d))]
+    check('os 20 blocos estão copiados', len(blocks) == 20, len(blocks))
+    check('nenhum bloco é instalado como skill',
+          not any(os.path.isfile(os.path.join(tp, b, 'SKILL.md')) for b in blocks))
+    lentes = read('skills', 'bks-arch', 'references', 'lentes-system-design.md')
+    absent = [b for b in blocks if '`%s`' % b not in lentes]
+    check('todo bloco aparece no mapa de lentes', not absent, ', '.join(absent))
+    fd = read('skills', 'frontend-design', 'SKILL.md')
+    check('frontend-design cita a taste-skill sem depender dela',
+          'design-taste-frontend' in fd and 'Without the skill' in fd and 'DISABLE_TELEMETRY=1' in fd)
+    check('template SUPOSICOES.md existe', os.path.isfile(os.path.join(ROOT, 'templates', 'SUPOSICOES.md')))
+
+
+def test_library_and_arch_gate():
+    print('\nbiblioteca e portão de arquitetura')
+    arch = read('commands', 'arch.md')
+    check('/bkhar:arch escreve em docs/library/architecture/',
+          'docs/library/architecture/ARCH-{projeto}.md' in arch and 'models/<modelo>.md' in arch)
+    check('/bkhar:arch desenha pela bks-arch', 'bks-arch' in arch and 'bks-c4-diagrams' not in arch)
+    check('/bkhar:arch nasce em rascunho e pede aprovação', 'status: rascunho' in arch and 'aprova' in arch)
+    check('/bkhar:arch --update usa o stale', '--update' in arch and 'scripts/library.py stale' in arch)
+    for name in ('spec', 'refine'):
+        text = read('commands', name + '.md')
+        check('/bkhar:%s tem o portão de arquitetura' % name,
+              '## Portão de arquitetura' in text and '/bkhar:arch' in text)
+    check('/bkhar:plan põe o ARCH no consome do desenho',
+          'docs/library/architecture/ARCH-{projeto}.md' in read('commands', 'plan.md'))
+    check('/bkhar:mode nomeia o ARCH entre os portões', 'PRD, PLAN e ARCH' in read('commands', 'mode.md'))
+    check('/bkhar:loop confere a arquitetura viva no fim da onda',
+          'scripts/library.py stale' in read('commands', 'loop.md'))
+    check('readiness tem o nível Arquitetura', "level('Arquitetura'" in read('scripts', 'readiness.py'))
+    check('wave_graph exige o ARCH no desenho', 'não consome o ARCH' in read('scripts', 'wave_graph.py'))
+    lib_path = os.path.join(ROOT, 'commands', 'library.md')
+    lib = read('commands', 'library.md') if os.path.isfile(lib_path) else ''
+    check('/bkhar:library existe', bool(lib))
+    check('/bkhar:library usa o script', all(s in lib for s in (
+        'scripts/library.py index', 'scripts/library.py build', 'scripts/library.py export')))
+    check('/bkhar:library export espera o ok', 'espere o ok' in lib)
+    save = read('commands', 'save.md')
+    check('/bkhar:save regera a biblioteca e avisa a defasagem',
+          all(s in save for s in ('scripts/library.py stale', 'scripts/library.py index', 'scripts/library.py build')))
+    check('/bkhar:brain avisa modelo defasado', 'scripts/library.py stale' in read('commands', 'brain.md'))
+    skel = os.path.join(ROOT, 'templates', 'project-skeleton', 'docs', 'library')
+    check('esqueleto tem docs/library/', all(os.path.isfile(os.path.join(skel, *p.split('/'), '.gitkeep'))
+                                            for p in ('architecture/models', 'architecture/render', 'site')))
+    workflow = read('templates', 'project-skeleton', 'WORKFLOW.md')
+    check('WORKFLOW do esqueleto põe a arquitetura antes da especificação',
+          workflow.index('### 4 · Plano e arquitetura') < workflow.index('### 5 · Especificação'))
+    old = [f for f in listdir('profiles') if f.endswith('.md') and 'outputs/ARCH' in read('profiles', f)]
+    check('nenhum perfil aponta para outputs/ARCH', not old, ', '.join(old))
+    schema = json.loads(read('profiles', 'bks-profile.schema.json'))
+    check('schema declara library.export', 'export' in schema['properties'].get('library', {}).get('properties', {}))
+    check('/bkhar:new-project e /bkhar:migrate gravam library.export',
+          '"library"' in read('commands', 'new-project.md') and '"library"' in read('commands', 'migrate.md'))
+
+
+def test_design_system():
+    print('\nskill bks-design-system')
+    base = ('skills', 'bks-design-system')
+    check('skill bks-design-system existe', os.path.isfile(os.path.join(ROOT, *base, 'SKILL.md')))
+    refs = set(listdir(*base, 'references'))
+    want = {'design-md-format.md', 'pwa.md', 'mobile.md', 'slides.md'}
+    check('skill tem as quatro referências', want <= refs, 'faltando: %s' % ', '.join(sorted(want - refs)))
+    dm_path = os.path.join(ROOT, *base, 'assets', 'backside', 'DESIGN.md')
+    check('DESIGN.md da Backside existe', os.path.isfile(dm_path))
+    dm = read(*base, 'assets', 'backside', 'DESIGN.md') if os.path.isfile(dm_path) else ''
+    fm = frontmatter(dm) or ''
+    check('DESIGN.md abre com front matter YAML', bool(fm))
+    for key in ('name', 'colors', 'typography', 'rounded', 'spacing', 'components'):
+        check('DESIGN.md: chave %s no front matter' % key, re.search(r'^%s:' % key, fm, re.M) is not None)
+    colors = fm.split('colors:', 1)[-1].split('\ntypography:', 1)[0].upper()
+    check('DESIGN.md: colors tem #99CCFF e #336699', '#99CCFF' in colors and '#336699' in colors)
+    for img in ('mark-original', 'mark-black', 'mark-white',
+                'symbol-original', 'symbol-black', 'symbol-white'):
+        check('imagem %s.png existe' % img,
+              os.path.isfile(os.path.join(ROOT, *base, 'assets', 'backside', img + '.png')))
+    skill = read(*base, 'SKILL.md') if os.path.isfile(os.path.join(ROOT, *base, 'SKILL.md')) else ''
+    check('SKILL.md cita lint, diff e export da CLI',
+          all(c in skill for c in ('designmd lint', 'designmd diff', 'designmd export')))
+
+    fd = read('skills', 'frontend-design', 'SKILL.md')
+    check('frontend-design cita DESIGN.md, bks-design-system e --keep palette,type',
+          all(c in fd for c in ('DESIGN.md', 'bks-design-system', '--keep palette,type')))
+
+
+def test_maestri_dispatch():
+    print('\ndespacho por terminal do Maestri')
+    team = read('skills', 'bks-team', 'SKILL.md')
+    check('bks-team tem a seção de despacho', '## Despacho: terminal ou subagente' in team)
+    check('bks-team decide a rota pela configuração e cai para subagente',
+          all(s in team for s in ('scripts/maestri_config.py route', '**subagente**', 'enabled: false')))
+    check('bks-team tem a delegação de comando com handoff e gate no manager',
+          all(s in team for s in ('## Delegação de comando', 'scripts/maestri_config.py delegate',
+                                  'outputs/run/handoff/', 'gate do `manager`')))
+    no_step0 = [c for c in ('arch', 'prd', 'plan', 'canonize', 'save', 'maintainability')
+                if 'maestri_config.py delegate . --command %s' % c not in read('commands', c + '.md')]
+    check('comandos delegáveis abrem com o passo 0', not no_step0, 'sem passo 0: %s' % ', '.join(no_step0))
+    maestri_cmd = read('commands', 'maestri.md')
+    check('/bkhar:maestri liga, desliga e confere pelo script',
+          all('scripts/maestri_config.py %s' % s in maestri_cmd for s in ('on', 'off', 'check')))
+    check('/bkhar:maestri orienta a montar o que falta sem Maestro Mode',
+          '## Montar o que falta' in maestri_cmd and 'Maestro Mode' in maestri_cmd)
+    check('schema declara o bloco maestri',
+          'maestri' in json.loads(read('profiles', 'bks-profile.schema.json'))['properties'])
+    check('maestri_config.py tem teste', os.path.isfile(os.path.join(ROOT, 'tests', 'test_maestri_config.py')))
+    check('esqueleto ignora o handoff', 'outputs/run/handoff/' in read('templates', 'project-skeleton', '.gitignore'))
+    check('bks-team limpa a sessão antes do rito e protege o /clear no Git Bash',
+          '--raw "/clear\\n"' in team and 'MSYS_NO_PATHCONV=1' in team)
+    check('bks-team usa ask back, --batch e check',
+          all(s in team for s in ('maestri ask \\"manager\\"', 'maestri ask --batch', 'maestri check')))
+    check('bks-team não dá Bash aos papéis só de leitura', 'não ganham Bash' in team)
+    check('architect tem Bash limitado pelo guarda',
+          'Bash' in frontmatter(read('agents', 'architect.md')) and 'architect_bash.py' in team
+          and 'architect_bash.py' in read('hooks', 'hooks.json'))
+    check('guarda do architect tem teste', 'test_architect_bash.py' in read('hooks', 'tests', 'run.sh'))
+    sync = 'scripts/status_note.py sync'
+    check('/bkhar:loop regera a nota de status', sync in read('commands', 'loop.md'))
+    check('/bkhar:save regera a nota de status', sync in read('commands', 'save.md'))
+    check('status_note.py tem teste', os.path.isfile(os.path.join(ROOT, 'tests', 'test_status_note.py')))
+    if os.path.isdir(os.path.join(ROOT, 'decisions')):
+        check('ADR-009 existe', os.path.isfile(os.path.join(ROOT, 'decisions', 'ADR-009-despacho-por-terminal.md')))
+    check('esqueleto ignora a nota de status',
+          'outputs/run/status-canvas.md' in read('templates', 'project-skeleton', '.gitignore'))
+
+
 def main():
     print('suite estrutural do bks-harness')
     for fn in (test_manifests, test_skills, test_commands, test_pointers,
                test_agents,
                test_hooks, test_invariants, test_profiles, test_renderers,
-               test_evals, test_public_hygiene, test_team, test_training):
+               test_evals, test_public_hygiene, test_team, test_training,
+               test_mode_and_models, test_autonomous_branches, test_library_and_arch_gate,
+               test_design_system, test_maestri_dispatch):
         fn()
 
     print('\n%d verificacoes, %d falhas' % (checks, len(failures)))
