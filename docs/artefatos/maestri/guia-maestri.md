@@ -1,6 +1,6 @@
 # Guia do Maestri — Usar o harness com terminais de agente
 
-Versão 1.1.0, testado com o Maestri 0.30.1 para Windows, o Claude Code 2.1.319 e o plugin `bkhar` 3.0.0-beta.
+Versão 1.1.0, testado com o Maestri 0.30.1 para Windows, o Claude Code 2.1.319 e o plugin `bkhar` 3.0.1.
 
 ## Antes de começar
 
@@ -13,7 +13,7 @@ A regra que organiza tudo: **o Gerente do harness conduz, e o Maestri só mostra
 memória do projeto continua nos arquivos de sempre (`STATUS.md`, `JOURNAL.md`, `decisions/`), e nada
 no canvas a substitui.
 
-> **Beta.** A integração com o Maestri chegou na 3.0.0-beta e ainda está em prova num projeto
+> **Em prova.** A integração com o Maestri chegou na 3.0 e ainda está em prova num projeto
 > piloto. Sem o bloco `maestri` no perfil do projeto, o harness funciona como na 1.1.0.
 
 ## O que é o Maestri
@@ -285,4 +285,4 @@ As decisões por trás deste guia estão em `docs/ARCHITECTURE.md`, nas seções
 | Versão | Data | O que mudou |
 |---|---|---|
 | 1.1.0 | 2026-11-20 | Fonte única do assunto: o ambiente do projeto como task, trazido do manual do vault, que passa a apontar para cá |
-| 1.0.0 | 2026-11-06 | Primeira versão, com o `bkhar` 3.0.0-beta |
+| 1.0.0 | 2026-11-06 | Primeira versão, com o `bkhar` 3.0 |

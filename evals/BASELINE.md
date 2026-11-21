@@ -1,6 +1,6 @@
 # Linha de base dos evals
 
-Delta entre o braço `with` (plugin `bkhar` 3.0.0-beta) e o `without` (modelo sem plugin), com
+Delta entre o braço `with` (plugin `bkhar` na árvore da 3.0.1 em construção) e o `without` (modelo sem plugin), com
 `--runs 1`, em 2026-11-19. O relatório bruto fica em `evals/results/`, fora do git.
 
 - **Rodada 1:** os 28 casos, delta médio +0,19, $9,66, 3086 s (`results/2026-11-19T18-22-47-860Z`).
