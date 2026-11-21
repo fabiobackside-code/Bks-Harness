@@ -1,6 +1,6 @@
 # Suposições — {projeto}
 
-No modo `autonomo`, a pergunta que um agente faria ao usuário vira uma linha aqui. Suposição é
+No modo `autonomous`, a pergunta que um agente faria ao usuário vira uma linha aqui. Suposição é
 revisável: o usuário confirma ou reverte, e a revertida volta como task.
 
 | # | Data | Onde | Papel | Pergunta | Resposta presumida | Fonte ou motivo | Estado |

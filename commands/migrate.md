@@ -40,8 +40,8 @@ cada, como o `/bkhar:new-project` faz, e grave a escolha conforme
 `${CLAUDE_PLUGIN_ROOT}/profiles/bks-profile.schema.json`. Leia o `STATUS.md` e o `README.md` do
 projeto antes de sugerir: o perfil tem que casar com o que o projeto já gera.
 
-**Com `.bks-profile.json` sem `axes.mode`:** acrescente `"mode": "colaborativo"` em `axes`; o
-`autonomo` vem depois, pelo `/bkhar:mode`. **Sem `library`:** pergunte se a biblioteca vai ser
+**Com `.bks-profile.json` sem `axes.mode`:** acrescente `"mode": "collaborative"` em `axes`; o
+`autonomous` vem depois, pelo `/bkhar:mode`. **Sem `library`:** pergunte se a biblioteca vai ser
 exportada para o vault e, com sim, acrescente `"library": {"export": "knowledge/wiki/projetos/{projeto}"}`.
 São as únicas chaves que a migração escreve num perfil existente.
 

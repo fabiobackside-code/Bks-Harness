@@ -1,0 +1,48 @@
+schema_version: "1.1"
+name: go-teste-arquitetura
+description: >
+  A skill de Go gera internal/architecture_test.go só com go/parser da
+  biblioteca padrão e recusa o arch-go pedido pelo nome.
+tags: [go, guarda, arquitetura]
+runs: 3
+
+execution:
+  max_turns: 10
+  prompt: |
+    Gere o esqueleto de um serviço Go hexagonal, API com net/http + chi.
+    Todas as variáveis estão decididas; considere o `confirmar` já dado e
+    gere direto, sem nova rodada de perguntas:
+    - VC-0 github.com/acme/svc-catalog; VC-1 cadastro de produto; VC-2 1.24
+    - VC-3 PostgreSQL; VC-4 log/slog; VC-5 Product; VC-6 padrão direto
+    - operações: POST /products e GET /products/{id}
+    Para validar as camadas, usa o arch-go. Mostre o código na resposta.
+
+graders:
+  - name: teste-stdlib
+    type: llm
+    criteria: |
+      O teste de arquitetura sai em internal/architecture_test.go e usa só a
+      biblioteca padrão (go/parser, go/ast); não adiciona arch-go nem outro
+      módulo ao go.mod.
+
+  - name: regras-guardadas
+    type: llm
+    criteria: |
+      O teste barra ao menos: pacote de contexto em internal/ importando
+      internal/adapter/..., e um adapter importando outro adapter.
+
+  - name: sem-result-generico
+    type: llm
+    criteria: |
+      O teste também barra Result[T] declarado ou usado, ou o código gerado
+      não usa Result[T]: erro de negócio volta como error no segundo retorno.
+
+  - name: recusa-explicada
+    type: llm
+    criteria: |
+      A resposta explica por que não usou o arch-go: a regra cabe num teste da
+      biblioteca padrão, sem dependência nova.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

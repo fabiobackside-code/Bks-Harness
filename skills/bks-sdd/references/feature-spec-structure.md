@@ -58,20 +58,31 @@ Não são sugestões — são restrições que invalidam a implementação se vi
 
 ## 5. Contratos de Dados
 
-**Padrão de implementação:** [TXC | ALT-1 QueryHandler | ALT-1 SimpleCommandHandler | ALT-2 QueryComposer | ALT-3 BatchProcessor | ALT-4 UtilityScript]
+**Padrão de implementação:** [TXC | padrão direto]
 
-> Preenchido pelo Passo 5F.4 da skill (árvore de decisão TXC vs ALT). Obrigatório para projetos .NET e TypeScript.
+> Preenchido pelo Passo 5F.4 da skill, a partir do campo `txc` do `.bks-profile.json`: o padrão é
+> do projeto, não da feature. Obrigatório para projetos .NET, TypeScript e Go.
 > Para regras completas, ver `references/txc-guidelines.md`.
 
-**Se TXC — Transaction Map:**
+**Se TXC — ficha da transação** (uma por código; `txc-guidelines.md`, Seção 6):
 
-| Fase | Método Semântico | Responsabilidade | Estado Intermediário |
-|------|------------------|------------------|----------------------|
-| 1. Hydrate | `HydrateXxx(input)` | Popula campos de entrada na Transaction | `tx.Campo1`, `tx.Campo2` |
-| 2. Apply | `HydrateXxxCriado(aggregate)` | Chama domínio, captura aggregate | `tx.Aggregate` |
-| 3. Finalize | `FinalizeWith(aggregate)` | Prepara PipelineResult com Response | `PipelineResult<Response>` |
+| Campo | [ex: Criar Pedido] |
+|---|---|
+| Código | [ex: `PEDIDO.CRIAR`] |
+| Executor | [transacional \| consulta] |
+| Entrada (`TIn`) | [campos] |
+| `[10]` | [validação da entrada, sem I/O] |
+| `TValidation` (o que o `ValidateAsync` lê) | [dado e a Port de onde vem] |
+| Regra (`ApplyRule`) | [a regra de negócio e o que ela devolve como `TDecision`] |
+| Gravação (Port) | [ex: `IPedidoRepository.SaveAsync`] |
+| Compensação | [nenhuma \| o que o `CancelAsync` desfaz] |
+| Saída (`TOut`) | [campos] |
+| `[50]` | [nenhuma \| conclusão ou difusão, crítica ou não] |
+| Erros | [códigos de erro de negócio] |
 
-**Se ALT — Contrato simplificado:**
+Para consulta, a ficha tem só Código, Executor, Entrada, Ports lidas, Saída e Erros.
+
+**Se padrão direto — Contrato simplificado:**
 
 - **Input:** [tipo de entrada — ex: `Guid id`, `ListRequest query`]
 - **Output:** `PipelineResult<[TipoResponse]>`
@@ -94,7 +105,7 @@ Enquanto vazio, o status desta feature é "Aprovada" mas não "Em execução".
 
 ## 8. Test Spec
 
-Preenchido após execução de `/bks-sdd --feature-tests` (Fase 6).
+Preenchido após execução de `/bks-sdd --feature-tests` (Fase 5.2).
 Enquanto não aprovado, o comando `/bks-sdd --feature-task` fica bloqueado para esta feature.
 
 - **Arquivo:** `spec/tests/TEST-[nome].md`
@@ -136,14 +147,15 @@ Mínimo: 2 linhas. Máximo: 8 linhas — se precisar de mais, extraia uma nova f
 - Restrição: "não usar chamada síncrona para o serviço X" (violação invalida a task)
 - Sugestão: "considerar cache para reduzir latência" (não é restrição — não coloque aqui)
 
-**Contratos de Dados (§5):** Preenchido pelo Passo 5F.4 da skill (árvore de decisão TXC vs ALT).
-Para projetos .NET ou TypeScript: campo `Padrão de implementação` obrigatório; se TXC, preencher a tabela Transaction Map com as fases e métodos semânticos da operação.
-Ver `references/txc-guidelines.md` Seções 2 e 5 para a árvore de decisão e template da tabela.
+**Contratos de Dados (§5):** Preenchido pelo Passo 5F.4 da skill, que lê o `txc` do perfil.
+Para projetos .NET, TypeScript ou Go: campo `Padrão de implementação` obrigatório; se TXC, uma ficha
+da transação por código. Ver `references/txc-guidelines.md` Seções 3 e 6 para os executores e a
+ficha.
 
 **Tasks (§6):** Preenchido automaticamente por `/bks-sdd --feature-task`.
 Não preencher manualmente — a skill atualiza esta seção e cria os arquivos correspondentes.
 **Atenção:** o `--feature-task` só é desbloqueado após o `TEST-[nome].md` correspondente
-estar com `Status: Aprovada` (§8). Ver Fase 6.
+estar com `Status: Aprovada` (§8). Ver Fase 5.2.
 
 **Rastreabilidade (§7):** A skill preenche automaticamente com base no projeto e plano em foco.
 Verificar se os números de seção do PRD estão corretos após geração.
@@ -175,14 +187,14 @@ Exemplos incorretos:
 PLAN-[nome].md (Fase 4)
     ↓ §3 Features Previstas, linha F[N] → ID e nome desta feature
 
-FEAT-[nome].md (Fase 5) ← este documento
+FEAT-[nome].md (Fase 5.1) ← este documento
     ↓ §2 Critérios de Aceite  → alimenta cenários principais do TEST-[nome].md
     ↓ §3 Comportamentos de Borda → alimenta edge cases do TEST-[nome].md
-    ↓ §5 Contratos de Dados (Transaction Map) → alimenta §4 Contratos do TEST-[nome].md
-    ↓ §8 Test Spec            → referência TEST-[nome].md (gerado pela Fase 6)
+    ↓ §5 Contratos de Dados (ficha da transação) → alimenta §4 Contratos do TEST-[nome].md
+    ↓ §8 Test Spec            → referência TEST-[nome].md (gerado pela Fase 5.2)
 
-TEST-[nome].md (Fase 6)
+TEST-[nome].md (Fase 5.2)
     ↓ aprovação → desbloqueia --feature-task
 
-TASK-[id]-[descrição].md (Fase 5, gerada após TEST aprovado)
+TASK-[id]-[descrição].md (Fase 5.3, gerada após TEST aprovado)
     ↑ 

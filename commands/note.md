@@ -2,7 +2,7 @@
 description: Escreve ou atualiza uma nota viva em docs/input/notas/ do projeto atual — material bruto para alimentar o /bkhar:canonize.
 ---
 
-`/bkhar:note <assunto> [--pasta <subpasta>]`
+`/bkhar:note <assunto> [--folder <subpasta>]`
 
 Escreve ou atualiza UMA nota viva em `docs/input/notas/` do projeto atual, no padrão já
 consolidado nos projetos do vault: material bruto do autor para alimentar o `/bkhar:canonize` —
@@ -13,7 +13,7 @@ Argumentos:
   "arquitetura pretendida" → `ARQUITETURA-PRETENDIDA.md`). Sem data no nome — a nota é viva,
   cresce ao longo dos dias; a cronologia fica numa seção `## Estado em YYYY-MM-DD` dentro do
   arquivo, nunca no nome do arquivo.
-- `--pasta <subpasta>` (opcional): grava dentro de `docs/input/notas/<subpasta>/` em vez da
+- `--folder <subpasta>` (opcional): grava dentro de `docs/input/notas/<subpasta>/` em vez da
   raiz de `notas/` — use para a fila de um colaborador externo específico (ex.:
   `<especialista>/`, com apontamentos e áudios de um especialista de domínio, tratados à parte
   das notas do próprio autor).

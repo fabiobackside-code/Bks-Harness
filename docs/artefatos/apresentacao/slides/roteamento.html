@@ -1,17 +1,12 @@
-<section id="roteamento" style="background:#13202E;color:#F5F2EB;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#F0904F">09 · ROTEAMENTO E POLÍTICA</p>
-<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">routing.yaml: suas regras de trabalho viram configuração</h2>
-<div style="display:flex;gap:40px">
-<div style="flex:1;background:#0C1620;border:1px solid #2D4257;border-radius:16px;padding:36px">
-<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;line-height:1.5;color:#C9D3DC"><span style="color:#F0904F">agents:</span><br>&nbsp;&nbsp;arquiteto: <span style="color:#F5F2EB">claude-opus</span> <span style="color:#8FA0B0"># era o planner</span><br>&nbsp;&nbsp;dev: <span style="color:#F5F2EB">claude-sonnet</span> <span style="color:#8FA0B0"># deepseek após evals</span><br>&nbsp;&nbsp;testes: <span style="color:#F5F2EB">claude-sonnet</span><br>&nbsp;&nbsp;seguranca: <span style="color:#F5F2EB">claude-opus</span> <span style="color:#8FA0B0"># era o reviewer</span><br><span style="color:#F0904F">rules:</span><br>&nbsp;&nbsp;seguranca.vendor != dev.vendor<br>&nbsp;&nbsp;loop.max_attempts: 4<br><span style="color:#F0904F">zones:</span><br>&nbsp;&nbsp;sensitive:<br>&nbsp;&nbsp;&nbsp;&nbsp;allowed: [anthropic, ollama-local]</p>
+<section id="roteamento" style="background:#F5F2EB;color:#1C2733;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#A84E18">10 · MODELO E PROVEDOR</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.1;width:1600px">O agente declara o rótulo; o provedor decide quem responde</h2>
+<div style="display:flex;gap:24px">
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px;color:#2F6B4F">QUEM DECIDE</p><h3 style="font-size:30px;font-weight:600">Opus</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">architect e security. Decisão errada custa caro; tokens são baratos perto disso.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px;color:#2F6B4F">QUEM EXECUTA E REVISA</p><h3 style="font-size:30px;font-weight:600">Sonnet</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">developer, tester e quality. O Dev é protegido pelos gates.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px;color:#2F6B4F">QUEM REGISTRA</p><h3 style="font-size:30px;font-weight:600">Haiku</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">scribe. Só registra o que já foi verificado.</p></div>
+<div style="flex:1;background:#FCFAF6;border:1px solid #DDD6C8;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px;color:#6B7480">PROPOSTO</p><h3 style="font-size:30px;font-weight:600">Outro fornecedor</h3><p style="font-size:24px;line-height:1.45;color:#3E4A57">Revisor num fornecedor diferente do Dev, e troca de provedor por zona sensível. Não existe.</p></div>
 </div>
-<div style="flex:1;display:flex;flex-direction:column;gap:24px">
-<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Quem decide usa o mais forte.</span> Arquiteto e Gerente erram caro.</p>
-<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Quem executa pode usar o mais barato.</span> Os gates protegem o Dev.</p>
-<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Quem revisa usa outro fornecedor.</span> Testes e Segurança erram de forma diferente do Dev.</p>
-<p style="font-size:24px;line-height:1.45;color:#C9D3DC"><span style="color:#F5F2EB;font-weight:600">Zona sensível não sai.</span> O policy engine troca o provedor sem depender de lembrar.</p>
-</div>
-</div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#8FA0B0;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 10 · nomes de modelo são exemplos</p>
-<aside>A API hospedada do DeepSeek armazena dados fora do Brasil. Por isso, no contexto bancário, zonas sensíveis só usam provedor aprovado ou pesos abertos rodando localmente.</aside>
+<p style="font-size:26px;line-height:1.4;color:#3E4A57;width:1600px">O mapa models do .bks-profile.json sobrescreve por projeto. O lançador bkhar troca o provedor (claude, deepseek, openrouter) só no processo do claude, com a chave cifrada fora do repositório (ADR-006).</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7480;font-family:'JetBrains Mono', 'Courier New', monospace">BKS Harness · 11</p>
 </section>

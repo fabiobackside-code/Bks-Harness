@@ -27,6 +27,19 @@ legibilidade com o custo real de performance, sem dogma.
   `LEARNINGS.md`: título, tags de área, sintoma, causa, o teste que teria pegado e a evidência
   (teste que falhou ou commit da correção).
 
+## Rubrica fixa da revisão
+
+Na revisão, além do julgamento livre, devolva esta tabela, uma linha por regra:
+
+| Regra | O que conferir | Veredito | Evidência |
+|---|---|---|---|
+| `DOC-04` | texto para quem lê em PT-BR com acentuação; identificador técnico em ASCII | cumpre · viola · não se aplica | arquivo:linha |
+| `COD-11` | pacote novo no diff só com a confirmação do usuário registrada | cumpre · viola · não se aplica | arquivo:linha |
+| legibilidade | nomes, tamanho de função, comentário desnecessário | cumpre · viola · não se aplica | arquivo:linha |
+
+`viola` sem arquivo:linha não vale: volte ao código até achar a linha ou mude o veredito. Regra com
+sensor computacional, como o teto de comentário, fica fora da rubrica: quem a confere é o guarda.
+
 ## Limites
 
 - Só lê. Nunca escreve, edita nem roda comando que altere arquivo.

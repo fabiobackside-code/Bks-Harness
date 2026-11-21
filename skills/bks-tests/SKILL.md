@@ -1,31 +1,55 @@
 ---
 name: bks-tests
 description: >
-  Analisa uma solution .NET, cria ou melhora um projeto único de testes xUnit dentro de src/
-  e leva a cobertura a 90%+ em linhas, branches e métodos, com conformidade SonarQube.
-  Use sempre que o usuário quiser criar testes para uma solution .NET, subir a cobertura,
-  montar projeto de testes, gerar relatorio de cobertura, corrigir issues do SonarQube em
-  testes, ou configurar coverlet e ReportGenerator. Trigger: cobertura de testes, xUnit,
-  90% de cobertura, projeto de testes .NET, coverlet, ReportGenerator, SonarQube nos testes,
-  testes unitários e de integração .NET.
+  Escreve e revisa testes em qualquer stack (.NET, Python, TypeScript, Go) e, numa solution .NET,
+  cria o projeto único de testes xUnit dentro de src/ e leva a cobertura a 90%+ com conformidade
+  SonarQube. Use sempre que o usuário pedir para escrever um teste, um script de teste ou de
+  checagem, revisar teste existente, montar projeto de testes, subir a cobertura ou configurar
+  coverlet e ReportGenerator. Trigger: escrever teste, teste unitário, teste de integração,
+  xUnit, pytest, node --test, go test, script de checagem, cobertura de testes, 90% de
+  cobertura, coverlet, ReportGenerator, SonarQube nos testes, FluentAssertions.
 ---
 
-# BKS-TESTS — Cobertura de testes em solution .NET
+# BKS-TESTS — Testes em qualquer stack e cobertura em solution .NET
 
 **Idioma:** interação e documentação gerada em **PT-BR**. Código, nomes de classe, método e
-variavel em **inglês**.
+variável em **inglês**.
 
-## O que esta skill entrega
+## Regras de qualquer stack
 
-1. Analise da estrutura da solution e do que já existe de teste
+Valem para todo teste e todo script de checagem, pedido avulso ou dentro das fases abaixo.
+
+### Pasta fora de repositório é criada pelo teste
+
+Teste que precisa de diretório fora de repositório git cria a própria pasta temporária
+(`tempfile.TemporaryDirectory`, `tmp_path`, `t.TempDir()`, `fs.mkdtemp`) e a remove no fim.
+Nunca usa a home do usuário nem outra pasta fixa da máquina: a home pode ser um repositório
+(dotfiles versionados), e o teste passa a depender de onde roda. Vale mesmo quando o usuário
+sugere a home.
+
+### Falha sai com código diferente de zero
+
+Script de teste ou de checagem sai com código 1 quando algo falha e com 0 só quando tudo passa.
+Imprimir a contagem não basta: `run.sh`, CI e pre-commit leem o código de saída, não o texto. Vale
+mesmo quando o usuário diz que o resumo impresso basta; explique o motivo ao recusar.
+
+### Biblioteca de asserção em .NET
+
+Use exclusivamente o `Assert` nativo do xUnit, inclusive quando o usuário pede FluentAssertions
+pelo nome: escreva o teste com `Assert` e diga por quê.
+
+Nunca instale FluentAssertions: a v8 passou a licença comercial paga (Xceed) e a v7.x é a última
+sob Apache 2.0. Não substitua por Shouldly nem equivalente.
+
+## Solution .NET — o que esta skill entrega
+
+1. Análise da estrutura da solution e do que já existe de teste
 2. Um projeto único de testes xUnit, dentro de `src/`, organizado em `Unit/`, `Integration/` e
    `Shared/`
 3. Cobertura de 90%+ em linhas, branches e métodos
-4. Relatorio HTML navegavel
+4. Relatório HTML navegável
 5. Scripts de execução e integração com CI/CD
 6. Guia de testes no repositório
-
-## Duas regras que não se negociam
 
 ### Localização do projeto de testes
 
@@ -41,14 +65,10 @@ src/
 Nunca em `tests/`, `test/` ou na raiz. A solution inteira vive em `src/`; separar os testes
 quebra a consistência, alonga os caminhos relativos entre projetos e complica build e deploy.
 
-Um projeto só. Unitario e integração convivem nele, separados por diretório — não por projeto.
+Vale mesmo quando o usuário pede `tests/` pelo nome ou diz que é como costuma organizar: crie o
+projeto em `src/` e diga por quê, em vez de seguir o pedido ou mudar a estrutura em silêncio.
 
-### Biblioteca de asserção
-
-Use exclusivamente o `Assert` nativo do xUnit.
-
-Nunca instale FluentAssertions: a v8 passou a licença comercial paga (Xceed) e a v7.x e a última
-sob Apache 2.0. Não substitua por Shouldly nem equivalente.
+Um projeto só. Unitário e integração convivem nele, separados por diretório — não por projeto.
 
 ## Fases
 
@@ -91,3 +111,9 @@ validar a cobertura contra o alvo — relatorio que não foi conferido não e en
 
 Se o alvo não for atingido, diga o número real, aponte as classes que faltam e proponha o próximo
 passo. Nunca declare cobertura atingida sem a saída do relatorio.
+
+## Histórico de regras
+
+Regra que entrou pelo `/bkhar:retro`, com a proposta de origem.
+- 2026-11-18 · Teste que precisa de pasta fora de repositório git cria a própria pasta temporária; a home do usuário pode ser um repositório. · origem: `archive/proposals/bks-harness--2026-11-18-teste-que-precisa-de-pasta-fora-de-repositorio-g.md` (save 2026-11-18 · Ações 004 a 008; evidência: test_secret_guard falhou com PROJECT sob a home (C:/Users/... é repositório git); corrigido no commit 0754210)
+- 2026-11-18 · Script de teste sai com código 1 quando há falha; imprimir a contagem não basta para o run.sh nem para o CI. · origem: `archive/proposals/bks-harness--2026-11-18-script-de-teste-sai-com-codigo-1-quando-ha-falha.md` (save 2026-11-18 · Ações 004 a 008; evidência: hooks/tests/test_guards.py imprimia falhas e saía 0; corrigido no commit f33ec27)

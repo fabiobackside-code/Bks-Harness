@@ -35,7 +35,7 @@ def check(name, condition, detail=''):
 
 def project(block=None):
     root = tempfile.mkdtemp()
-    profile = {'profile': 'fullstack', 'axes': {'mode': 'colaborativo'}}
+    profile = {'profile': 'fullstack', 'axes': {'mode': 'collaborative'}}
     if block is not None:
         profile['maestri'] = block
     with io.open(os.path.join(root, '.bks-profile.json'), 'w', encoding='utf-8') as fh:
@@ -76,7 +76,7 @@ def test_on_off():
     check('on grava o bloco ligado', block['enabled'] is True)
     check('on aceita nome próprio de terminal', block['roles']['developer'] == 'dev')
     check('on preenche os padrões', block['roles']['architect'] == 'architect' and block['executors'] == {'ops': 'ops'})
-    check('o resto do perfil fica intacto', profile(root)['axes'] == {'mode': 'colaborativo'})
+    check('o resto do perfil fica intacto', profile(root)['axes'] == {'mode': 'collaborative'})
     mc.turn_off(root)
     check('off só desliga e guarda o mapa', profile(root)['maestri']['enabled'] is False
           and profile(root)['maestri']['roles']['developer'] == 'dev')

@@ -17,7 +17,7 @@ Pré-requisito: docs/canonical/PRD-{projeto}.md existe. Se não existir, PARE e 
 Faça, nesta ordem:
 
 1. Leia o `.bks-profile.json`. No perfil `fullstack` o plano é obrigatório, e também em qualquer
-   perfil que vá para o modo `autonomo`: a prontidão exige o plano e o grafo. Nos demais casos,
+   perfil que vá para o modo `autonomous`: a prontidão exige o plano e o grafo. Nos demais casos,
    diga em uma linha que o plano é opcional ali e pergunte se segue.
 
 2. Leia docs/canonical/PRD-{projeto}.md, docs/canonical/CONTEXT.md e o plano anterior em
@@ -47,7 +47,7 @@ Faça, nesta ordem:
    sobrescrever.
 
 7. Grave o grafo de tasks em `outputs/GRAPH-{projeto}.json`, derivado das features do plano. É o
-   que o modo `autonomo` executa em ondas:
+   que o modo `autonomous` executa em ondas:
 
    ```json
    {

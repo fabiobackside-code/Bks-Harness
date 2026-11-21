@@ -1,6 +1,6 @@
 # Guia do Maestri — Usar o harness com terminais de agente
 
-Versão 1.0.0, testado com o Maestri 0.30.1 para Windows, o Claude Code 2.1.319 e o plugin `bkhar` 3.0.0-beta.
+Versão 1.1.0, testado com o Maestri 0.30.1 para Windows, o Claude Code 2.1.319 e o plugin `bkhar` 3.0.0-beta.
 
 ## Antes de começar
 
@@ -158,7 +158,7 @@ volta ao `manager` com a fonte citada.
 
 ## Trabalhar no modo autônomo
 
-1. Rode `/bkhar:mode autonomo` no `manager`. A checagem de prontidão concede o modo ou diz o que
+1. Rode `/bkhar:mode autonomous` no `manager`. A checagem de prontidão concede o modo ou diz o que
    falta.
 2. Abra os terminais de construção e revisão, e o `architect` se a onda tiver tarefa de desenho.
 3. Rode `/bkhar:loop --wave next`: até 4 tarefas em paralelo, cada uma na sua worktree, com até 4
@@ -174,7 +174,7 @@ nela à mão, e ela nunca substitui o `STATUS.md`:
 # Status · meu-projeto
 > Espelho gerado de STATUS.md e outputs/run/. Não editar à mão. Atualizado: 2026-11-06 15:30
 
-Modo: autonomo · Etapa: onda 2 de 5 — construcao · Concluídas: 3/9
+Modo: autonomous · Etapa: onda 2 de 5 — construcao · Concluídas: 3/9
 
 ## Em uma frase
 ## Próximo passo
@@ -214,6 +214,13 @@ com "sim".
 O Maestri Remote, o aplicativo para celular, abre um terminal real e permitiria responder pelo
 telefone. Ele exige o Maestri Wire ligado, o que abre acesso remoto à máquina; o harness não foi
 testado com ele.
+
+**O ambiente do projeto.** Docker Compose, banco e variáveis não têm comando próprio: são trabalho
+de construção, planejado no plano e no grafo como qualquer task. Uma task de desenho do `architect`
+produz o contrato de infraestrutura; uma task de integração do `developer` sobe o compose no terminal
+dele; o `tester` escreve antes o teste que falha, como o healthcheck. No colaborativo, isso passa
+pelo `/bkhar:refine` e pelo `/bkhar:loop` da task; no autônomo, o `/bkhar:loop --wave next` segue a
+ordem do grafo.
 
 ## Fora do Maestri
 
@@ -277,4 +284,5 @@ As decisões por trás deste guia estão em `docs/ARCHITECTURE.md`, nas seções
 
 | Versão | Data | O que mudou |
 |---|---|---|
+| 1.1.0 | 2026-11-20 | Fonte única do assunto: o ambiente do projeto como task, trazido do manual do vault, que passa a apontar para cá |
 | 1.0.0 | 2026-11-06 | Primeira versão, com o `bkhar` 3.0.0-beta |

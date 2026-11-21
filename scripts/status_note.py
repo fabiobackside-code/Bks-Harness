@@ -21,6 +21,7 @@ import maestri_config  # noqa: E402
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
+OLD_MODES = {'colaborativo': 'collaborative', 'autonomo': 'autonomous'}
 NOTE_NAME = 'status'
 NOTE_PATH = os.path.join('outputs', 'run', 'status-canvas.md')
 STATES = ('working', 'blocked', 'review', 'done')
@@ -67,9 +68,10 @@ def _blocks(repo):
 def _mode(repo):
     path = os.path.join(repo, '.bks-profile.json')
     if not os.path.isfile(path):
-        return 'colaborativo'
+        return 'collaborative'
     with io.open(path, encoding='utf-8') as fh:
-        return (json.load(fh).get('axes') or {}).get('mode') or 'colaborativo'
+        mode = (json.load(fh).get('axes') or {}).get('mode') or 'collaborative'
+    return OLD_MODES.get(mode, mode)
 
 
 def stage(tasks):
@@ -183,7 +185,9 @@ def sync(repo, state=None, cli=None, runner=_run, now=None):
     done.append('nota %s: %s' % (name, 'ok' if code == 0 else 'falhou'))
     tasks, blocks = _tasks(repo), _blocks(repo)
     state = state or auto_state(tasks, blocks)
-    code, _ = runner([cli, 'floor', 'status', stage(tasks), '--state', state, '--progress', progress(tasks)])
+    # A CLI do Maestri recusa a fração 0/0.
+    code, _ = runner([cli, 'floor', 'status', stage(tasks), '--state', state,
+                      '--progress', progress(tasks) if tasks else '0%'])
     done.append('floor status %s: %s' % (state, 'ok' if code == 0 else 'falhou'))
     return done
 

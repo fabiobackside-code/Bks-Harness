@@ -39,8 +39,9 @@ Abra a que a tarefa exige, não todas.
 cliente de mensageria. Precisa de infraestrutura no domínio? A dependência entra invertida, por uma
 porta.
 
-**Orquestração explicita.** Sem MediatR, sem dispatcher. O use case e chamado direto pela porta, e
-os passos ficam ordenados no pipeline. Há um guarda que recusa a escrita — ver `hooks/`.
+**Orquestração explícita.** Sem MediatR, sem dispatcher. O use case é chamado direto pela porta.
+Com `txc` declarado, os passos ficam ordenados no pipeline; no padrão direto não há pipeline, e a
+regra mora no serviço e no aggregate. Há um guarda que recusa a escrita — ver `hooks/`.
 
 **Erro de negócio não e exceção.** Use case devolve resultado tipado. Exceção fica para o que e
 excepcional de verdade.

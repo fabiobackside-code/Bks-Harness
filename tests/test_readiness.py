@@ -59,7 +59,7 @@ def ready_project():
     root = tempfile.mkdtemp()
     write(root, '.bks-profile.json', json.dumps({
         'profile': 'backend', 'category': 'private',
-        'axes': {'rigor': 'poc', 'mode': 'colaborativo'},
+        'axes': {'rigor': 'poc', 'mode': 'collaborative'},
         'stack': {'backend': '.NET 10'}}))
     write(root, 'docs/canonical/CONTEXT.md', doc('revisado'))
     write(root, 'docs/canonical/PRD-p.md',

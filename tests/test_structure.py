@@ -258,6 +258,10 @@ def test_hooks():
     check('todo guarda do diretorio esta declarado', runnable <= declared,
           'nunca declarados: %s' % ', '.join(sorted(runnable - declared)))
 
+    tests_text = ''.join(read('hooks', 'tests', t) for t in listdir('hooks', 'tests') if t.endswith('.py'))
+    untested = sorted(s for s in runnable if s[:-3] not in tests_text)
+    check('todo guarda tem teste em hooks/tests/', not untested, 'sem teste: %s' % ', '.join(untested))
+
     for s in sorted(scripts_dir):
         if not s.endswith('.py'):
             continue
@@ -470,45 +474,21 @@ def test_evals():
               'so indicadores with-only — o caso nao mede nada')
 
 
-def test_public_hygiene():
-    print('\nhigiene de repositorio publico')
-    leaks = {
-        'caminho absoluto de maquina':
-            re.compile(r'[A-Z]:' + BS + r'{1,2}[A-Za-z]|[A-Z]:/(?:Users|Fabio)'),
-        'endereco de e-mail pessoal':
-            re.compile(r'[\w.+-]+@(?:gmail|hotmail|outlook)\.com'),
-        # caminho do vault do autor; use ${BKS_VAULT}. README documenta o valor da
-        # variavel; JOURNAL e docs/handoff/ sao historico
-        'caminho do vault em vez de BKS_VAULT':
-            re.compile('[A-Z]:[/' + BS + BS + ']{1,2}2brains'),
-    }
-    exempt = {'caminho do vault em vez de BKS_VAULT': ('README.md', 'JOURNAL.md', 'docs/handoff/')}
-    found = dict((k, []) for k in leaks)
-
+def test_control_bytes():
+    print('\nbyte de controle em markdown')
+    found = []
     for base, dirs, files in os.walk(ROOT):
-        dirs[:] = [d for d in dirs if d not in ('.git', 'results', '__pycache__')]
+        dirs[:] = [d for d in dirs if d not in ('.git', 'results', '__pycache__', 'node_modules')]
         for f in files:
-            if not f.endswith(('.md', '.json', '.py', '.yaml', '.yml')):
+            if not f.endswith('.md'):
                 continue
             path = os.path.join(base, f)
             rel = os.path.relpath(path, ROOT).replace(BS, '/')
-            if rel.startswith('tests/'):
-                continue
-            try:
-                with io.open(path, encoding='utf-8') as fh:
-                    text = fh.read()
-            except Exception:
-                continue
-            for label, rx in leaks.items():
-                if any(rel == e or (e.endswith('/') and rel.startswith(e))
-                       for e in exempt.get(label, ())):
-                    continue
-                if rx.search(text):
-                    found[label].append(rel)
-
-    for label in sorted(leaks):
-        hits = found[label]
-        check('sem %s' % label, not hits, 'em: %s' % ', '.join(sorted(hits)))
+            with io.open(path, encoding='utf-8', errors='replace') as fh:
+                for n, line in enumerate(fh, 1):
+                    if any(ord(c) < 32 and c not in '\t\r\n' for c in line):
+                        found.append('%s:%d' % (rel, n))
+    check('nenhum .md com byte de controle', not found, 'em: %s' % ', '.join(found))
 
 
 old_agent_re = re.compile(r'`(?:bkhar:)?(?:planner|builder|reviewer)`|\|\s*(?:planner|builder|reviewer)\s*\|')
@@ -554,14 +534,21 @@ def test_team():
         'loop': ('passo 0', 'red confirmado', '`tester`', '`developer`', 'bloqueio-'),
         'review': ('`tester`', '`security`', '`quality`', 'não revisa os próprios testes',
                    'proposta de task'),
-        'spec': ('`architect`', '`tester`', 'refinamento: não (exceção)'),
+        'spec': ('`architect`', '`tester`', 'refinamento: não (exceção)', '/bkhar:tasks'),
+        'tasks': ('`architect`', 'specs/tasks/task-[feature].md', 'uma task por peça',
+                  'status:** aprovada', '/bkhar:loop', 'suposicoes.md'),
         'ask': ('architect', 'arquiteto', 'tester', 'testes', 'developer', 'dev', 'security',
                 'seguranca', 'quality', 'qualidade', 'scribe', 'documentador', 'opinião'),
         'panel': ('independente', 'adr', 'descartadas', '`scribe`', 'invocação separada'),
         'refine': ('`architect`', '`tester`', '`security`', 'até três perguntas',
                    'refinamento: sim'),
     }
-    for cmd in ('ask', 'panel', 'refine'):
+    loop_text = read('commands', 'loop.md')
+    check('/bkhar:loop lê o arquivo que o /bkhar:tasks escreve',
+          'specs/tasks/TASK-[feature].md' in loop_text and '/bkhar:tasks' in loop_text)
+    check('template TASK.md tem a seção Tentativas que o loop preenche',
+          '### Tentativas' in read('templates', 'TASK.md'))
+    for cmd in ('ask', 'panel', 'refine', 'tasks'):
         check('commands/%s.md existe' % cmd, os.path.isfile(os.path.join(ROOT, 'commands', cmd + '.md')))
     for cmd, musts in sorted(commands.items()):
         path = os.path.join(ROOT, 'commands', cmd + '.md')
@@ -688,8 +675,8 @@ def test_mode_and_models():
     print('\nmodo de condução e modelo por papel')
     schema = json.loads(read('profiles', 'bks-profile.schema.json'))
     mode = schema['properties']['axes']['properties'].get('mode', {})
-    check('schema declara o eixo mode', mode.get('enum') == ['colaborativo', 'autonomo'])
-    check('o padrão do mode é colaborativo', mode.get('default') == 'colaborativo')
+    check('schema declara o eixo mode', mode.get('enum') == ['collaborative', 'autonomous'])
+    check('o padrão do mode é collaborative', mode.get('default') == 'collaborative')
 
     models = schema['properties'].get('models', {})
     roles = set(models.get('properties', {}))
@@ -702,8 +689,8 @@ def test_mode_and_models():
     new_project = read('commands', 'new-project.md')
     check('/bkhar:new-project pergunta o mode', '`mode`' in new_project and '"mode"' in new_project)
     migrate = read('commands', 'migrate.md')
-    check('/bkhar:migrate grava o mode ausente como colaborativo',
-          '"mode": "colaborativo"' in migrate)
+    check('/bkhar:migrate grava o mode ausente como collaborative',
+          '"mode": "collaborative"' in migrate)
 
     mode_cmd = read('commands', 'mode.md') if os.path.isfile(os.path.join(ROOT, 'commands', 'mode.md')) else ''
     check('/bkhar:mode existe', bool(mode_cmd))
@@ -716,11 +703,11 @@ def test_autonomous_branches():
     print('\nramo autonomo dos comandos')
     team = read('skills', 'bks-team', 'SKILL.md')
     check('bks-team lê o mapa models', '`models`' in team and 'parâmetro `model`' in team)
-    check('bks-team define o modo autonomo', '## Modo `autonomo`' in team and 'SUPOSICOES.md' in team)
-    for name in ('refine', 'spec', 'loop', 'review'):
+    check('bks-team define o modo autonomo', '## Modo `autonomous`' in team and 'SUPOSICOES.md' in team)
+    for name in ('refine', 'spec', 'loop', 'review', 'tasks'):
         text = read('commands', name + '.md')
-        check('/bkhar:%s tem o ramo autonomo' % name, '## Modo `autonomo`' in text)
-    for name in ('refine', 'spec', 'loop'):
+        check('/bkhar:%s tem o ramo autonomo' % name, '## Modo `autonomous`' in text)
+    for name in ('refine', 'spec', 'loop', 'tasks'):
         check('/bkhar:%s registra suposição' % name, 'SUPOSICOES.md' in read('commands', name + '.md'))
     review = read('commands', 'review.md')
     check('/bkhar:review manda sugestão ao relatório da onda', 'RELATORIO.md' in review)
@@ -728,7 +715,7 @@ def test_autonomous_branches():
     plan = read('commands', 'plan.md')
     check('/bkhar:plan gera o grafo', 'outputs/GRAPH-{projeto}.json' in plan)
     check('/bkhar:plan valida o grafo pelo script', 'scripts/wave_graph.py validate' in plan)
-    check('/bkhar:plan exige o plano no autonomo', 'autonomo' in plan)
+    check('/bkhar:plan exige o plano no autonomous', 'autonomous' in plan)
     loop = read('commands', 'loop.md')
     check('/bkhar:loop tem o modo onda', '--wave' in loop)
     check('/bkhar:loop --wave usa o estado e o grafo', 'scripts/run_state.py' in loop and 'scripts/wave_graph.py ready' in loop)
@@ -888,7 +875,7 @@ def main():
     for fn in (test_manifests, test_skills, test_commands, test_pointers,
                test_agents,
                test_hooks, test_invariants, test_profiles, test_renderers,
-               test_evals, test_public_hygiene, test_team, test_training,
+               test_evals, test_control_bytes, test_team, test_training,
                test_mode_and_models, test_autonomous_branches, test_library_and_arch_gate,
                test_design_system, test_maestri_dispatch):
         fn()

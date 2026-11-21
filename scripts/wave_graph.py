@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Grafo de tasks do modo autonomo: validação, ondas e liberação, sem chamada de modelo.
+"""Grafo de tasks do modo autônomo: validação, ondas e liberação, sem chamada de modelo.
 
 Uso:
   wave_graph.py validate [REPO]          sai 0 sem problema, 1 com problema, 2 sem grafo

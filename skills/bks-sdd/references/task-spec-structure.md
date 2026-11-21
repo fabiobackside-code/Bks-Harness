@@ -91,7 +91,7 @@ Diferença do critério de aceite da feature: a feature tem vários critérios c
 a task tem exatamente um critério individual. Se a task não tem como verificar seu próprio
 critério, está mal definida.
 
-**Test Spec:** Campo obrigatório a partir da Fase 6. Referencia o `TEST-[nome].md` que define
+**Test Spec:** Campo obrigatório a partir da Fase 5.2. Referencia o `TEST-[nome].md` que define
 os cenários que esta task deve fazer passar. O nome do arquivo TEST corresponde ao nome do
 FEAT de origem — ex: task gerada de `FEAT-validação-autorização-transação.md` referência
 `spec/tests/TEST-validação-autorização-transação.md`.
@@ -145,16 +145,16 @@ uma única sessão focada, sem precisar pedir esclarecimentos.
 ## Relação com outros artefatos
 
 ```
-FEAT-[nome].md (Fase 5)
+FEAT-[nome].md (Fase 5.1)
     ↓ §5 Tasks              → define quais TASKs existem e suas dependências
     ↓ §2 Critérios de Aceite → cada critério da feature vira critério de uma ou mais TASKs
     ↓ §4 Restrições Técnicas → herdadas pelo contexto de cada TASK
 
-TEST-[nome].md (Fase 6)
+TEST-[nome].md (Fase 5.2)
     ↓ §2 Cenários Principais → referenciados no campo "Test Spec:" desta task
     ↓ §3 Edge Cases          → cobertos pelos testes implementados nas tasks
 
-TASK-[id]-[descrição].md (Fase 5, gerada após TEST aprovado) ← este documento
+TASK-[id]-[descrição].md (Fase 5.3, gerada após TEST aprovado) ← este documento
     ↑ referência a feature pelo campo "Feature: F[N]"
     ↑ referência o test spec pelo campo "Test Spec:"
     → spec/output/ ← resultado da 

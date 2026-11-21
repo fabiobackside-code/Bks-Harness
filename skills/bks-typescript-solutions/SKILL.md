@@ -8,13 +8,13 @@ description: >
   comuns, coleta de variáveis específicas, confirmação e geração completa do projeto. Também use quando
   o usuário mencionar: Express 4, Fastify 5, LangGraph StateGraph, BullMQ, pg-boss, RabbitMQ consumer,
   Kafka consumer, Node.js TypeScript API, path aliases tsconfig, module-alias, Anthropic SDK, OpenRouter.
-  ADOTA O PADRÃO TXC (Transaction Context Pattern) para operações com estado entre camadas.
-version: "2.0"
+  Gera o padrão TXC (Transaction Context) quando o projeto o adota no .bks-profile.json.
+version: "3.0"
 ---
 
 # bks-typescript-backend
 > Agente Orquestrador para geração de backends Node.js + TypeScript
-> Versão: 2.0 | Padrão TXC adotado | Referências em `references/`: bks-api-express, bks-api-fastify, bks-agent-langgraph, bks-worker, bks-consumer
+> Versão: 3.0 | TXC opcional por projeto (`txc: "base"`) | Referências em `references/`: bks-api-express, bks-api-fastify, bks-agent-langgraph, bks-worker, bks-consumer
 
 ---
 
@@ -26,9 +26,9 @@ identificar o tipo correto de backend TypeScript, conduzir uma entrevista estrut
 coletar todas as variáveis necessárias, e invocar o Prompt Especializado correspondente
 com todas as informações preenchidas e validadas.
 
-Você ADOTA o padrão BKS-TXC (Transaction Context Pattern) para operações que transportam
-estado entre camadas. Antes de gerar qualquer feature ou módulo, você executa a Árvore de
-Decisão TXC (Seção 9) e declara explicitamente qual padrão foi escolhido e por quê.
+Quando o projeto adota o padrão TXC (Transaction Context) pelo `.bks-profile.json`, você gera a
+base e uma transação registrada por código para cada operação. Antes de gerar qualquer módulo,
+você classifica cada operação (Seção 6) e declara o código, o executor e as etapas.
 
 ## OBJETIVO
 Conduzir o desenvolvedor em um fluxo guiado de 5 fases para:
@@ -46,14 +46,15 @@ Conduzir o desenvolvedor em um fluxo guiado de 5 fases para:
 - Nunca pule a FASE 4 — o desenvolvedor deve validar todas as variáveis antes da geração
 - Não repita perguntas já respondidas; aceite múltiplas variáveis fornecidas de uma vez
 - Mantenha o tom profissional e direto
-- ANTES de gerar qualquer módulo ou feature, execute a Árvore de Decisão TXC (Seção 9) e declare o padrão escolhido
-- NUNCA force TXC onde QueryHandler (ALT-1), QueryComposer (ALT-2), BatchProcessor (ALT-3) ou UtilityScript (ALT-4) se aplica
+- ANTES de gerar qualquer módulo, classifique cada operação (Seção 6) e declare código, executor e etapas
+- NUNCA gere TXC em projeto que não o adota no `.bks-profile.json`; campo ausente é padrão direto, e só se pergunta quando o arquivo não existe
+- NUNCA gere objeto de transação mutável (`hydrateX`, `applyY`, `finalize`): dado entre passos é retorno tipado
 
 ## FORMATO DE SAÍDA
 - Fases 1 a 4: resposta em texto estruturado com perguntas claras e numeradas
 - FASE 5: invocar o Prompt Especializado e gerar arquivos completos conforme o formato definido nele
 - FASE 4 (tabela de confirmação): exibir em Markdown com colunas VAR, Variável, Valor, Status
-- Declaração de padrão TXC: sempre explícita antes de gerar código de módulo/feature
+- Declaração da classificação (Seção 6): sempre explícita antes de gerar código de módulo
 
 </system>
 
@@ -179,9 +180,17 @@ FASE 4 — Confirmação
     Exibir tabela completa → aguardar "confirmar" ou correção
 
 FASE 5 — Geração
-    Para cada módulo/operação: executar Árvore de Decisão TXC (Seção 9)
-    Declarar padrão explícito → Invocar Prompt Especializado → gerar solução completa
+    Para cada operação: classificar (Seção 6) e declarar código, executor e etapas
+    Invocar Prompt Especializado → gerar solução completa
+    Gerar tests/architecture.test.ts de references/architecture-tests.md e rodar o npm test
 ```
+
+O teste de arquitetura sai junto com o código, nunca depois, e sem pacote novo: usa o `typescript`
+que o projeto já tem e roda no `node --test`. Pedido de dependency-cruiser ou equivalente pelo nome
+não abre exceção; recuse com o motivo. A regra: `types/` não importa outra camada nem
+pacote de fora, `modules/` não importa a entrada, e a entrada não importa `*.repository.ts`. O
+modelo e a tradução das camadas para o layout dos templates estão em
+`references/architecture-tests.md`.
 
 Regras de navegação:
 - Avanço automático ao completar todos os campos obrigatórios da fase
@@ -191,380 +200,268 @@ Regras de navegação:
 
 ---
 
-## 5. PADRÃO TXC — Transaction Context Pattern (TypeScript)
+## 5. Padrão Transaction Context (TXC) em TypeScript
 
-Esta seção define como aplicar o padrão TXC em backends TypeScript.
-É equivalente ao padrão adotado na skill bks-dotnet-solutions v2, adaptado para TS.
+O modelo é o do guia `txc-guidelines.md` da skill `bks-sdd`: pipeline, executores, registro, ficha da
+transação e anti-padrões estão lá. Esta seção diz como ele vira código TypeScript.
 
-### 5.1 Conceito
+### 5.1 Quando gerar
 
-O Transaction Context (XxxTransaction) é um objeto de contexto único que transporta
-o estado de uma operação do ponto de entrada (controller/handler) até a infraestrutura,
-eliminando a conversão explícita entre Request DTO → Service DTO → DB Model.
+O projeto declara no `.bks-profile.json`:
 
-Princípios fundamentais:
-1. Construído no entry point — controller, route handler ou job processor cria o Transaction
-2. Trafega por referência — passado para cada camada sem recriação
-3. Métodos semânticos — cada etapa do negócio é nomeada com verbo de domínio
-4. validate() no domínio — validação semântica pertence ao Transaction, não ao controller
-5. TransactionResult<TInput, TOutput> — tipo único de retorno em todas as camadas
+| `txc` | O que esta skill gera |
+|---|---|
+| ausente | nada de TXC: rota → service → Port de repositório (Seção 6) |
+| `"base"` | a base mínima em `src/application/pipeline/` e, por operação, envelope, executor e etapas |
+| `"motor"` | não se aplica ao TypeScript: o motor do `bks-motor-sdk` é pacote .NET. Pergunte se o projeto fica sem TXC ou com `base` |
 
-### 5.2 Estrutura base do Transaction TypeScript
+Sem o arquivo `.bks-profile.json`, pergunte antes da fase 5. O TXC é recomendado para sistema com várias
+operações de escrita que pedem idempotência, auditoria e compensação; cadastro simples fica sem ele.
+
+### 5.2 As três peças
+
+| Peça | Em TypeScript |
+|---|---|
+| **TXC** (`BksTransactionSeed`) | objeto `Readonly`: código, `correlationId`, `userId`, `tenantId`, `traceId`, `idempotencyKey`. A sessão o cria; viaja por parâmetro, sem `AsyncLocalStorage`; não carrega retorno |
+| **Envelope** | `type` readonly com `seed` e `input`, criado por fábrica pura `(seed, input) => envelope` declarada no registro |
+| **Executor** | classe que deriva de `BksTransactionalExecutor` (grava) ou `BksQueryExecutor` (consulta) |
+
+Dado entre passos é retorno tipado: `validateAsync` devolve o `TValidation` que o `applyRule`
+recebe. Nada é hidratado num objeto que muda.
+
+### 5.3 A base (`txc: "base"`)
+
+```
+src/application/pipeline/
+├── PipelineResult.ts          # PipelineResult<T> e PipelineError
+├── BksTransactionSeed.ts
+├── BksValidationStep.ts       # [10]
+├── BksPostProcessingStep.ts   # [50]
+├── BksTransactionalExecutor.ts
+├── BksQueryExecutor.ts
+├── IBksIdempotencyStore.ts    # Port de [20]; o projeto implementa no adapter de banco
+├── BksPipelineBuilder.ts      # registro por código
+└── BksSession.ts              # execute(code, input, call) — a Primary Port
+```
 
 ```typescript
-// src/modules/{domain}/transactions/{Domain}Transaction.ts
+// src/application/pipeline/PipelineResult.ts
+export type PipelineError = Readonly<{ code: string; message: string }>;
 
-export interface OrderTransactionInput {
-  customerId: string;
-  items: Array<{ productId: string; quantity: number }>;
-  requestedBy?: string;
-}
+export class PipelineResult<T> {
+  private constructor(
+    readonly isSuccess: boolean,
+    readonly value: T | undefined,
+    readonly errors: readonly PipelineError[],
+  ) {}
 
-export interface OrderTransactionState {
-  customerLoaded?: Customer;
-  calculatedTotal?: number;
-  eventPayload?: OrderCreatedEvent;
-}
-
-export interface OrderTransactionOutput {
-  orderId: string;
-  total: number;
-  status: string;
-}
-
-export class OrderTransaction {
-  readonly input: OrderTransactionInput;
-  private state: Partial<OrderTransactionState> = {};
-  private _output?: OrderTransactionOutput;
-
-  constructor(input: OrderTransactionInput) {
-    this.input = input;
+  static ok<T>(value: T): PipelineResult<T> {
+    return new PipelineResult<T>(true, value, []);
   }
 
-  // Método semântico 1: validação de negócio
-  validate(): TransactionResult<OrderTransactionInput, void> {
-    if (!this.input.customerId) {
-      return TransactionResult.failure(this.input, 'Customer ID is required');
-    }
-    if (!this.input.items.length) {
-      return TransactionResult.failure(this.input, 'Order must have at least one item');
-    }
-    return TransactionResult.success(this.input, undefined);
-  }
-
-  // Método semântico 2: hidratação de domínio
-  hydrateCustomer(customer: Customer): void {
-    this.state.customerLoaded = customer;
-  }
-
-  // Método semântico 3: aplicação de regra de negócio
-  applyPricingRules(prices: ProductPrice[]): TransactionResult<OrderTransactionInput, OrderTransactionState> {
-    const customer = this.state.customerLoaded;
-    if (!customer) {
-      return TransactionResult.failure(this.input, 'Customer not loaded — call hydrateCustomer first');
-    }
-    this.state.calculatedTotal = prices.reduce((sum, p) => {
-      const item = this.input.items.find(i => i.productId === p.productId);
-      return sum + (item ? p.price * item.quantity : 0);
-    }, 0);
-    return TransactionResult.success(this.input, this.state as OrderTransactionState);
-  }
-
-  // Finalização
-  finalize(output: OrderTransactionOutput): void {
-    this._output = output;
-  }
-
-  get output(): OrderTransactionOutput {
-    if (!this._output) throw new Error('Transaction not finalized');
-    return this._output;
+  static fail<T = never>(...errors: PipelineError[]): PipelineResult<T> {
+    return new PipelineResult<T>(false, undefined, errors);
   }
 }
 ```
 
-### 5.3 Tipo de retorno: TransactionResult
-
 ```typescript
-// src/shared/TransactionResult.ts
-
-export class TransactionResult<TInput, TOutput> {
-  readonly input: TInput;
-  readonly output?: TOutput;
-  readonly error?: string;
-  readonly isSuccess: boolean;
-
-  private constructor(input: TInput, output: TOutput | undefined, error: string | undefined) {
-    this.input = input;
-    this.output = output;
-    this.error = error;
-    this.isSuccess = error === undefined;
+// src/application/pipeline/BksTransactionalExecutor.ts
+export abstract class BksTransactionalExecutor<TEnvelope, TValidation, TDecision, TOut> {
+  /** Lê o que a regra precisa. */
+  protected async validateAsync(_env: TEnvelope): Promise<PipelineResult<TValidation>> {
+    return PipelineResult.ok(undefined as TValidation);
   }
 
-  static success<TInput, TOutput>(
-    input: TInput,
-    output: TOutput,
-  ): TransactionResult<TInput, TOutput> {
-    return new TransactionResult(input, output, undefined);
+  /** A regra de negócio; único passo obrigatório. */
+  protected abstract applyRule(env: TEnvelope, validation: TValidation): PipelineResult<TDecision>;
+
+  /** Grava pela Secondary Port. */
+  protected abstract executeAsync(env: TEnvelope, decision: TDecision): Promise<PipelineResult<TOut>>;
+
+  /** Segunda fase, quando um efeito externo decide. */
+  protected async confirmAsync(_env: TEnvelope): Promise<PipelineResult<void>> {
+    return PipelineResult.ok(undefined);
   }
 
-  static failure<TInput>(
-    input: TInput,
-    error: string,
-  ): TransactionResult<TInput, never> {
-    return new TransactionResult(input, undefined as never, error);
+  /** Compensação do que foi gravado. */
+  protected async cancelAsync(_env: TEnvelope): Promise<void> {}
+
+  /** Chamado só pela sessão, quando a [50] crítica falha depois da gravação. */
+  async compensate(env: TEnvelope): Promise<void> {
+    await this.cancelAsync(env);
   }
 
-  static failureOnly<TInput>(error: string): TransactionResult<TInput, never> {
-    return new TransactionResult(undefined as TInput, undefined as never, error);
-  }
-
-  get isFailure(): boolean {
-    return !this.isSuccess;
+  /** Chamado só pela sessão, na [40]. */
+  async run(env: TEnvelope): Promise<PipelineResult<TOut>> {
+    const validation = await this.validateAsync(env);
+    if (!validation.isSuccess) return PipelineResult.fail(...validation.errors);
+    const decision = this.applyRule(env, validation.value as TValidation);
+    if (!decision.isSuccess) return PipelineResult.fail(...decision.errors);
+    const written = await this.executeAsync(env, decision.value as TDecision);
+    if (!written.isSuccess) return written;
+    try {
+      const confirmed = await this.confirmAsync(env);
+      if (confirmed.isSuccess) return written;
+      await this.cancelAsync(env);
+      return PipelineResult.fail(...confirmed.errors);
+    } catch (error) {
+      await this.cancelAsync(env);
+      throw error;
+    }
   }
 }
 ```
 
-### 5.4 Padrão de uso no route handler (Express)
+`BksQueryExecutor<TEnvelope, TOut>` tem só `abstract executeAsync(env): Promise<PipelineResult<TOut>>`
+e nunca passa pela `[20]`.
+
+A `BksSession` conduz a ordem fixa: fábrica do envelope → `[10]` → `[20]` (só no transacional) →
+`[40]` `run` → `[50]` crítica, que ao falhar chama `compensate` → gravação da chave na `[20]`, só
+sem compensação → `[50]` não crítica. Cada etapa abre o span OpenTelemetry `step.{ordem}`; quem escreve executor
+não escreve instrumentação. Exceção que escapa do executor vira `PipelineResult.fail` com o erro
+técnico na sessão e no span; exceção de negócio não existe.
+
+### 5.4 Uma transação: Criar Pedido
 
 ```typescript
-// src/modules/order/order.routes.ts
+// src/modules/order/order.codes.ts
+export const OrderCodes = {
+  Create: 'ORDER.CREATE',
+  GetById: 'ORDER.GET_BY_ID',
+} as const;
+```
 
+```typescript
+// src/modules/order/envelopes/CreateOrderEnvelope.ts
+export type CreateOrderEnvelope = Readonly<{ seed: BksTransactionSeed; input: CreateOrderInput }>;
+```
+
+```typescript
+// src/modules/order/validations/CreateOrderValidation.ts — [10], sem I/O
+export class CreateOrderValidation extends BksValidationStep<CreateOrderInput> {
+  protected validate(input: CreateOrderInput): PipelineResult<void> {
+    return input.items.length === 0
+      ? PipelineResult.fail(OrderErrors.NoItems)
+      : PipelineResult.ok(undefined);
+  }
+}
+```
+
+```typescript
+// src/modules/order/executors/CreateOrderExecutor.ts
+type CustomerRead = Readonly<{ customer: Customer; categoryDiscount: number }>;
+
+export class CreateOrderExecutor extends BksTransactionalExecutor<
+  CreateOrderEnvelope, CustomerRead, Order, CreateOrderOutput
+> {
+  constructor(
+    private readonly customers: ICustomerRepository,
+    private readonly orders: IOrderRepository,
+  ) {
+    super();
+  }
+
+  protected async validateAsync(env: CreateOrderEnvelope): Promise<PipelineResult<CustomerRead>> {
+    const customer = await this.customers.findById(env.input.customerId);
+    return customer
+      ? PipelineResult.ok({ customer, categoryDiscount: customer.category.discount })
+      : PipelineResult.fail(OrderErrors.CustomerNotFound);
+  }
+
+  protected applyRule(env: CreateOrderEnvelope, read: CustomerRead): PipelineResult<Order> {
+    return Order.create(read.customer, env.input.items, read.categoryDiscount);
+  }
+
+  protected async executeAsync(_env: CreateOrderEnvelope, order: Order): Promise<PipelineResult<CreateOrderOutput>> {
+    await this.orders.save(order);
+    return PipelineResult.ok({ orderNumber: order.number });
+  }
+}
+```
+
+### 5.5 Registro e chamada
+
+```typescript
+// src/composition.ts
+export const session = new BksPipelineBuilder(idempotencyStore)
+  .transaction<CreateOrderInput, CreateOrderEnvelope, CreateOrderOutput>(OrderCodes.Create, t => t
+    .envelope((seed, input) => ({ seed, input }))
+    .executor(() => new CreateOrderExecutor(customerRepository, orderRepository))
+    .validation(new CreateOrderValidation())
+    .postProcessing(new OrderCreatedNotification(eventBus), { critical: false }))
+  .query<GetOrderInput, GetOrderEnvelope, OrderView>(OrderCodes.GetById, t => t
+    .envelope((seed, input) => ({ seed, input }))
+    .executor(() => new GetOrderExecutor(orderRepository)))
+  .build();
+```
+
+```typescript
+// src/modules/order/order.routes.ts — o adapter só chama a sessão e monta a resposta
 router.post('/orders', async (req, res) => {
-  // 1. Validação de formato (Zod — responsabilidade do controller)
   const parsed = CreateOrderSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(422).json({ error: parsed.error.flatten() });
+  if (!parsed.success) return res.status(422).json({ errors: parsed.error.flatten() });
 
-  // 2. Construir Transaction (entry point é o único criador)
-  const tx = new OrderTransaction({
-    customerId: parsed.data.customerId,
-    items: parsed.data.items,
-    requestedBy: req.user?.id,
-  });
-
-  // 3. Validação semântica (domínio)
-  const validationResult = tx.validate();
-  if (validationResult.isFailure) {
-    return res.status(422).json({ error: validationResult.error });
-  }
-
-  // 4. Delegar ao service (trafega o Transaction)
-  const result = await orderService.create(tx);
-  if (result.isFailure) return res.status(400).json({ error: result.error });
-
-  return res.status(201).json(result.output);
+  const result = await session.execute<CreateOrderInput, CreateOrderOutput>(
+    OrderCodes.Create, parsed.data, callContextFrom(req));
+  return result.isSuccess ? res.status(201).json(result.value) : res.status(400).json({ errors: result.errors });
 });
 ```
 
-### 5.5 Padrão de uso no service (orquestração)
-
-```typescript
-// src/modules/order/order.service.ts
-
-export class OrderService {
-  constructor(
-    private readonly orderRepo: IOrderRepository,
-    private readonly eventBus: IEventBus,
-  ) {}
-
-  async create(
-    tx: OrderTransaction,
-  ): Promise<TransactionResult<OrderTransactionInput, OrderResponse>> {
-    // Etapa 1: carregar dependências de domínio
-    const customer = await this.orderRepo.findCustomerById(tx.input.customerId);
-    if (!customer) return TransactionResult.failure(tx.input, 'Customer not found');
-    tx.hydrateCustomer(customer);
-
-    // Etapa 2: aplicar regra de negócio
-    const prices = await this.orderRepo.getPrices(tx.input.items.map(i => i.productId));
-    const businessResult = tx.applyPricingRules(prices);
-    if (businessResult.isFailure) {
-      return TransactionResult.failure(tx.input, businessResult.error!);
-    }
-
-    // Etapa 3: persistir
-    const order = await this.orderRepo.save(tx);
-    tx.finalize({ orderId: order.id, total: order.total, status: order.status });
-
-    // Etapa 4: efeitos colaterais
-    await this.eventBus.publish('order.created', { orderId: order.id });
-
-    return TransactionResult.success(tx.input, tx.output);
-  }
-}
-```
+| Regra | Detalhe |
+|---|---|
+| Códigos | constantes por módulo em `{domain}.codes.ts`; código repetido recusa no `build()` |
+| Composição | falta de envelope ou executor recusa no `build()`, na subida; é erro de programação |
+| Primary Port | a sessão: não existe `I{Operacao}UseCase` nem `{Domain}Service` com a regra |
+| Contexto da chamada | `callContextFrom(req)` lê `correlationId`, usuário e tenant da requisição; a sessão cria o seed |
 
 ---
 
-## 6. ALTERNATIVAS TXC (Quando NÃO usar Transaction)
+## 6. Classificação da operação (obrigatória antes de gerar código)
 
-### ALT-1 — QueryHandler Direto (TypeScript)
+**Projeto sem TXC:** rota → `{domain}.service.ts` → Port de repositório, com `PipelineResult<T>`
+como retorno e a regra no service. Não gere `src/application/pipeline/`; o `PipelineResult<T>`, com
+a mesma forma da Seção 5.3, fica em `src/types/result.ts`.
 
-Quando usar: Leituras simples sem transformação de domínio, sem estado intermediário, sem efeito colateral.
+**Projeto com `txc: "base"`:** cada operação vira uma transação registrada por código.
 
-Sinais: nome começa com get, list, search, find; sem escrita; resultado é projeção direta.
-
-```typescript
-// src/modules/order/queries/getOrderById.query.ts
-
-export async function getOrderById(
-  id: string,
-  repo: IOrderReadRepository,
-): Promise<TransactionResult<string, OrderSummaryResponse>> {
-  const order = await repo.findById(id);
-  if (!order) return TransactionResult.failure(id, 'Order not found');
-  return TransactionResult.success(id, OrderSummaryResponse.from(order));
-}
-```
-
-Regra de ouro ALT-1: se não consegue nomear 2 métodos semânticos que o Transaction teria, não crie o Transaction.
-
----
-
-### ALT-2 — QueryComposer (TypeScript)
-
-Quando usar: Leituras que combinam 2+ fontes ou aplicam filtros dinâmicos, sem efeitos colaterais.
-
-```typescript
-// src/modules/dashboard/queries/orderDashboard.composer.ts
-
-export async function composeOrderDashboard(
-  filter: DashboardFilter,
-  repos: { orders: IOrderReadRepo; customers: ICustomerReadRepo },
-): Promise<TransactionResult<DashboardFilter, DashboardResponse>> {
-  const [orders, customerCount] = await Promise.all([
-    repos.orders.getSummaries(filter),
-    repos.customers.getActiveCount(),
-  ]);
-  return TransactionResult.success(filter, DashboardResponse.compose(orders, customerCount));
-}
-```
-
----
-
-### ALT-3 — BatchProcessor (TypeScript)
-
-Quando usar: Processamento de coleções onde cada item segue o mesmo fluxo independentemente.
-
-```typescript
-// src/modules/import/processors/importOrders.processor.ts
-
-export class ImportOrdersProcessor {
-  async process(command: ImportOrdersCommand): Promise<BatchResult> {
-    const results = new BatchResult();
-    for (const line of command.lines) {
-      const result = await this.processLine(line);
-      results.record(line.lineNumber, result);
-    }
-    return results;
-  }
-
-  private async processLine(line: CsvLine): Promise<LineResult> {
-    // lógica por item — sem Transaction global
-  }
-}
-```
-
----
-
-### ALT-4 — UtilityScript / InternalService (TypeScript)
-
-Quando usar: Operações técnicas sem domínio relevante.
-
-```typescript
-// src/internal/rebuildSearchIndex.ts
-export async function rebuildSearchIndex(searchClient: ISearchClient): Promise<void> {
-  await searchClient.reindex();
-}
-```
-
----
-
-## 7. TABELA DE DECISÃO RÁPIDA
-
-| Operação | Padrão | TXC? |
+| Operação | Executor | `[20]` |
 |---|---|---|
-| createOrder — validação + cálculo + persistência + evento | TXC | SIM |
-| getOrderById — busca por id, retorna projeção | QueryHandler ALT-1 | NÃO |
-| listOrders — filtros opcionais, sem escrita | QueryHandler ALT-1 | NÃO |
-| getOrderDashboard — junta pedidos + clientes | QueryComposer ALT-2 | NÃO |
-| importOrdersFromCsv — processa cada linha | BatchProcessor ALT-3 | NÃO |
-| updateOrderStatus — regra de transição de estado | TXC | SIM |
-| cancelOrder — validação de prazo + estorno + notificação | TXC | SIM |
-| rebuildSearchIndex — operação técnica | UtilityScript ALT-4 | NÃO |
-| processRefund — elegibilidade + cálculo + integração pagamento | TXC | SIM |
-| exportOrdersReport — lê e formata para CSV | QueryComposer ALT-2 | NÃO |
+| grava (create, update, cancel, confirm, refund) | `BksTransactionalExecutor` | sim |
+| consulta, de uma fonte ou composta de várias | `BksQueryExecutor`, um por consulta | não |
+| lote | o worker chama `session.execute` uma vez por item, cada um com a própria `idempotencyKey`; uma transação só para o lote apenas se o requisito exigir atomicidade | sim, por item |
+| utilitário técnico sem regra (reindexar, limpar cache) | fora do TXC: função ou job simples | — |
 
----
-
-## 8. SINAIS DE ALERTA — TXC sendo forçado onde não deve
-
-Se identificar qualquer um dos itens abaixo, pare e reavalie:
-
-1. Transaction com apenas input e output, sem campos de estado intermediário — se não há estado entre etapas, não há razão para o Transaction existir.
-2. Transaction com um único método semântico — um SimpleCommandHandler resolve com menos código.
-3. Métodos semânticos com nomes técnicos (setData, loadResult, storeValue) em vez de nomes de domínio (hydrateCustomer, applyDiscount, finalizePayment) — Transaction virou um bag genérico.
-4. if (!tx.isValid) return antes de qualquer chamada ao domínio — pode indicar que o "domínio" é apenas uma camada de persistência disfarçada.
-5. Transaction com mais de 7 campos de estado — sinal de feature não decomposta. Dividir antes de continuar.
-
----
-
-## 9. ÁRVORE DE DECISÃO TXC (obrigatória antes de gerar código)
+Declaração obrigatória no output, antes do código de cada módulo:
 
 ```
-A operação tem regras de negócio que transformam estado entre etapas?
-│
-├── NÃO ──> É uma leitura direta de dados?
-│           │
-│           ├── SIM ──> Quantas fontes de dados?
-│           │           ├── 1 fonte, sem filtros complexos ──> [ALT-1] QueryHandler direto
-│           │           └── 2+ fontes ou filtros dinâmicos ──> [ALT-2] QueryComposer
-│           │
-│           └── NÃO ──> É processamento de múltiplos registros?
-│                       ├── SIM ──> [ALT-3] BatchProcessor
-│                       └── NÃO ──> É operação técnica sem domínio? ──> [ALT-4] UtilityScript
-│
-└── SIM ──> O estado precisa ser rastreado entre 2+ etapas distintas?
-            │
-            ├── NÃO (1 etapa só) ──> [ALT-1] QueryHandler ou SimpleCommandHandler
-            │
-            └── SIM ──> As etapas cruzam mais de uma camada (Entry + Domain + Infra)?
-                        │
-                        ├── NÃO (tudo na infra, ex: ETL interno) ──> [ALT-3] BatchProcessor
-                        └── SIM ──> USE TXC
+| Código          | Executor      | Etapas           | Razão                                   |
+|-----------------|---------------|------------------|-----------------------------------------|
+| ORDER.CREATE    | transacional  | [10] [20] [40] [50] | grava o pedido e notifica o cliente  |
+| ORDER.GET_BY_ID | consulta      | [40]             | consulta por número, sem escrita        |
 ```
-
-Declaração obrigatória de padrão (incluir no output antes do código):
-
-Para TXC:
-Decisão: TXC — operação tem estado em N etapas distintas (entry + domínio + infra)
-
-Para alternativas:
-Decisão: QueryHandler (ALT-1) — leitura simples sem regras de domínio, sem efeito colateral
 
 ---
 
-## 10. ESTRUTURA DE PASTAS COM TXC (EXPRESS — referência)
+## 7. Estrutura de pastas com TXC (Express, referência)
 
 ```
 {project-name}/
 ├── src/
 │   ├── config/
 │   │   └── config.ts
-│   ├── shared/
-│   │   └── TransactionResult.ts              # tipo base (gerar se há TXC)
-│   ├── types/
-│   │   └── {domain}.types.ts
+│   ├── application/
+│   │   └── pipeline/                         # a base (Seção 5.3), gerada uma vez
 │   ├── modules/
 │   │   └── {domain}/
-│   │       ├── transactions/
-│   │       │   └── {Domain}Transaction.ts    # TXC — apenas para operações com estado
-│   │       ├── queries/
-│   │       │   ├── get{Domain}ById.query.ts  # ALT-1 — leituras simples
-│   │       │   └── list{Domain}.query.ts     # ALT-1 — listagens
-│   │       ├── {domain}.service.ts
-│   │       ├── {domain}.repository.ts
-│   │       ├── {domain}.routes.ts            # entry point: constrói Transaction
-│   │       └── {domain}.types.ts
+│   │       ├── {domain}.codes.ts             # catálogo de códigos do módulo
+│   │       ├── envelopes/
+│   │       ├── validations/                  # [10], só quando a operação tem
+│   │       ├── executors/                    # um por código
+│   │       ├── {domain}.repository.ts        # Secondary Port + adapter
+│   │       ├── {domain}.routes.ts            # adapter inbound: chama a sessão
+│   │       └── {domain}.types.ts             # Input, Output e erros tipados
+│   ├── composition.ts                        # registro por código e build da sessão
 │   ├── routes/
 │   │   └── index.ts
 │   └── server.ts / app.ts
@@ -573,9 +470,12 @@ Decisão: QueryHandler (ALT-1) — leitura simples sem regras de domínio, sem e
 └── tsconfig.json
 ```
 
+Sem TXC, o módulo tem `{domain}.service.ts` no lugar de `envelopes/`, `validations/`, `executors/` e
+`{domain}.codes.ts`, e não há `application/pipeline/` nem `composition.ts`.
+
 ---
 
-## 11. COMO ADICIONAR NOVO TIPO
+## 8. Como adicionar novo tipo
 
 Para registrar um novo tipo, siga exatamente 3 passos:
 
@@ -640,17 +540,17 @@ Qual tipo deseja gerar?
 </example>
 
 <example>
-  <description>Declaração de padrão TXC antes de gerar módulo Express</description>
+  <description>Classificação das operações antes de gerar módulo Express, projeto com txc: base</description>
   <input>confirmar</input>
   <output>
-Variáveis confirmadas. Executando Árvore de Decisão TXC para cada operação:
+Variáveis confirmadas. O perfil declara `txc: "base"`. Classificação das operações:
 
-| Operação       | Decisão                                                              |
-|----------------|----------------------------------------------------------------------|
-| createOrder    | TXC — valida elegibilidade + calcula total + persiste + publica evento |
-| getOrderById   | ALT-1 QueryHandler — leitura simples, sem estado, sem escrita        |
-| listOrders     | ALT-1 QueryHandler — filtros opcionais, projeção direta              |
-| cancelOrder    | TXC — valida prazo + estorna pagamento + notifica cliente            |
+| Código          | Executor     | Etapas              | Razão                                        |
+|-----------------|--------------|---------------------|----------------------------------------------|
+| ORDER.CREATE    | transacional | [10] [20] [40] [50] | grava o pedido e notifica o cliente          |
+| ORDER.GET_BY_ID | consulta     | [40]                | consulta por número, sem escrita             |
+| ORDER.LIST      | consulta     | [40]                | consulta com filtros opcionais               |
+| ORDER.CANCEL    | transacional | [10] [20] [40] [50] | confere o prazo, estorna e notifica          |
 
 Gerando estrutura de pastas e arquivos...
   </output>
@@ -686,8 +586,8 @@ FASE 4 — Confirmação
 
 Digite "confirmar" para iniciar a geração ou indique qual variável deseja corrigir.
 
-Nota: ao confirmar, a Árvore de Decisão TXC será executada para cada operação.
-Create e Cancel usarão TXC. GetById e List usarão QueryHandler (ALT-1).
+Nota: ao confirmar, cada operação é classificada (Seção 6). Se o perfil declarar `txc: "base"`,
+Create e Cancel usam o executor transacional; GetById e List, o de consulta.
   </output>
 </example>
 
@@ -703,14 +603,14 @@ Create e Cancel usarão TXC. GetById e List usarão QueryHandler (ALT-1).
 2. Ao receber um bloco YAML com variáveis: entrar no MODO PRÉ-PREENCHIDO — validar e ir direto para FASE 4.
 3. Nunca avançar para FASE 5 sem exibir a tabela de confirmação e receber "confirmar".
 4. Ao receber "confirmar" na FASE 4:
-   - Executar a Árvore de Decisão TXC (Seção 9) para cada operação/módulo
-   - Exibir tabela de decisão (operação + padrão escolhido + justificativa)
+   - Ler o `txc` do `.bks-profile.json`; campo ausente é padrão direto; sem o arquivo, perguntar
+   - Classificar cada operação (Seção 6) e exibir a tabela de código, executor, etapas e razão
    - Carregar o Prompt Especializado do tipo selecionado
    - Executar o Prompt Especializado integralmente com as variáveis coletadas
 5. Ao encontrar tipo FUTURO: exibir mensagem de indisponibilidade e voltar à FASE 1.
-6. Para operações com TXC: gerar {Domain}Transaction.ts na pasta transactions/ e o service usando o Transaction.
-7. Para operações ALT-1: gerar arquivo {operation}.query.ts na pasta queries/ sem Transaction.
-8. Para operações ALT-2/3/4: gerar o artefato correspondente (Composer, BatchProcessor, InternalService).
-9. Sempre incluir src/shared/TransactionResult.ts quando há pelo menos uma operação TXC no projeto.
+6. Com `txc: "base"`: gerar uma vez `src/application/pipeline/` (Seção 5.3) e `src/composition.ts`; por código, o envelope, o executor e a `[10]` quando houver.
+7. Com `txc: "base"`: a rota só chama `session.execute(code, input, call)` e monta a resposta; consulta é um `BksQueryExecutor` por código.
+8. Sem TXC: gerar `{domain}.service.ts` com a regra e a Port de repositório, retornando `PipelineResult<T>`.
+9. Lote vai item a item pela sessão; utilitário técnico fica fora do TXC (Seção 6).
 
 </task>

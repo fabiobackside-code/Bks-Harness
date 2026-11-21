@@ -58,7 +58,8 @@ Gerar um agente LangGraph completo em Node.js + TypeScript, com:
 ```
 {project-name}/
 ├── src/
-│   ├── config.ts                         # env vars centralizadas
+│   ├── config/
+│   │   └── config.ts                     # env vars centralizadas
 │   ├── graph/
 │   │   ├── graph.ts                      # StateGraph: schema + nodes + edges
 │   │   ├── factory.ts                    # export default graph — obrigatório LangGraph Studio
@@ -189,16 +190,29 @@ export default graph;
 
 ### Integração LLM
 
+As variáveis de ambiente são lidas só em `src/config/config.ts`; o serviço recebe o valor dele.
+
+```typescript
+// config/config.ts
+export const config = {
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+  anthropicModel: process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6',
+  openRouterApiKey: process.env.OPENROUTER_API_KEY,
+  openRouterModel: process.env.OPENROUTER_MODEL ?? 'anthropic/claude-sonnet-4-6',
+} as const;
+```
+
 **Anthropic (VC-2 = Anthropic):**
 ```typescript
 // services/llmService.ts
 import Anthropic from '@anthropic-ai/sdk';
+import { config } from '../config/config.ts';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = new Anthropic({ apiKey: config.anthropicApiKey });
 
 export async function callLLM(system: string, user: string): Promise<string> {
   const response = await client.messages.create({
-    model: process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6',
+    model: config.anthropicModel,
     max_tokens: 1024,
     system,
     messages: [{ role: 'user', content: user }],
@@ -214,15 +228,16 @@ export async function callLLM(system: string, user: string): Promise<string> {
 ```typescript
 // services/llmService.ts
 import OpenAI from 'openai';
+import { config } from '../config/config.ts';
 
 const client = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: config.openRouterApiKey,
   baseURL: 'https://openrouter.ai/api/v1',
 });
 
 export async function callLLM(system: string, user: string): Promise<string> {
   const response = await client.chat.completions.create({
-    model: process.env.OPENROUTER_MODEL ?? 'anthropic/claude-sonnet-4-6',
+    model: config.openRouterModel,
     messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
   });
   return response.choices[0]?.message?.content ?? '';
@@ -316,7 +331,7 @@ Sempre incluir `zod` e `@types/node` como devDependency.
 1. `package.json` — `"type": "module"`, scripts, dependências por VC-2
 2. `tsconfig.json` — ESM, `noEmit: true`, `allowImportingTsExtensions: true`
 3. `.env.example`
-4. `src/config.ts` — variáveis de ambiente centralizadas
+4. `src/config/config.ts` — variáveis de ambiente centralizadas; nenhum outro arquivo as lê
 
 ### PASSO 2 — Prompts
 

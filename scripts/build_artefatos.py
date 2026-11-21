@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Gera o HTML do Atlas, da Apresentação, do treinamento e do guia do Maestri a partir de docs/artefatos/.
+"""Gera o HTML do Atlas, da Apresentação, do treinamento, do guia do Maestri, do guia para quem chega, do roteiro e do estudo do TXC.
 
 Uso:
-  python scripts/build_artefatos.py            gera os quatro HTML
+  python scripts/build_artefatos.py            gera os seis HTML
   python scripts/build_artefatos.py --check    falha se o HTML versionado estiver defasado
 
 Requer o pacote Python `markdown` (3.x). Saída pronta para imprimir em PDF pelo navegador.
@@ -30,6 +30,16 @@ TRAINING_HTML = os.path.join(TRAINING, 'treinamento-bks-harness.html')
 GUIDE = os.path.join(ART, 'maestri')
 GUIDE_MD = os.path.join(GUIDE, 'guia-maestri.md')
 GUIDE_HTML = os.path.join(GUIDE, 'guia-maestri.html')
+STUDY = os.path.join(ROOT, 'docs', 'estudo')
+STUDY_MD = os.path.join(STUDY, 'roteiro-7-dias.md')
+STUDY_HTML = os.path.join(STUDY, 'roteiro-7-dias.html')
+HARNESS_GUIDE = os.path.join(ART, 'guia')
+HARNESS_GUIDE_MD = os.path.join(HARNESS_GUIDE, 'guia-bks-harness.md')
+HARNESS_GUIDE_HTML = os.path.join(HARNESS_GUIDE, 'guia-bks-harness.html')
+TXC_STUDY = os.path.join(STUDY, 'txc')
+TXC_STUDY_MD = os.path.join(TXC_STUDY, 'estudo-txc.md')
+TXC_STUDY_HTML = os.path.join(TXC_STUDY, 'estudo-txc.html')
+TXC_STUDY_MOBILE_HTML = os.path.join(TXC_STUDY, 'estudo-txc-celular.html')
 
 FONTS = ('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700'
          '&family=JetBrains+Mono:wght@400;600&display=swap')
@@ -115,6 +125,8 @@ def strip_frontmatter(text):
 
 def load_figures(folder):
     figures = {}
+    if not os.path.isdir(folder):
+        return figures
     for name in sorted(os.listdir(folder)):
         body = read(os.path.join(folder, name))
         caption = re.search(r'</b>\s*·\s*(.+?)(?:\s*·\s*comandos|</figcaption>)', body)
@@ -228,6 +240,59 @@ def build_guide():
                       'beta: integração em prova')
 
 
+def build_harness_guide():
+    return render_doc(read(HARNESS_GUIDE_MD), os.path.join(HARNESS_GUIDE, 'figuras'), 'BKS HARNESS · GUIA',
+                      'o que orienta o agente, o que confere o trabalho, o que é proibido, o que fica guardado '
+                      'e como se mede.',
+                      'para quem chega')
+
+
+def build_study():
+    return render_doc(read(STUDY_MD), os.path.join(STUDY, 'figuras'), 'BKS HARNESS · ESTUDO',
+                      'sete dias de leitura e prática na PoC, do vocabulário de Harness Engineering ao '
+                      'ciclo completo com a equipe e ao esqueleto de um artigo.',
+                      'privado: não sai para o público')
+
+
+def build_txc_study():
+    return render_doc(read(TXC_STUDY_MD), os.path.join(TXC_STUDY, 'figuras'), 'BKS HARNESS · ESTUDO DO TXC',
+                      'o problema, os fundamentos, o caso de origem, onde o padrão aparece, a mesma transação '
+                      'em C#, TypeScript e Go, e quando adotar.',
+                      'sobre o txc-guidelines 2.2')
+
+
+MOBILE_CSS = """
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+html,body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:17px;line-height:1.65}
+code,pre,.eyebrow{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+main{padding:16px 16px 72px}
+.cover{min-height:auto;padding:40px 0 32px}
+.cover h1{font-size:34px}
+.cover p.sub{font-size:18px}
+.toc{padding:24px 0}
+nav.toc ol{columns:auto;column-count:1;list-style:none;padding-left:0}
+p code,li code,td code{overflow-wrap:anywhere}
+.toc li{margin:10px 0}
+h2{font-size:25px;margin:48px 0 12px;scroll-margin-top:12px}
+h3{font-size:20px;margin:32px 0 8px;scroll-margin-top:12px}
+table{font-size:14px;-webkit-overflow-scrolling:touch}
+th,td{min-width:120px}
+pre{font-size:12.5px;padding:12px}
+figure{padding:10px;margin:20px -8px}
+a.top{position:fixed;right:14px;bottom:14px;width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;text-decoration:none;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+@media print{a.top{display:none}}
+"""
+
+
+def build_txc_study_mobile():
+    page = build_txc_study()
+    page = page.replace('<link rel="stylesheet" href="%s">\n' % FONTS, '')
+    page = page.replace('</style>', MOBILE_CSS + '</style>', 1)
+    page = page.replace('<nav class="toc">', '<nav class="toc" id="sumario">', 1)
+    page = page.replace('</main>', '</main><a class="top" href="#sumario" aria-label="Voltar ao sumário">↑</a>', 1)
+    return page
+
+
 def build_deck():
     deck = json.loads(read(os.path.join(DECK, 'deck.json')))
     frames = []
@@ -248,8 +313,17 @@ def build_deck():
 
 
 def main(argv):
-    outputs = [(ATLAS_HTML, build_atlas()), (DECK_HTML, build_deck()), (TRAINING_HTML, build_training()),
-               (GUIDE_HTML, build_guide())]
+    targets = [(ATLAS_HTML, ATLAS_MD, build_atlas), (DECK_HTML, DECK, build_deck),
+               (TRAINING_HTML, TRAINING_MD, build_training), (GUIDE_HTML, GUIDE_MD, build_guide),
+               (HARNESS_GUIDE_HTML, HARNESS_GUIDE_MD, build_harness_guide),
+               (STUDY_HTML, STUDY_MD, build_study), (TXC_STUDY_HTML, TXC_STUDY_MD, build_txc_study),
+               (TXC_STUDY_MOBILE_HTML, TXC_STUDY_MD, build_txc_study_mobile)]
+    outputs = []
+    for path, source, builder in targets:
+        if not os.path.exists(source):
+            print('pulado, fonte fora desta árvore: %s' % os.path.relpath(source, ROOT))
+            continue
+        outputs.append((path, builder()))
     if '--check' in argv:
         stale = [p for p, text in outputs if not os.path.exists(p) or read(p) != text]
         for p in stale:

@@ -1,10 +1,14 @@
 {
-  "_comment": "Precos em USD por 1.000.000 de tokens. Atualize quando a tabela oficial mudar. cache_write_5m = write de cache efemero 5min; cache_write_1h = write de cache 1h; cache_read = leitura de cache.",
-  "_updated": "2026-08-28",
+  "_comment": "Precos em USD por 1.000.000 de tokens, tabela da API da Anthropic de 2026-11-03. input, output e cache_read oficiais onde a tabela os da; sem cache_read oficial, 0,1x do input. cache_write_5m = 1,25x e cache_write_1h = 2x do input. Haiku 5.5: faixa ate 100K tokens de prompt (acima, 0,50 / 2,50).",
+  "_updated": "2026-11-18",
   "models": {
+    "claude-fable-5-2":         { "input": 8.00,  "output": 40.00, "cache_write_5m": 10.00, "cache_write_1h": 16.00, "cache_read": 0.20 },
+    "claude-fable-5":           { "input": 10.00, "output": 50.00, "cache_write_5m": 12.50, "cache_write_1h": 20.00, "cache_read": 1.00 },
+    "claude-opus-5-5":          { "input": 4.00,  "output": 20.00, "cache_write_5m": 5.00,  "cache_write_1h": 8.00,  "cache_read": 0.20 },
     "claude-opus-5":            { "input": 5.00,  "output": 25.00, "cache_write_5m": 6.25,  "cache_write_1h": 10.00, "cache_read": 0.50 },
-    "claude-sonnet-5":          { "input": 3.00,  "output": 15.00, "cache_write_5m": 3.75,  "cache_write_1h": 6.00,  "cache_read": 0.30 },
-    "claude-fable-5":           { "input": 1.00,  "output": 5.00,  "cache_write_5m": 1.25,  "cache_write_1h": 2.00,  "cache_read": 0.10 },
+    "claude-sonnet-5-5":        { "input": 2.00,  "output": 10.00, "cache_write_5m": 2.50,  "cache_write_1h": 4.00,  "cache_read": 0.10 },
+    "claude-sonnet-5":          { "input": 2.00,  "output": 10.00, "cache_write_5m": 2.50,  "cache_write_1h": 4.00,  "cache_read": 0.20 },
+    "claude-haiku-5-5":         { "input": 0.10,  "output": 0.50,  "cache_write_5m": 0.125, "cache_write_1h": 0.20,  "cache_read": 0.01 },
     "claude-haiku-4-5-20251001":{ "input": 1.00,  "output": 5.00,  "cache_write_5m": 1.25,  "cache_write_1h": 2.00,  "cache_read": 0.10 }
   },
   "aliases": {

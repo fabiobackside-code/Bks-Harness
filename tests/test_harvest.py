@@ -89,6 +89,43 @@ def test_index_scope():
         shutil.rmtree(v)
 
 
+def test_kit_source():
+    print('\no kit como fonte')
+    v = vault()
+    kit = tempfile.mkdtemp()
+    write(kit, 'decisions/ADR-018-fecha.md', ADR_A)
+    write(kit, 'LEARNINGS.md', '# LEARNINGS\n\n## Preço errado na tabela\n\nevidência\n')
+    try:
+        idx = hv.index(v, kit)
+        kit_entries = [e for e in idx['entradas'].values() if e['categoria'] == 'kit']
+        check('indexa ADR e caso do kit', len(kit_entries) == 2, kit_entries)
+        check('arquivo do kit apontado como kit/bks-harness',
+              all(e['arquivo'].startswith('kit/bks-harness/') for e in kit_entries), kit_entries)
+        check('sem kit, o índice fica só com o vault',
+              all(e['categoria'] != 'kit' for e in hv.index(v)['entradas'].values()))
+    finally:
+        shutil.rmtree(v)
+        shutil.rmtree(kit)
+
+
+def test_clean_fields():
+    print('\nmodelo vazio e estado')
+    v = vault()
+    write(v, 'repos/private/poc/LEARNINGS.md', '# LEARNINGS\n\n## {{Título curto do defeito}}\n\nmodelo\n\n'
+                                               '## 2026-10-02 · teste flaky\n\nevidência\n')
+    write(v, 'repos/private/poc/decisions/ADR-003-velho.md', '# ADR-003 — velho\n\n> Status: superseded\n')
+    write(v, 'repos/private/poc/decisions/ADR-004-solto.md', '# ADR-004 — solto\n\nO status do pedido muda.\n')
+    try:
+        entries = list(hv.index(v)['entradas'].values())
+        learns = [e['titulo'] for e in entries if e['tipo'] == 'learning' and e['projeto'] == 'poc']
+        check('modelo vazio do LEARNINGS fica fora', learns == ['2026-10-02 · teste flaky'], learns)
+        by = {e.get('titulo', '')[:7]: e.get('estado') for e in entries if e['projeto'] == 'poc'}
+        check('superseded vira superada', by.get('ADR-003') == 'superada', by)
+        check('palavra solta depois de status não vira estado', by.get('ADR-004') is None, by)
+    finally:
+        shutil.rmtree(v)
+
+
 def test_incremental():
     print('\nincremental')
     v = vault()
@@ -144,7 +181,7 @@ def test_stale():
 
 def main():
     print('testes do harvest.py')
-    for fn in (test_index_scope, test_incremental, test_page_check, test_stale):
+    for fn in (test_index_scope, test_kit_source, test_clean_fields, test_incremental, test_page_check, test_stale):
         fn()
     print('\n%d verificacoes, %d falhas' % (checks, len(failures)))
     return 1 if failures else 0

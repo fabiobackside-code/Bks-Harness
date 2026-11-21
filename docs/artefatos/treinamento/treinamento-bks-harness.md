@@ -1,6 +1,6 @@
 # Treinamento do bks-harness — Instalação e uso
 
-Versão 1.4.0, testado com o Claude Code 2.1.303 e o plugin `bkhar` 0.9.0; as seções 8 e 11 seguem o `bkhar` 1.0.0, e a 13, o `bkhar` 3.0.0-beta.
+Versão 1.5.0, sobre o plugin `bkhar` 3.0.0-beta. A instalação foi testada com o Claude Code 2.1.303 e o `bkhar` 0.9.0; a prova numa instalação limpa da 3.0.0 ainda não rodou.
 
 ## Antes de começar
 
@@ -18,8 +18,9 @@ O harness (o conjunto de ferramentas em volta do modelo) tem duas peças que voc
 
 Os caminhos deste manual são exemplos, como `C:\dev\2brains`. Troque pelos seus.
 
-Para o porquê de cada decisão, leia o Atlas. Para o detalhe de cada comando, o manual de comandos,
-que é a Parte X do Atlas. Os dois estão em `docs/artefatos/` do repositório.
+Para entender o desenho (o que orienta o agente, o que confere o trabalho, o que é proibido), leia
+o guia para quem chega. Para o porquê de cada decisão, o Atlas. Para o detalhe de cada comando, o
+manual de comandos, que é a Parte X do Atlas. Os três estão em `docs/artefatos/` do repositório.
 
 ## Parte 1 — Instalação
 
@@ -103,14 +104,14 @@ plugin é lido direto da pasta: o que estiver no disco vale na próxima sessão.
 
 ```
 ❯ bkhar@bks-harness
-  Version: 0.9.0
+  Version: 3.0.0-beta
   Scope: user
   Status: ✔ enabled
 ```
 
 E `claude plugin details bkhar@bks-harness` lista `Agents (6)  architect, developer, quality,
 scribe, security, tester` e os hooks `PreToolUse`, `SessionStart` e `PostToolUse`. O custo fixo
-fica em torno de 3,2 mil tokens por sessão.
+medido na 0.9.0 ficou em torno de 3,2 mil tokens por sessão.
 
 ### 4. Montar o vault (opcional)
 
@@ -233,15 +234,16 @@ O trabalho segue uma ordem, e você aprova entre as etapas:
 | Consolidação | `/bkhar:canonize` | o contexto canônico em `docs/canonical/` |
 | Produto | `/bkhar:prd` | o PRD (documento de requisitos do produto) |
 | Plano | `/bkhar:plan` | o PLAN (plano macro) e o grafo de tasks |
-| Arquitetura | `/bkhar:arch` | o índice ARCH e os modelos (C4 nos níveis contexto e container, dados, sequências, fronteiras sensíveis) em `docs/library/architecture/`, e o README |
-| Especificação | `/bkhar:refine` ou `/bkhar:spec` | a FEAT (especificação da feature) e o TEST (os cenários), apoiados nos modelos |
+| Arquitetura | `/bkhar:arch` | o índice ARCH (o documento de arquitetura) e os modelos (C4 nos níveis contexto e container, dados, sequências, fronteiras sensíveis) em `docs/library/architecture/`, e o README |
+| Especificação | `/bkhar:refine` ou `/bkhar:spec` | a FEAT (especificação da feature) e o TEST (os cenários), apoiados nos modelos, os dois com `**Status:** Aprovada` |
+| Tasks | `/bkhar:tasks` | `specs/tasks/TASK-[feature].md`: uma task por peça, cada uma com os cenários do TEST que ela cobre |
 | Implementação | `/bkhar:loop` | código com teste, task a task |
 | Revisão | `/bkhar:review` | os achados do painel |
 | Fechamento | `/bkhar:save` | `STATUS.md`, `JOURNAL.md`, decisões e aprendizados gravados |
 
 O que não se pula é a aprovação: nenhuma etapa gera artefato sem você aprovar a anterior. A
 arquitetura é portão: o `/bkhar:refine` e o `/bkhar:spec` recusam começar sem o ARCH e os modelos em
-`status: aprovado`.
+`status: aprovado`. O `/bkhar:tasks` recusa começar sem a FEAT e o TEST aprovados.
 
 **A biblioteca do projeto.** Tudo o que o projeto produz fica catalogado em `docs/library/LIBRARY.md`
 e aparece no dashboard `docs/library/site/index.html`, que você abre no navegador. O `/bkhar:save`
@@ -266,7 +268,7 @@ Seis agentes, cada um com as ferramentas do seu trabalho e só elas:
 
 | Papel | Modelo | Pode | Não pode |
 |---|---|---|---|
-| `architect` | Opus | escrever FEAT, TASK (a tarefa do plano) e ADR (o registro de decisão) | executar comando ou escrever código de produção |
+| `architect` | Opus | escrever FEAT, TASK (a tarefa do plano) e ADR (o registro de decisão); no Bash, só scripts do plugin e `git` de leitura | escrever código de produção ou gravar fora de `specs/`, `decisions/`, `docs/` e `outputs/` |
 | `tester` | Sonnet | escrever o TEST e o teste que falha | revisar os próprios testes |
 | `developer` | Sonnet | implementar uma tentativa por vez | commitar ou mexer no teste do `tester` |
 | `security` | Opus | ler e apontar o risco com `arquivo:linha` | escrever: só lê |
@@ -300,14 +302,17 @@ afirmação cita a fonte, e o que vier sem fonte aparece marcado como **opinião
 
 ### 10. Implementar e revisar
 
-O `/bkhar:loop` implementa uma task do plano, no protocolo LOOP-4: no máximo quatro tentativas.
+O `/bkhar:loop T-NNN` implementa uma task de `specs/tasks/TASK-[feature].md`, escrita pelo
+`/bkhar:tasks`, no protocolo LOOP-4: no máximo quatro tentativas, na branch `task/T-NNN`.
 
 1. **Passo 0.** O `tester` escreve o RED (o teste que ainda falha). Você confirma que ele falha pelo
    motivo certo: é o portão "RED confirmado".
 2. **Tentativas.** O `developer` implementa, uma tentativa por vez, contra os goals: build limpo,
    testes verdes, cenários do TEST cobertos.
 3. **Falha.** O erro real volta como contexto da tentativa seguinte. Nada é escondido.
-4. **Quarta falha.** O loop para com um `BLOQUEIO` e devolve a decisão para você.
+4. **Quarta falha.** O loop para com um `BLOQUEIO` e devolve a decisão para você. Depois de
+   preencher o que mudou, `/bkhar:loop T-NNN --resume` retoma; o mesmo `--resume` volta ao último
+   ponto seguro se a sessão cair no meio.
 
 Quem escreve o teste não é quem o faz passar. É essa separação que impede o teste de ser escrito
 para caber no código.
@@ -325,11 +330,11 @@ falha: o loop para e a decisão é sua.
 
 ### 11. Rodar no modo autônomo
 
-Todo projeto nasce `colaborativo`: a equipe pergunta e espera você em cada FEAT, TEST e tentativa.
-O `autonomo` deixa a equipe seguir sozinha entre três portões seus: PRD, PLAN e ARCH aprovados; os
+Todo projeto nasce `collaborative`: a equipe pergunta e espera você em cada FEAT, TEST e tentativa.
+O `autonomous` deixa a equipe seguir sozinha entre três portões seus: PRD, PLAN e ARCH aprovados; os
 contratos da onda de desenho; a entrega final.
 
-O modo não se pede, se concede. O `/bkhar:mode autonomo` roda o `scripts/readiness.py`, que confere,
+O modo não se pede, se concede. O `/bkhar:mode autonomous` roda o `scripts/readiness.py`, que confere,
 sem chamar modelo:
 
 | Nível | O que precisa estar pronto |
@@ -343,7 +348,7 @@ sem chamar modelo:
 Faltando algo, a resposta lista o que é e o comando que resolve. Concedido, o modo muda no perfil e
 vira um ADR em `decisions/`.
 
-**O que muda.** No `autonomo`, o `architect` responde as próprias perguntas pelas fontes do projeto
+**O que muda.** No `autonomous`, o `architect` responde as próprias perguntas pelas fontes do projeto
 e grava cada resposta em `decisions/SUPOSICOES.md`, para você revisar depois. Dado pessoal,
 autorização e segredo não se presumem: param num `BLOQUEIO`. O `/bkhar:loop --wave next` roda a
 próxima onda do grafo, com até quatro tasks em paralelo, cada uma na sua worktree. No fim da onda,
@@ -360,15 +365,15 @@ modelo e agente. Por ele você responde a um bloqueio, pausa a onda ou troca o m
 pedido é aplicado entre tentativas. O `/bkhar:status` mostra a mesma tabela no terminal.
 
 Nenhum modo afrouxa os guardas, o RED antes do código, as quatro tentativas e a revisão de
-segurança em área sensível. A volta para o `colaborativo` é sempre permitida.
+segurança em área sensível. A volta para o `collaborative` é sempre permitida.
 
 **O que você ensina.** Cada correção sua vira proposta candidata em `inbox/proposals/`. O
 `/bkhar:retro` mostra as candidatas, e você promove cada uma a regra do projeto, do vault ou do kit,
-ou a rejeita com motivo. É assim que o `colaborativo` treina o `autonomo`.
+ou a rejeita com motivo. É assim que o `collaborative` treina o `autonomous`.
 
 **Exercício.** No `treino-harness`, rode `/bkhar:mode` sem argumento.
 
-**Confira.** A resposta mostra o modo atual, `colaborativo`, e a prontidão recusada, com o que falta
+**Confira.** A resposta mostra o modo atual, `collaborative`, e a prontidão recusada, com o que falta
 em cada nível. Você sabe dizer qual comando resolve cada item.
 
 ### 12. Uma sessão de trabalho
@@ -430,6 +435,7 @@ conectados`.
 | `/bkhar:refine` | especificar com a equipe | raiz do projeto |
 | `/bkhar:spec` | especificar direto | raiz do projeto |
 | `/bkhar:library` | catálogo, dashboard e exportação para o vault | raiz do projeto |
+| `/bkhar:tasks` | decompor a feature aprovada em tasks | raiz do projeto |
 | `/bkhar:loop` | implementar uma task | raiz do projeto |
 | `/bkhar:review` | revisão em painel | raiz do projeto |
 | `/bkhar:ask` | perguntar a um agente | qualquer ponto |
@@ -440,6 +446,7 @@ conectados`.
 | `/bkhar:status` | estado da execução em ondas | raiz do projeto |
 | `/bkhar:retro` | promover ou rejeitar o aprendizado candidato | raiz do projeto |
 | `/bkhar:harvest` | consolidar a experiência dos projetos no vault | raiz do vault |
+| `/bkhar:audit` | conferir deriva entre guias, sensores e estado | raiz do projeto ou do kit |
 | `/bkhar:migrate` | trazer projeto do kit antigo `bks` | raiz do projeto |
 | `/bkhar:maestri` | ligar, desligar e conferir a equipe em terminais do Maestri | terminal `manager`, raiz do projeto |
 
@@ -452,6 +459,7 @@ O detalhe de cada comando, com passo a passo e exemplo, está no manual de coman
 
 | Versão | Data | O que mudou |
 |---|---|---|
+| 1.5.0 | 2026-11-20 | Alinhado à 3.0.0-beta: `/bkhar:tasks` no ciclo e na referência, `/bkhar:audit`, `--resume` do loop, Bash limitado do `architect` e ponteiro para o guia para quem chega |
 | 1.4.0 | 2026-11-06 | Capítulo 13, "Usar com o Maestri", com o `/bkhar:maestri` e o ponteiro para o guia do Maestri |
 | 1.3.0 | 2026-11-05 | Guia de preparação da máquina e dos provedores de modelo, apontando para o manual de comandos |
 | 1.2.0 | 2026-11-04 | Capítulo 11, "Rodar no modo autônomo": prontidão, suposições, ondas, painel e `/bkhar:retro`; referência rápida com toda a 1.0.0 |

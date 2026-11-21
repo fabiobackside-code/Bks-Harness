@@ -13,7 +13,7 @@ estado.
    ```
 
    Sem `outputs/run/`, diga que nenhuma onda começou e que a primeira roda com
-   `/bkhar:loop --wave next`, no modo `autonomo`.
+   `/bkhar:loop --wave next`, no modo `autonomous`.
 
 2. Liste os `outputs/BLOQUEIO-*.md`, um por linha, com a pergunta objetiva de cada um.
 3. Conte as linhas `aberta` de `decisions/SUPOSICOES.md`.

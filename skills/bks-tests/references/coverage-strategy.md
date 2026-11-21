@@ -20,29 +20,25 @@ src/
 
 ## Prioridade CRÍTICA (95%+ obrigatório)
 
-### 1. Domain/Core Layer
+### 1. Domain
 **Meta:** 98%+ de cobertura
 **Localização no projeto de testes:** `src/[SolutionName].Tests/Unit/Domain/`
 
-- [ ] Entidades de domínio
-- [ ] Value Objects
-- [ ] Aggregates
-- [ ] Lógica de negócio
+- [ ] Aggregates, entidades e Value Objects (`Domain/Core/Models/`)
+- [ ] Padrão direto: o `{Entidade}Service` com a regra (`Domain/Services/`)
 
 **Justificativa:** Core business rules - mais crítico
 
-### 2. Application Layer
+### 2. Application (só com `txc: "base"`)
 **Meta:** 95%+ de cobertura
 **Localização no projeto de testes:** `src/[SolutionName].Tests/Unit/Application/`
 
-- [ ] Use Cases
-- [ ] Services
-- [ ] Validators
-- [ ] Mappers
+- [ ] `ApplyRule` de cada executor, testado com valores
+- [ ] Executor pela sessão: `[10]`, `[20]` (replay) e compensação no desvio
 
-**Justificativa:** Orquestração de lógica de negócio
+**Justificativa:** a regra e a ordem de leitura, decisão e gravação
 
-### 3. Adapters/Infrastructure
+### 3. Adapters
 **Meta:** 90%+ de cobertura
 **Localização no projeto de testes:** `src/[SolutionName].Tests/Unit/Adapters/` e `Integration/`
 

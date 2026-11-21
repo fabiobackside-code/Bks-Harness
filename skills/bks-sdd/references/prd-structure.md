@@ -80,39 +80,46 @@ that walks through a user achieving a goal. These become the basis for acceptanc
 
 ## 8. Architecture and Integration Boundaries
 
-> **Para projetos .NET ou TypeScript com Arquitetura Hexagonal + TXC:** use as sub-seções §8a–§8d abaixo.  
+> **Para projetos com Arquitetura Hexagonal e `txc` declarado no `.bks-profile.json` (.NET, TypeScript ou Go):** use as sub-seções §8a–§8d abaixo.  
 > **Para projetos genéricos (sem Hexagonal/TXC):** descreva sistemas tocados, fronteiras de integração, APIs externas, bancos, auth e contratos de dados em forma livre.
 
 ### §8a — Internal Architecture
 
-Fluxo obrigatório para projetos TXC:
+Fluxo obrigatório para projetos com TXC (Transaction Context); o DTO (Data Transfer Object) é o
+formato que chega ao adapter:
 
 ```
-Primary Adapter (HTTP/Worker)
-  │ cria Transaction, popula campos de entrada (Hydrate)
+Primary Adapter (HTTP/Worker/consumer)
+  │ preenche o contexto da chamada (correlation id, usuário) e traduz o DTO em input
   ▼
-Primary Port: I{Entidade}Handler / I{Entidade}Query
+Primary Port: IBksSession.ExecuteAsync(code, input)
+  │ a sessão cria o TXC somente leitura e o envelope pela fábrica pura
+  ├── [10] Validation      → valida só a entrada, sem I/O                     (opcional)
+  ├── [20] Idempotency     → replay devolve o primeiro resultado        (sempre no que grava)
+  ├── [40] Processing      → executor transacional:
+  │                            ValidateAsync → TValidation (lê pelas Secondary Ports)
+  │                            ApplyRule     → TDecision   (regra de negócio)
+  │                            ExecuteAsync  → TOut        (grava pela Secondary Port)
+  │                          ou executor de consulta: ExecuteAsync → TOut
+  └── [50] PostProcessing  → conclusão ou difusão; não monta a resposta      (opcional)
   ▼
-Handler / QueryHandler (Application layer)
-  ├── Transaction.HydrateXxx(input)           → Fase 1: entrada
-  ├── Aggregate.Create/Apply/Cancel(...)       → Fase 2: domínio
-  ├── Transaction.HydrateXxxCriado(aggregate) → Fase 2: captura estado
-  ├── IXxxRepository.SaveAsync(aggregate)     → Fase 3: persistência
-  └── Transaction.FinalizeWith(aggregate)     → Fase 3: output
-  ▼
-PipelineResult<{Entidade}Response>
+PipelineResult<TOut> → o adapter monta a resposta
 ```
 
-Não usar Steps numerados separados (ValidationStep, ProcessingStep) — são anti-padrão v1.
+Etapa vazia é omitida. Dado entre passos é retorno tipado, nunca campo de um objeto que muda; o
+TXC não carrega retorno. Não existe `I{Entidade}Handler` nem `I{Operacao}UseCase`: a Primary Port é
+a sessão.
 
-### §8b — Bounded Contexts e Aggregates
+### §8b — Bounded Contexts e catálogo de transações
 
-| Bounded Context | Aggregate Root | Primary Port (Command) | Primary Port (Query) |
-|-----------------|----------------|------------------------|----------------------|
-| [ex: Vendas]    | [ex: Pedido]   | [ex: IPedidoHandler]   | [ex: IPedidoQuery]   |
+| Bounded Context | Aggregate Root | Código | Executor |
+|-----------------|----------------|--------|----------|
+| [ex: Vendas]    | [ex: Pedido]   | [ex: `PEDIDO.CRIAR`] | transacional |
+| [ex: Vendas]    | [ex: Pedido]   | [ex: `PEDIDO.OBTER`] | consulta |
 
-**Regra:** uma Primary Port de Command por BC (agrupa operações TXC do BC), uma Primary Port de Query por BC (agrupa todas as queries).  
-**Nunca:** `ICreatePedidoUseCase`, `IListPedidosUseCase`, `ICancelPedidoUseCase` separados.
+**Regra:** os códigos são constantes por BC (`PedidoCodes.Criar`); toda escrita usa executor
+transacional, toda leitura, executor de consulta, um por código.
+**Nunca:** `IPedidoHandler`, `ICreatePedidoUseCase`, `IListPedidosUseCase` como Primary Port.
 
 ### §8c — Secondary Ports
 
@@ -132,7 +139,7 @@ Para sistemas externos com modelo de dados diferente do domínio, listar:
 |-----------------|----------------|-----------------|---------------|
 | [ex: API Correios] | [ex: ICalculadoraDeFrete] | Sim | Modelo externo não mapeia 1:1 com domínio |
 
-> Para regras completas de Primary/Secondary Ports e Transaction Map, ver `references/txc-guidelines.md`.
+> Para o modelo completo (sessão, executores, ficha da transação), ver `references/txc-guidelines.md`.
 
 ## 9. Delivery Plan
 
@@ -190,7 +197,7 @@ bounding what is NOT included prevents AI agents from expanding implementation b
 95% of queries" is.
 
 **Architecture and Integration Boundaries (§8):** Use the conditional rule:
-- If the project uses Hexagonal Architecture + TXC (.NET or TypeScript): fill §8a–§8d using the TXC-aware template. Read `references/txc-guidelines.md` before writing §8b and §8c. Primary Ports must be grouped by BoundedContext (not per CRUD operation). Secondary Ports must be specific per aggregate (not a generic `IDBRepositoryPort`).
+- If the project uses Hexagonal Architecture and declares `txc` in `.bks-profile.json` (.NET, TypeScript or Go): fill §8a–§8d using the TXC-aware template. Read `references/txc-guidelines.md` before writing §8b and §8c. The Primary Port is the session (in Go, each transaction's `txc.Op`); §8b lists the transaction codes per BoundedContext (no `I{Entity}Handler` nor per-operation UseCase). Secondary Ports must be specific per aggregate (not a generic `IDBRepositoryPort`).
 - For other stacks or generic projects: describe systems touched, integration boundaries, external APIs, databases, and auth in free-form text.
 
 **Delivery Plan (§9):** Each phase should be shippable. Avoid phases like "backend" +

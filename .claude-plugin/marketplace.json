@@ -4,12 +4,13 @@
     "name": "Fabio Magalhaes",
     "url": "https://github.com/fabiobackside-code"
   },
+  "description": "Marketplace do bkhar: harness de engenharia assistida com Spec-Driven Development e equipe de agentes.",
   "plugins": [
     {
       "name": "bkhar",
       "source": "./",
       "description": "Kit BKS de Spec-Driven Development: PRD, specs, tasks, execucao e arquitetura hexagonal em .NET, TypeScript e Go.",
-      "version": "3.0.0-beta",
+      "version": "3.0.1",
       "category": "development",
       "keywords": ["sdd", "spec-driven-development", "hexagonal-architecture", "dotnet", "typescript", "go"]
     }

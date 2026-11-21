@@ -1,15 +1,16 @@
 ---
-description: "Troca o modo de condução do projeto — /bkhar:mode <colaborativo|autonomo>. Roda a checagem de prontidão, grava ADR e altera o .bks-profile.json. Sem argumento, mostra o modo atual e a prontidão."
+description: "Troca o modo de condução do projeto — /bkhar:mode <collaborative|autonomous>. Roda a checagem de prontidão, grava ADR e altera o .bks-profile.json. Sem argumento, mostra o modo atual e a prontidão."
 ---
 
 Troca o modo de condução do projeto atual. Rode com a sessão aberta **na raiz do repo do
 projeto**; na raiz do vault, recuse e peça para abrir a sessão na pasta do projeto.
 
-Uso: `/bkhar:mode` · `/bkhar:mode colaborativo` · `/bkhar:mode autonomo`
+Uso: `/bkhar:mode` · `/bkhar:mode collaborative` · `/bkhar:mode autonomous`
 
 ## Passo 1 — onde o projeto está
 
-1. Leia o `.bks-profile.json`. `axes.mode` ausente vale `colaborativo`.
+1. Leia o `.bks-profile.json`. `axes.mode` ausente vale `collaborative`. O valor antigo (`colaborativo`,
+   `autonomo`) vale como o novo (`collaborative`, `autonomous`); ao gravar, use sempre o novo.
 2. Rode e cole a saída inteira:
 
    ```
@@ -20,7 +21,7 @@ Uso: `/bkhar:mode` · `/bkhar:mode colaborativo` · `/bkhar:mode autonomo`
 
 ## Passo 2 — decidir
 
-**Para `autonomo`:**
+**Para `autonomous`:**
 
 - Saída 1 (RECUSADA): não troque. Agrupe o que falta por nível e diga, para cada item, o comando que
   o resolve (`/bkhar:canonize`, `/bkhar:prd`, `/bkhar:plan`, `/bkhar:arch` — ou `/bkhar:arch --update`
@@ -28,12 +29,13 @@ Uso: `/bkhar:mode` · `/bkhar:mode colaborativo` · `/bkhar:mode autonomo`
 - Saída 0 (CONCEDIDA): mostre os avisos e o que muda no projeto:
   - `refine` e `spec` sem pergunta ao usuário; cada resposta presumida vai para
     `decisions/SUPOSICOES.md`;
-  - portões do usuário: PRD, PLAN e ARCH (já aprovados), contratos da onda de desenho, entrega final;
+  - portões do usuário: PRD, PLAN e ARCH (já aprovados), contratos da onda de desenho (em `poc`, a
+    revisão sem bloqueante os aprova), entrega final;
   - `/bkhar:loop --wave N` passa a rodar as ondas do grafo.
 
   Em `rigor: producao`, diga que os contratos da onda de desenho continuam com o usuário.
 
-**Para `colaborativo`:** a volta é sempre permitida. Se houver onda em curso em `outputs/run/`,
+**Para `collaborative`:** a volta é sempre permitida. Se houver onda em curso em `outputs/run/`,
 diga que ela termina a task em andamento e para.
 
 Mostre o que vai ser escrito e espere o ok.

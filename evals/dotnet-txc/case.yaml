@@ -1,39 +1,49 @@
 schema_version: "1.1"
 name: dotnet-txc
 description: >
-  A skill de .NET aplica o padrao TXC — transaction como parameter object
-  imutavel, criada no adapter inbound — e retorna Result em vez de excecao
-  de negocio.
+  A skill de .NET aplica o TXC do motor quando o projeto o adota: a sessao
+  cria o TXC somente leitura, o adapter so chama ExecuteAsync(code, input),
+  dado entre passos e retorno tipado, e o erro de negocio volta como
+  PipelineResult, nao como excecao.
 tags: [dotnet, txc]
 runs: 3
 
 execution:
   max_turns: 6
   prompt: |
-    Preciso do esqueleto de um caso de uso de abertura de conta numa API .NET
-    hexagonal: a assinatura do use case, o que ele recebe e o que devolve.
-    Como faco para propagar o correlation id e o usuario ate a camada de dominio?
+    Nosso projeto .NET hexagonal adota o TXC (txc: "base" no .bks-profile.json).
+    Preciso do esqueleto da transacao de abertura de conta: o que o endpoint
+    chama, o que o executor recebe e devolve, e onde busco o cliente antes de
+    aplicar a regra. Como o correlation id e o usuario chegam ate la?
 
 graders:
-  - name: parameter-object-unico
+  - name: txc-somente-leitura
     type: llm
     criteria: |
-      A resposta transporta o contexto num parameter object unico (transaction /
-      TXC) que carrega correlation id e usuario, em vez de espalhar esses dados
-      em parametros soltos, campos estaticos, AsyncLocal ou HttpContext acessado
-      no dominio.
+      O contexto (TXC ou seed) carrega correlation id e usuario, e somente
+      leitura e e criado pela sessao a partir do contexto da chamada, nao
+      montado no adapter nem alterado no meio do fluxo. Nada de AsyncLocal,
+      campo estatico ou HttpContext acessado no dominio.
 
-  - name: imutavel-no-inbound
+  - name: adapter-chama-a-sessao
     type: llm
     criteria: |
-      O objeto de contexto e imutavel e criado no adapter inbound, nao montado
-      ou alterado no meio do fluxo. Uso de record ou equivalente conta a favor.
+      O endpoint so chama a sessao com codigo e entrada (ex.:
+      session.ExecuteAsync("CONTA.ABRIR", input)) e monta a resposta. Nao
+      existe Handler nem UseCase por operacao como Primary Port.
+
+  - name: retorno-tipado-entre-passos
+    type: llm
+    criteria: |
+      O cliente e lido no ValidateAsync do executor e entregue ao ApplyRule
+      como retorno tipado, sem metodo Hydrate nem estado mutavel num objeto
+      de transacao.
 
   - name: result-nao-excecao
     type: llm
     criteria: |
-      O use case devolve um resultado tipado (PipelineResult, Result ou
-      equivalente) em vez de sinalizar erro de negocio por excecao.
+      O executor devolve PipelineResult (ou equivalente tipado) em vez de
+      sinalizar erro de negocio por excecao.
 
   - name: skill-disparou
     type: tool_used

@@ -1,18 +1,18 @@
 ---
 name: bks-dotnet-solutions
-version: 2.0
+version: 3.0
 description: |
-  Guia prescritivo para geração de soluções .NET completas com Arquitetura Hexagonal BKS,
-  padrão TXC (Transaction Context) e DDD. Use SEMPRE que o usuário quiser criar, estruturar
+  Guia prescritivo para geração de soluções .NET completas com Arquitetura Hexagonal BKS e DDD,
+  montadas pelas portas de entrada e de saída. Use SEMPRE que o usuário quiser criar, estruturar
   ou implementar qualquer solução .NET — Minimal API, Worker/Background Service ou SDK/Lib.
 
-  Trigger: criar projeto .NET, hexagonal em .NET, TXC, transaction parameter object,
-  CRUD com Dapper ou EF Core, Stored Procedures, Single Project vs Multi Project,
-  BKS Stack, estrutura de pastas para projeto C#.
+  Trigger: criar projeto .NET, hexagonal em .NET, portas e adapters, Worker com TCP ou HTTP,
+  consumer Kafka ou RabbitMQ, TXC, transaction context, CRUD com Dapper ou EF Core,
+  Stored Procedures, Single Project vs Multi Project, estrutura de pastas para projeto C#.
 
   A skill é OPINIONADA e PRESCRITIVA — recomenda ativamente, não apenas lista opções.
-  É EMBEDDABLE — toda decisão obrigatória de padrão (TXC vs ALT-1/2/3/4) está documentada
-  in-line; o agente NÃO PODE pular a árvore de decisão.
+  A entrevista de 9 fases é obrigatória: tipo, forma (padrão direto ou TXC), portas de entrada
+  e de saída; o agente NÃO PODE gerar pasta de porta que a entrevista não declarou.
 
 trigger_keywords:
   - .net solution
@@ -20,6 +20,8 @@ trigger_keywords:
   - minimal api
   - worker .net
   - sdk .net
+  - portas e adapters
+  - worker tcp
   - txc
   - transaction context
   - bks stack
@@ -28,34 +30,40 @@ trigger_keywords:
   - single project vs multi project
 
 related_guidelines:
-  - GUIDELINE-DDD-v2.md          (tático: Entities, VOs, Aggregates, Domain Services)
-  - GUIDELINE-HEXAGONAL-v2.md    (estrutural: Ports & Adapters, dependências)
-  - GUIDELINE-CONTEXTOS-v2.md    (estratégico: Bounded Contexts, Subdomain types)
+  - ddd-tactic-guidelines.md           (bks-sdd — tático: Entities, VOs, Aggregates, Domain Services)
+  - hexagonal-arch-guidelines.md       (bks-sdd — estrutural: Ports & Adapters, dependências)
+  - ddd-bounded-contexts-guidelines.md (bks-sdd — estratégico: Bounded Contexts, Subdomain types)
+  - txc-guidelines.md                  (bks-sdd — o modelo do TXC, quando o projeto o adota)
 ---
 
-# bks-dotnet-solutions — Skill v2.0
+# bks-dotnet-solutions — Skill v3.0
 
-> **Mudanças vs v1:** Adoção do padrão TXC (Transaction Context). Estrutura de pastas
-> reduzida (~73% menos arquivos por entidade CRUD). Árvore de decisão obrigatória
-> (TXC vs ALT-1/2/3/4) embutida na Fase 5. Declaração de padrão obrigatória no output.
-> Integração explícita com 3 guidelines auxiliares (DDD, Hexagonal, Contextos).
+> **Mudanças vs v2:** a estrutura sai das portas de entrada e de saída declaradas na entrevista.
+> Duas formas, escolhidas por projeto: padrão direto (entrada → serviço → porta) ou TXC
+> (`txc: "base"`, com a base em `references/txc-base.md`). Toda lista tem "outro", que vira Port.
+> Sai a árvore TXC × ALT-1..4 e o Transaction mutável (`decisions/ADR-015` e `ADR-016` do kit).
 
 ---
 
-## REGRA ZERO — ANTES DE GERAR QUALQUER CÓDIGO
+## Regra zero — antes de gerar qualquer código
 
 > **Esta regra é absoluta e não negociável.**
 
-Você DEVE:
+Você deve:
 
-1. Conduzir a **Entrevista Estruturada (7 fases)** — sem pular fases mesmo que o usuário tenha dado pistas no prompt inicial. Cada fase é uma decisão consciente.
-2. Para cada operação a gerar, percorrer a **Árvore de Decisão TXC** (Fase 5.2) e **declarar explicitamente** no output qual padrão foi escolhido. A ausência da declaração é proibida.
-3. Cumprir as **Restrições Absolutas** (seção final) — qualquer violação invalida a geração.
-4. Quando houver dúvida arquitetural, **PERGUNTE ao usuário antes de implementar**. Não invente tecnologias não mencionadas.
+1. Conduzir a **entrevista estruturada (9 fases)**, sem pular fases mesmo que o usuário tenha dado pistas no prompt inicial. Cada fase é uma decisão consciente.
+2. Gerar só o que a entrevista declarou: cada porta de entrada e de saída escolhida vira adapter; porta não declarada não gera pasta nem código.
+3. Na fase 7, **declarar explicitamente** como cada operação será construída, conforme a forma do projeto (fase 2). A ausência da declaração é proibida.
+4. Cumprir as **Restrições Absolutas** (seção final): qualquer violação invalida a geração.
+5. Quando houver dúvida arquitetural, **pergunte ao usuário antes de implementar**. Tecnologia que não está nas listas entra como "outro": vira Port com o adapter a especificar, nunca uma biblioteca inventada.
 
 ---
 
-## ENTREVISTA ESTRUTURADA — 7 FASES
+## Entrevista estruturada — 9 fases
+
+Toda lista termina em "outro". O "outro" vira Port com o adapter a especificar na especificação
+da feature; a skill não escolhe biblioteca por conta própria. Trocar o adapter de uma porta depois
+da construção inicial não toca o domínio.
 
 ### Fase 1 — Tipo de solução
 
@@ -63,548 +71,501 @@ Você DEVE:
 Pergunta:
   Qual o tipo de solução?
   [A] Minimal API (REST)
-  [B] Worker / Background Service
-  [C] SDK / Biblioteca reutilizável
+  [B] Worker / Background Service — pode ter várias portas de entrada no mesmo processo
+  [C] SDK / Biblioteca reutilizável — sem porta de entrada; a API pública é a da biblioteca
+  [D] Outro — especificar (ex.: CLI, função serverless); a skill parte do tipo mais próximo entre
+      A, B e C, diz qual escolheu e lista na especificação o que o tipo pedido exige além dele
 
 Saída: {tipo_solucao}
 ```
 
-### Fase 2 — Modo de projeto
+### Fase 2 — Forma do projeto: Transaction Context (TXC) ou padrão direto
+
+```
+Leia o campo txc do .bks-profile.json. Declarado: [A]. Campo ausente: [B], sem perguntar.
+Só sem o arquivo .bks-profile.json faça a pergunta abaixo.
+
+Pergunta:
+  O projeto adota o TXC (Transaction Context)?
+  [A] Sim, txc: "base" — toda operação é transação registrada por código:
+      entrada → sessão → pipeline [10] [20] [40] [50] → executor
+  [B] Não — padrão direto: entrada → serviço → porta de saída; a regra mora no serviço
+
+Recomendação (a confirmar com o usuário):
+  - várias operações de escrita que pedem idempotência, auditoria e compensação → [A]
+  - cadastro simples, integração sem regra, serviço de leitura, gateway de protocolo → [B]
+
+Saída: {forma} — vale para o projeto inteiro; não há mistura entre as duas
+```
+
+O `txc: "motor"` (pacote do `bks-motor-sdk`) não é gerado por esta skill; é o caminho de migração
+de um projeto `base`: trocar a base pelo pacote e escrever a procedure de cada transação.
+
+### Fase 3 — Modo de projeto
 
 ```
 Pergunta:
-  SingleProject (1 csproj com Features/) ou MultiProject (Domain + Application + Adapters + Host)?
+  SingleProject (1 csproj) ou MultiProject (Domain + Application + Adapters + Host)?
+  Vale para as duas formas da fase 2.
 
-Recomendação automática (a confirmar com usuário):
+Recomendação automática (a confirmar com o usuário):
   - 1-3 contextos coesos, time único, deploy junto → SingleProject
   - 4+ contextos OU times distintos OU regras de dependência via project reference → MultiProject
 
-Ver GUIDELINE-CONTEXTOS-v2.md §6 para critérios completos.
+Critérios completos: guia ddd-bounded-contexts-guidelines.md da skill bks-sdd.
 
 Saída: {modo_projeto}
 ```
 
-### Fase 3 — Complexidade do domínio
+### Fase 4 — Complexidade do domínio
 
 ```
 Pergunta:
   O domínio tem regras de negócio ricas (validações, transições de estado, eventos)
-  ou é predominantemente CRUD de leitura/escrita simples?
+  ou é predominantemente cadastro de leitura e escrita simples?
 
   [A] Domínio rico — usar Aggregates, Value Objects, Domain Events, Domain Services
-  [B] CRUD simples — entidades anêmicas com validação básica
+  [B] Cadastro simples — entidades anêmicas com validação básica
 
 Saída: {complexidade_dominio}
 ```
 
-### Fase 4 — Banco de dados
+### Fase 5 — Portas de entrada (múltipla escolha)
+
+Pule esta fase no SDK. Na Minimal API, o HTTP já vem marcado; pergunte se há outras.
 
 ```
 Pergunta:
-  Qual banco e tecnologia de acesso?
+  Por onde as operações entram? Marque todas.
+  [A] HTTP — Minimal API, ou Kestrel dentro do Worker
+  [B] Servidor TCP
+  [C] Consumer de fila — Kafka, RabbitMQ ou outro
+  [D] Agendamento — execução periódica
+  [E] gRPC
+  [F] Outro — especificar
 
-  [A] Sem banco (puro processamento, integrações)
-  [B] PostgreSQL com Dapper                ← preferência BKS
-  [C] PostgreSQL com EF Core
-  [D] SQL Server com Dapper                ← preferência BKS
-  [E] SQL Server com EF Core
-  [F] SQL Server com Stored Procedures     ← ver references/stored-procedures.md
-  [G] MongoDB
-  [H] Redis (cache)
-  [I] Outro — especificar
+Para cada porta marcada:
+  Autenticação? JWT | chave de API | certificado mútuo | outro | nenhuma
+  "Nenhuma" exige rede fechada declarada (ex.: só a rede interna das agências alcança a porta).
 
-Saída: {banco}, {acesso}
+Saída: {portas_entrada} = [{porta, tecnologia, autenticacao}]
 ```
 
-### Fase 5 — Entidades, contextos e operações
+### Fase 6 — Portas de saída (múltipla escolha)
 
-#### 5.1 — Listagem
+```
+Pergunta:
+  Com o que a aplicação fala? Marque todas.
+  [A] Banco relacional — SQL Server, PostgreSQL, Oracle, MySQL ou outro
+      acesso: Dapper (preferência BKS) | Entity Framework Core | Stored Procedure | outro
+      Stored Procedure: ver references/stored-procedures.md
+  [B] Banco de documentos — MongoDB ou outro
+  [C] Cache — Redis ou outro
+  [D] Producer de fila — Kafka, RabbitMQ ou outro
+  [E] Cliente HTTP
+  [F] Cliente TCP
+  [G] Cliente SOAP (web service XML)
+  [H] Cliente gRPC
+  [I] Outro — especificar
+  Nenhuma marcada: puro processamento, sem adapter de saída.
+
+Saída: {portas_saida} = [{porta, tecnologia, acesso}]
+```
+
+### Fase 7 — Contextos, entidades e operações
+
+#### 7.1 — Listagem
 
 ```
 Pergunta:
   Quais Bounded Contexts e quais entidades por contexto?
-  Para cada entidade, quais operações? (CRUD padrão ou customizadas?)
+  Para cada entidade, quais operações? (cadastro padrão ou customizadas?)
+  Por qual porta de entrada cada operação chega?
 
 Output esperado:
   Contexto: Vendas
     Entidade: Pedido
-      Operações: Create, GetById, GetAll, Update, Cancel, Confirm
+      Operações: Create (HTTP), GetById (HTTP), Cancel (HTTP), Reprocessar (Agendamento)
     Entidade: ItemPedido (entidade interna do aggregate Pedido)
-
-  Contexto: Catalogo
-    Entidade: Produto
-      Operações: Create, GetById, GetAll, Update, Delete
 ```
 
-#### 5.2 — Árvore de Decisão TXC (OBRIGATÓRIA POR OPERAÇÃO)
+#### 7.2 — Declaração por operação
 
-> **Para cada operação listada na 5.1, percorra a árvore e declare o padrão escolhido.**
+Antes de gerar o código, imprima uma linha por operação, conforme a forma da fase 2.
 
-```
-A operação tem regras de negócio que TRANSFORMAM ESTADO entre etapas distintas?
-│
-├── NÃO ──→ É leitura de dados?
-│           │
-│           ├── SIM ──→ Quantas fontes de dados?
-│           │           ├── 1 fonte, filtro simples ──→ [ALT-1] QueryHandler
-│           │           └── 2+ fontes ou filtros dinâmicos complexos ──→ [ALT-2] QueryComposer
-│           │
-│           └── NÃO ──→ É processamento de múltiplos registros?
-│                       ├── SIM ──→ [ALT-3] BatchProcessor
-│                       └── NÃO ──→ É operação técnica sem domínio? ──→ [ALT-4] UtilityScript
-│
-└── SIM ──→ O estado precisa ser rastreado entre 2+ etapas distintas?
-            │
-            ├── NÃO (1 etapa só) ──→ [ALT-1] SimpleCommandHandler
-            │
-            └── SIM ──→ As etapas cruzam Entry + Domain + Infra?
-                        ├── NÃO (tudo na infra, ex: ETL interno) ──→ [ALT-3] BatchProcessor
-                        └── SIM ──→ ✅ USE TXC
-```
+**Padrão direto:**
 
-#### 5.3 — Tabela de decisão rápida
+| Operação | Entrada | Serviço | Portas de saída | Razão |
+|---|---|---|---|---|
+| `Create` | HTTP | `PedidoService.CriarAsync` | banco relacional | grava o pedido com o desconto da categoria |
+| `GetById` | HTTP | `PedidoService.ObterAsync` | banco relacional | consulta por número |
 
-| Operação típica | Padrão | Razão |
-|---|---|---|
-| `GetById` (busca por id, projeção direta) | ALT-1 QueryHandler | Leitura simples sem regra |
-| `GetAll` / `List` com filtros opcionais simples | ALT-1 QueryHandler | Sem efeito colateral |
-| `GetDashboard` (combina 3+ repos) | ALT-2 QueryComposer | Composição multi-fonte |
-| `Create` com validação + cálculo + evento | ✅ TXC | Estado em 3 fases |
-| `Update` com transição de estado | ✅ TXC | Regra de transição |
-| `Cancel` com validação de prazo + notificação | ✅ TXC | 2+ etapas com domínio |
-| `Confirm` com regra de negócio + evento | ✅ TXC | Estado evolui |
-| `Delete` simples sem regra | ALT-1 SimpleCommandHandler | 1 etapa, sem estado |
-| `ImportFromCsv` (10k linhas) | ALT-3 BatchProcessor | Contexto por item |
-| `ExportReport` | ALT-2 QueryComposer | Leitura composta |
-| `RebuildIndex` (operação técnica) | ALT-4 UtilityScript | Sem domínio |
+**TXC** (modelo em `txc-guidelines.md` da skill `bks-sdd`):
 
-#### 5.4 — Declaração obrigatória no output
+| Operação | Código | Executor | Etapas | Razão |
+|---|---|---|---|---|
+| `Create` | `PEDIDO.CRIAR` | transacional | `[10]` `[20]` `[40]` `[50]` | grava o pedido e notifica o cliente |
+| `GetById` | `PEDIDO.OBTER` | consulta | `[40]` | consulta por número, sem escrita |
+| `Reprocessar` | `PEDIDO.REPROCESSAR` | transacional, item a item | `[20]` `[40]` | o worker chama a sessão uma vez por pedido |
 
-Antes de gerar o código de cada operação, o agente DEVE imprimir:
+Regras da declaração no TXC:
+- escrita → executor transacional, sempre com `[20]`;
+- consulta, de uma fonte ou composta → executor de consulta, um por consulta;
+- lote → item a item pela sessão, cada um com a própria chave de idempotência; uma transação só
+  para o lote apenas se o requisito exigir atomicidade;
+- utilitário técnico sem regra (reindexar, limpar cache) → fora do TXC, job ou comando simples.
 
-```
-Operação: {Nome}
-Decisão de padrão: [TXC | ALT-1 QueryHandler | ALT-1 SimpleCommandHandler |
-                    ALT-2 QueryComposer | ALT-3 BatchProcessor | ALT-4 UtilityScript]
-Caminho da árvore: [ramo seguido, ex.: "SIM (regras) → SIM (2+ etapas) → SIM (cruza camadas) → TXC"]
-Razão: [justificativa de uma frase, em linguagem do negócio]
-```
-
-#### 5.5 — Sinais de alerta TXC sendo forçado
-
-Se durante a geração for detectado qualquer sinal abaixo, **PARE e reavalie**:
-
-1. Transaction com apenas `Input` e `Output`, sem campos de estado intermediário → use ALT-1.
-2. Transaction com um único método semântico → use ALT-1 SimpleCommandHandler.
-3. Métodos com nomes técnicos (`SetData`, `LoadResult`, `StoreValue`) em vez de nomes do negócio (`HydrateCliente`, `ApplyPricing`, `FinalizeWith`) → o domínio não foi modelado; revisar.
-4. Handler com `if (!tx.IsValid) return` antes de qualquer chamada ao domínio → o "domínio" pode ser apenas persistência disfarçada.
-5. Transaction com mais de 7 campos de estado → feature não decomposta; quebrar em sub-features.
-
-### Fase 6 — Observabilidade
+### Fase 8 — Observabilidade
 
 ```
 Pergunta:
-  Endpoint OTLP (OpenTelemetry) ou local apenas (console + Serilog)?
+  Para onde vão traces, métricas e logs?
+  [A] Endpoint OTLP (OpenTelemetry)
+  [B] Local apenas (console + Serilog)
+  [C] Outro — especificar
 
 Saída: {observabilidade}
 ```
 
-### Fase 7 — Confirmação consolidada
+### Fase 9 — Confirmação consolidada
 
 ```
 Apresentar tabela final:
-  Tipo solução:    {tipo_solucao}
-  Modo projeto:    {modo_projeto}
-  Complexidade:    {complexidade_dominio}
-  Banco/Acesso:    {banco} / {acesso}
-  Bounded Contexts: [lista]
-  Operações × Padrão: [tabela com declarações da Fase 5.4]
-  Observabilidade: {observabilidade}
+  Tipo solução:      {tipo_solucao}
+  Forma:             {forma}
+  Modo projeto:      {modo_projeto}
+  Complexidade:      {complexidade_dominio}
+  Portas de entrada: [porta · tecnologia · autenticação]
+  Portas de saída:   [porta · tecnologia · acesso]
+  Bounded Contexts:  [lista]
+  Operações:         [tabela da fase 7.2]
+  Observabilidade:   {observabilidade}
 
 Aguardar "OK" do usuário antes de gerar código.
 ```
 
 ---
 
-## ESTRUTURAS DE PASTA
+## Estruturas de pasta
 
-### A) Single Project — TXC + ALT-1 misturados (recomendação padrão)
+A estrutura sai da entrevista. Cada porta de entrada (fase 5) e de saída (fase 6) escolhida vira
+uma pasta `{Nome}Adapter/` com a sua `Extensions/` e um `Add{Nome}(this IServiceCollection,
+IConfiguration)`. **Porta não escolhida não gera pasta.** O namespace é o caminho da pasta, com o
+prefixo do serviço. Contrato, adapter mínimo e regras de recurso de cada porta:
+`references/ports-catalog.md`.
 
-```
-src/
-{ServiceName}/
-├── _Shared/
-│   ├── Domain/Core/Common/
-│   │   ├── Pipeline/
-│   │   │   ├── PipelineResult.cs              ← contrato de retorno
-│   │   │   └── PipelineOrchestrator.cs        ← opcional, fluxos com 4+ etapas
-│   │   ├── Transactions/
-│   │   │   └── BaseTransaction.cs             ← opcional (CorrelationId, UserId, TraceId)
-│   │   ├── Entity.cs
-│   │   ├── ValueObject.cs
-│   │   └── DomainException.cs
-│   └── Adapters/
-│       ├── Inbound/API/
-│       │   ├── ApiExtensions.cs               ← ConfigureAPI() + UseAPIExtensions()
-│       │   ├── SwaggerExtensions.cs
-│       │   └── JwtExtensions.cs               ← JWT Bearer (obrigatório)
-│       └── Outbound/
-│           ├── Persistence/IDbConnectionFactory.cs
-│           └── Observability/
-│               ├── Logging/
-│               ├── Tracing/
-│               └── Metrics/
-├── Features/
-│   └── {Contexto}Context/
-│       └── {Entidade}/
-│           ├── Domain/                                   ← DENTRO do hexágono
-│           │   ├── {Entidade}.cs                         (Aggregate Root, class)
-│           │   ├── {VO}.cs                               (Value Objects)
-│           │   ├── {Evento}.cs                           (Domain Events)
-│           │   ├── I{Entidade}Repository.cs              ← Secondary Port
-│           │   └── {Entidade}DomainService.cs            (opcional)
-│           ├── Application/                              ← DENTRO do hexágono
-│           │   ├── {Entidade}Transaction.cs              ← TXC (se aplicável)
-│           │   ├── {Entidade}Response.cs                 ← DTO único reutilizável
-│           │   ├── I{Entidade}Handler.cs                 ← Primary Port (TXC consolida ops)
-│           │   ├── {Entidade}Handler.cs                  ← Implementação (Create/Update/Cancel)
-│           │   ├── Get{Entidade}ByIdHandler.cs           ← ALT-1 (1 arquivo, sem TXC)
-│           │   ├── List{Entidade}Handler.cs              ← ALT-1
-│           │   └── {Entidade}DashboardComposer.cs        ← ALT-2 (se houver)
-│           └── Persistence/                              ← FORA do hexágono
-│               ├── {DB}{Entidade}Repository.cs           ← implementa IPedidoRepository
-│               └── {DB}{Entidade}ReadRepository.cs       ← CQRS read (opcional)
-├── Program.cs
-├── appsettings.json
-└── appsettings.Development.json
-```
+| Porta da entrevista | Pasta |
+|---|---|
+| HTTP de entrada | `Adapters/Inbound/HttpAdapter/` (`Endpoints/`, `Extensions/`) |
+| Servidor TCP | `Adapters/Inbound/TcpServerAdapter/` |
+| Consumer de fila | `Adapters/Inbound/{Kafka\|RabbitMq\|Outro}ConsumerAdapter/` |
+| Agendamento | `Adapters/Inbound/SchedulerAdapter/` |
+| gRPC de entrada | `Adapters/Inbound/GrpcAdapter/` |
+| Banco relacional ou de documentos | `Adapters/Outbound/{SqlServer\|Postgres\|Oracle\|MySql\|Mongo\|Outro}Adapter/` |
+| Cache | `Adapters/Outbound/CacheAdapter/` |
+| Producer de fila | `Adapters/Outbound/{Kafka\|RabbitMq\|Outro}ProducerAdapter/` |
+| Cliente HTTP, TCP, SOAP (web service XML) ou gRPC | `Adapters/Outbound/{Sistema}{Http\|Tcp\|Soap\|Grpc}Adapter/` |
+| "Outro" | `Adapters/{Inbound\|Outbound}/{Nome}Adapter/` com a Port; o adapter fica a especificar |
+| Observabilidade (fase 8) | `Adapters/Outbound/ObservabilityAdapter/`, sempre |
 
-**Contagem de arquivos por entidade típica (Pedido com Create/Update/Cancel + GetById/List):**
-- Domain: 4 arquivos (Pedido, ItemPedido, Evento, IPedidoRepository)
-- Application: 5 arquivos (Transaction, Response, IHandler, Handler, GetByIdHandler+ListHandler como 2 arquivos OU 1 ReadHandler)
-- Persistence: 1-2 arquivos
-- **Total: 10-11 arquivos** (vs 28+ na v1)
-
-### B) Multi Project — TXC + ALT-1
+### A) Padrão direto — projeto único
 
 ```
 src/
-├── {ServiceName}.Domain/                       Domain.csproj
-│   ├── Common/{Entity, VO, DomainException, PipelineResult}.cs
-│   └── {Contexto}Context/{Entidade}/
-│       ├── {Entidade}.cs
-│       ├── {VO}.cs
-│       ├── {Evento}.cs
-│       └── I{Entidade}Repository.cs
-│
-├── {ServiceName}.Application/                  Application.csproj  → ref Domain
-│   ├── Extensions/ApplicationExtensions.cs     ← ConfigureApplication()
-│   └── UseCases/{Contexto}/{Entidade}/
-│       ├── {Entidade}Transaction.cs
-│       ├── {Entidade}Response.cs
-│       ├── I{Entidade}Handler.cs
-│       ├── {Entidade}Handler.cs                ← TXC: Create/Update/Cancel
-│       ├── Get{Entidade}ByIdHandler.cs         ← ALT-1
-│       └── List{Entidade}Handler.cs            ← ALT-1
-│
-├── {ServiceName}.Adapters.Outbound.Persistence/   Adapters.Outbound.Persistence.csproj  → ref Domain
-│   ├── Extensions/PersistenceExtensions.cs     ← ConfigurePersistence()
-│   ├── SQL/{DB}/IDbConnectionFactory.cs
-│   └── {Contexto}/{DB}{Entidade}Repository.cs
-│
-└── {ServiceName}.API/                          {ServiceName}.API.csproj  → ref Application + Adapters
-    ├── Program.cs
-    ├── appsettings.json
-    ├── Extensions/{ApiExtensions, JwtExtensions, SwaggerExtensions}.cs
-    └── Endpoints/{Contexto}/{Entidade}Endpoints.cs
+├── {ServiceName}/                              ← Web SDK com HTTP de entrada; Worker SDK sem
+│   ├── Adapters/
+│   │   ├── Inbound/{Porta}Adapter/             ← só as portas da fase 5
+│   │   └── Outbound/{Porta}Adapter/            ← só as portas da fase 6, mais Observability
+│   ├── Domain/
+│   │   ├── Core/
+│   │   │   ├── Ports/                          ← I{Entidade}Service (Primary), I{Entidade}Repository e clientes (Secondary)
+│   │   │   ├── Models/                         ← entidades, Value Objects, eventos; subpasta por contexto se houver mais de um
+│   │   │   ├── Settings/                       ← uma classe de opções por adapter
+│   │   │   └── Common/                         ← PipelineResult<T>, PipelineError; só System.*
+│   │   └── Services/                           ← {Entidade}Service: a regra de negócio
+│   └── main/
+│       ├── Program.cs                          ← só chama ServiceConfiguration
+│       └── ServiceConfiguration.cs             ← encadeia os Add{Nome} de cada adapter
+└── {ServiceName}.Tests/
 ```
 
-> 📌 **Formato da solution:** toda solution .NET 10 é **`.slnx`** — formato XML padrão do SDK 10,
-> mais enxuto e sem os GUIDs duplicados do formato clássico. `dotnet new sln` sob o SDK 10 já gera
-> `.slnx` por padrão. O `.sln` clássico fica reservado a solution que precise abrir em ferramenta
-> sem suporte ao novo formato.
+Fluxo: adapter de entrada → `I{Entidade}Service` → Ports de saída → adapter. Sem sessão, pipeline,
+steps nem orquestrador. Interface só onde há fronteira (adapter, ou teste que precisa de
+substituto); classe interna do domínio sem segunda implementação não ganha interface.
 
-> 🛑 **Biblioteca de asserção:** **nunca FluentAssertions.** A v8 passou a licença comercial paga
-> (Xceed) e a v7.x é a última sob Apache 2.0. Use o `Assert` nativo do xUnit — zero dependência de
-> licença, uma a menos a auditar.
-
-### C) Worker / Background Service
+### B) TXC (`txc: "base"`) — projeto único
 
 ```
 src/
-{ServiceName}.Worker/
-├── _Shared/                                    (igual ao SingleProject API)
-├── Features/{Contexto}Context/{Entidade}/      (igual)
-├── Workers/                                    ← Primary Adapters (IHostedService)
-│   ├── {Entidade}KafkaConsumer.cs
-│   └── {Entidade}ScheduledJob.cs
-├── Program.cs                                  ← Host.CreateDefaultBuilder
-└── appsettings.json
+├── {ServiceName}/
+│   ├── Adapters/
+│   │   ├── Inbound/{Porta}Adapter/             ← chama IBksSession.ExecuteAsync(code, input)
+│   │   └── Outbound/{Porta}Adapter/            ← inclui a implementação de IBksIdempotencyStore no adapter de banco
+│   ├── Application/
+│   │   ├── Pipeline/                           ← a base Bks* (references/txc-base.md), gerada uma vez
+│   │   └── {Contexto}/
+│   │       ├── {Contexto}Codes.cs              ← catálogo de códigos: o contrato da aplicação
+│   │       ├── {Contexto}Transactions.cs       ← AddBksTransaction / AddBksQuery por código
+│   │       └── {Operacao}/
+│   │           ├── {Operacao}Input.cs, {Operacao}Output.cs
+│   │           ├── {Operacao}Envelope.cs
+│   │           ├── {Operacao}Validation.cs     ← [10], só quando a operação tem
+│   │           └── {Operacao}Executor.cs       ← transacional ou de consulta
+│   ├── Domain/
+│   │   ├── Core/{Ports, Models, Settings, Common}/   ← igual à A; Common traz PipelineResult<T>
+│   │   └── {Contexto}/{Entidade}.cs ...        ← aggregates com a regra pura (Pedido.Criar)
+│   └── main/{Program.cs, ServiceConfiguration.cs}
+└── {ServiceName}.Tests/
 ```
 
-Workers que **iniciam um processamento de domínio** acionam `IPedidoHandler.CreateAsync(tx, ct)` — é Primary Adapter chamando Primary Port com TXC.
+Não existe `I{Entidade}Handler`, `I{Operacao}UseCase` nem `{Entidade}Service` com regra: a Primary
+Port é a sessão, e o catálogo de códigos diz o que a aplicação oferece.
 
-Workers que processam **lotes** usam ALT-3 BatchProcessor.
+### C) Multi Project — as duas formas
 
-### D) SDK / Biblioteca
+```
+src/
+├── {ServiceName}.Domain/                       Domain.csproj — Core/ (e Services/ no direto)
+├── {ServiceName}.Application/                  só no TXC — Pipeline/ e {Contexto}/; → ref Domain
+├── {ServiceName}.Adapters.Inbound/             {Porta}Adapter/ por porta da fase 5; → ref Domain (e Application no TXC)
+├── {ServiceName}.Adapters.Outbound/            {Porta}Adapter/ por porta da fase 6; → ref Domain (e Application no TXC)
+├── {ServiceName}.Host/                         main/ — Program.cs e ServiceConfiguration; → ref todos
+└── {ServiceName}.Tests/
+```
+
+> **Formato da solution:** toda solution .NET 10 é **`.slnx`**, o formato XML padrão do SDK 10.
+> `dotnet new sln` sob o SDK 10 já gera `.slnx`. O `.sln` clássico fica para ferramenta sem
+> suporte ao formato novo.
+
+> **Biblioteca de asserção:** nunca FluentAssertions. A v8 passou a licença comercial paga (Xceed)
+> e a v7.x é a última sob Apache 2.0. Use o `Assert` nativo do xUnit.
+
+### D) Worker com várias entradas
+
+O Worker hospeda várias portas de entrada no mesmo processo. Cada porta é um adapter próprio:
+
+| Porta | Forma no host |
+|---|---|
+| HTTP | Kestrel: o projeto usa o Web SDK, e o `WebApplication` hospeda também os `BackgroundService` das outras portas |
+| Servidor TCP | `BackgroundService` com o listener; um escopo de DI por conexão ou mensagem |
+| Consumer | `BackgroundService` do consumer; um escopo por mensagem |
+| Agendamento | `BackgroundService` com `PeriodicTimer`; um escopo por execução |
+
+Todo adapter de entrada chama o mesmo destino: `I{Entidade}Service` no padrão direto,
+`IBksSession` no TXC. Lote no TXC é item a item pela sessão. Detalhe de cada adapter de entrada:
+`references/worker-patterns.md`.
+
+### E) SDK / Biblioteca
 
 Ver `references/sdk-patterns.md`. Resumo:
-- Sem `Adapters/Inbound/` (não há host).
+- Sem `Adapters/Inbound/` (não há host); a fase 5 é pulada.
 - Expõe API pública via Fluent Builder.
 - `IServiceCollection` extension para integração em hosts consumidores.
 
 ---
 
-## TEMPLATES DE CÓDIGO
+## Templates de código
 
-### Template 1 — TXC
+Os templates 1 e 2 são do padrão direto; os 3 a 6, do TXC; o 7 vale para os dois. Gere só os da
+forma declarada na fase 2.
+
+### Template 1 — Padrão direto: Port e serviço
 
 ```csharp
-// {Entidade}Transaction.cs
-namespace {ServiceName}.Features.{Contexto}Context.{Entidade}.Application;
+// Domain/Core/Ports/IPedidoService.cs
+namespace {ServiceName}.Domain.Core.Ports;
 
-public sealed record {Entidade}Transaction
+public interface IPedidoService
 {
-    // Entrada (imutável, init-only)
-    public required {TipoInput} Input { get; init; }
-    public Guid CorrelationId { get; init; } = Guid.NewGuid();
-
-    // Estado de domínio (privado set, evolui entre fases)
-    public {TipoDominio}? {EstadoIntermediario} { get; private set; }
-
-    // Output
-    public {Entidade}Response? Resultado { get; private set; }
-
-    // Métodos semânticos — nomes do NEGÓCIO
-    public void Hydrate{Dependencia}({Tipo} dado) => {EstadoIntermediario} = dado;
-    public void Apply{RegraDeNegocio}({Tipo} valor) { /* transforma estado */ }
-    public void FinalizeWith({Entidade}Response resultado) => Resultado = resultado;
+    Task<PipelineResult<CriarPedidoOutput>> CriarAsync(CriarPedidoInput input, CancellationToken ct);
+    Task<PipelineResult<PedidoView>> ObterAsync(string numero, CancellationToken ct);
 }
 ```
 
 ```csharp
-// I{Entidade}Handler.cs — Primary Port
-namespace {ServiceName}.Features.{Contexto}Context.{Entidade}.Application;
+// Domain/Services/PedidoService.cs
+namespace {ServiceName}.Domain.Services;
 
-public interface I{Entidade}Handler
+public sealed class PedidoService(IClienteRepository clientes, IPedidoRepository pedidos) : IPedidoService
 {
-    ValueTask<PipelineResult<{Entidade}Response>> CreateAsync(
-        {Entidade}Transaction tx, CancellationToken ct = default);
-
-    ValueTask<PipelineResult<{Entidade}Response>> UpdateAsync(
-        {Entidade}Transaction tx, CancellationToken ct = default);
-
-    // Operações que exigem Transaction diferente (input distinto) usam Transaction próprio:
-    ValueTask<PipelineResult<{Entidade}Response>> CancelAsync(
-        Cancel{Entidade}Transaction tx, CancellationToken ct = default);
-}
-```
-
-```csharp
-// {Entidade}Handler.cs — Implementação
-namespace {ServiceName}.Features.{Contexto}Context.{Entidade}.Application;
-
-public class {Entidade}Handler : I{Entidade}Handler
-{
-    private readonly I{Entidade}Repository _repository;
-    private readonly I{Dependencia}Service _dependenciaService;
-    private readonly IEventDispatcher _eventDispatcher;
-
-    public {Entidade}Handler(
-        I{Entidade}Repository repository,
-        I{Dependencia}Service dependenciaService,
-        IEventDispatcher eventDispatcher)
+    public async Task<PipelineResult<CriarPedidoOutput>> CriarAsync(CriarPedidoInput input, CancellationToken ct)
     {
-        _repository = repository;
-        _dependenciaService = dependenciaService;
-        _eventDispatcher = eventDispatcher;
+        var cliente = await clientes.GetByIdAsync(input.ClienteId, ct);
+        if (cliente is null) return PedidoErrors.ClienteInexistente;
+
+        var pedido = Pedido.Criar(cliente, input.Itens, cliente.Categoria.Desconto);
+        if (!pedido.IsSuccess) return pedido.Errors;
+
+        await pedidos.SaveAsync(pedido.Value!, ct);
+        return new CriarPedidoOutput(pedido.Value!.Numero);
     }
 
-    public async ValueTask<PipelineResult<{Entidade}Response>> CreateAsync(
-        {Entidade}Transaction tx, CancellationToken ct = default)
+    public async Task<PipelineResult<PedidoView>> ObterAsync(string numero, CancellationToken ct)
     {
-        // Fase 1 — EntryHandler: validação de entrada
-        if (!IsInputValid(tx.Input, out var inputError))
-            return PipelineResult<{Entidade}Response>.Failure(inputError);
-
-        // Fase 2 — DomainService: regras de negócio
-        var dependência = await _dependenciaService.ValidarAsync(tx.Input.{Id}, ct).ConfigureAwait(false);
-        if (dependência is null)
-            return PipelineResult<{Entidade}Response>.Failure("{Dependencia} não encontrada");
-        tx.Hydrate{Dependencia}(dependência);
-
-        // Aplica regra de negócio (delegada ao domínio)
-        tx.Apply{RegraDeNegocio}({calculo});
-
-        // Fase 3 — InfraAdapter: persistência + eventos
-        var aggregate = {Entidade}.Criar(tx.{EstadoIntermediario}!, /* params puros */);
-        aggregate.Confirmar();  // método de domínio que emite DomainEvent
-
-        await _repository.SalvarAsync(aggregate, ct).ConfigureAwait(false);
-        await _eventDispatcher.PublishAsync(aggregate.Eventos, ct).ConfigureAwait(false);
-        aggregate.LimparEventos();
-
-        tx.FinalizeWith({Entidade}Response.From(aggregate));
-        return PipelineResult<{Entidade}Response>.Success(tx.Resultado!);
-    }
-
-    private static bool IsInputValid({TipoInput} input, out string error)
-    {
-        // validação de formato/presença (NÃO regra de negócio)
-        error = string.Empty;
-        return true;
+        var pedido = await pedidos.FindByNumeroAsync(numero, ct);
+        return pedido is null ? PedidoErrors.PedidoInexistente : PedidoView.From(pedido);
     }
 }
 ```
 
-### Template 2 — ALT-1 QueryHandler
+### Template 2 — Padrão direto: endpoint
 
 ```csharp
-// Get{Entidade}ByIdHandler.cs — 1 ARQUIVO, sem Transaction
-namespace {ServiceName}.Features.{Contexto}Context.{Entidade}.Application;
-
-public class Get{Entidade}ByIdHandler
+// Adapters/Inbound/HttpAdapter/Endpoints/PedidoEndpoints.cs
+public static class PedidoEndpoints
 {
-    private readonly I{Entidade}ReadRepository _repository;
-
-    public Get{Entidade}ByIdHandler(I{Entidade}ReadRepository repository)
-        => _repository = repository;
-
-    public async ValueTask<PipelineResult<{Entidade}Response>> HandleAsync(
-        Guid id, CancellationToken ct = default)
+    public static IEndpointRouteBuilder MapPedidoEndpoints(this IEndpointRouteBuilder app)
     {
-        var entity = await _repository.FindByIdAsync(id, ct).ConfigureAwait(false);
-        return entity is null
-            ? PipelineResult<{Entidade}Response>.Failure("{Entidade} não encontrado")
-            : PipelineResult<{Entidade}Response>.Success({Entidade}Response.From(entity));
-    }
-}
-```
+        var group = app.MapGroup("/api/pedidos").RequireAuthorization();
 
-### Template 3 — ALT-2 QueryComposer
+        group.MapPost("/", async (CriarPedidoRequest req, IPedidoService service, CancellationToken ct) =>
+            (await service.CriarAsync(req.ToInput(), ct)).ToHttpResult(o => $"/api/pedidos/{o.Numero}"));
 
-```csharp
-public class {Nome}DashboardComposer
-{
-    private readonly I{Repo1} _repo1;
-    private readonly I{Repo2} _repo2;
-    private readonly I{Repo3} _repo3;
-
-    public async ValueTask<PipelineResult<{Response}>> ComposeAsync(
-        {Query} query, CancellationToken ct = default)
-    {
-        var task1 = _repo1.GetAsync(query.Filter1, ct);
-        var task2 = _repo2.GetAsync(query.Filter2, ct);
-        var task3 = _repo3.GetAsync(ct);
-
-        await Task.WhenAll(task1, task2, task3).ConfigureAwait(false);
-
-        return PipelineResult<{Response}>.Success(
-            {Response}.Compose(task1.Result, task2.Result, task3.Result));
-    }
-}
-```
-
-### Template 4 — ALT-3 BatchProcessor
-
-```csharp
-public class Import{Entidade}BatchProcessor
-{
-    private readonly I{Entidade}Repository _repository;
-    private readonly ILogger<Import{Entidade}BatchProcessor> _logger;
-
-    public async ValueTask<BatchResult> ProcessAsync(
-        Import{Entidade}Command command, CancellationToken ct = default)
-    {
-        var results = new BatchResult();
-        await foreach (var line in command.Reader.ReadLinesAsync(ct).ConfigureAwait(false))
-        {
-            try
-            {
-                var entity = {Entidade}.Criar(/* mapping da linha */);
-                await _repository.SalvarAsync(entity, ct).ConfigureAwait(false);
-                results.RecordSuccess(line.LineNumber);
-            }
-            catch (DomainException ex)
-            {
-                _logger.LogWarning(ex, "Falha na linha {Line}", line.LineNumber);
-                results.RecordFailure(line.LineNumber, ex.Message);
-            }
-        }
-        return results;
-    }
-}
-```
-
-### Template 5 — Endpoint Minimal API (Primary Adapter)
-
-```csharp
-public static class {Entidade}Endpoints
-{
-    public static IEndpointRouteBuilder Map{Entidade}Endpoints(this IEndpointRouteBuilder app)
-    {
-        var group = app.MapGroup("/api/{entidades}").RequireAuthorization();   // JWT obrigatório
-
-        // POST → TXC
-        group.MapPost("/", async (
-            Criar{Entidade}Request req,
-            I{Entidade}Handler handler,
-            CancellationToken ct) =>
-        {
-            var tx = new {Entidade}Transaction { Input = req.ToInput() };
-            var result = await handler.CreateAsync(tx, ct);
-            return result.IsSuccess
-                ? Results.Created($"/api/{entidades}/{result.Value!.Id}", result.Value)
-                : Results.UnprocessableEntity(result.Error);
-        });
-
-        // GET by id → ALT-1 QueryHandler
-        group.MapGet("/{id:guid}", async (
-            Guid id,
-            Get{Entidade}ByIdHandler handler,
-            CancellationToken ct) =>
-        {
-            var result = await handler.HandleAsync(id, ct);
-            return result.IsSuccess
-                ? Results.Ok(result.Value)
-                : Results.NotFound(result.Error);
-        });
+        group.MapGet("/{numero}", async (string numero, IPedidoService service, CancellationToken ct) =>
+            (await service.ObterAsync(numero, ct)).ToHttpResult());
 
         return app;
     }
 }
 ```
 
-### Template 6 — Program.cs (composição)
+`RequireAuthorization()` só quando a fase 5 declarou autenticação para o HTTP. A resposta é montada
+no adapter (`ToHttpResult`), nunca no serviço.
+
+### Template 3 — TXC: códigos, entrada e envelope
 
 ```csharp
-var builder = WebApplication.CreateBuilder(args);
+// Application/Vendas/VendasCodes.cs
+public static class VendasCodes
+{
+    public const string CriarPedido = "PEDIDO.CRIAR";
+    public const string ObterPedido = "PEDIDO.OBTER";
+}
 
-// 1. Inbound — API
-builder.Services.ConfigureAPI(builder.Configuration);
+// Application/Vendas/CriarPedido/CriarPedidoEnvelope.cs
+public sealed record CriarPedidoInput(Guid ClienteId, IReadOnlyList<ItemInput> Itens, string IdempotencyKey);
+public sealed record CriarPedidoOutput(string Numero);
+public sealed record CriarPedidoEnvelope(BksTransactionSeed Seed, CriarPedidoInput Input);
+```
 
-// 2. Application — Handlers (TXC + ALT-1/2/3)
-builder.Services.ConfigureApplication(builder.Configuration);
+### Template 4 — TXC: executor transacional
 
-// 3. Outbound — Persistence + Observability
-builder.Services.ConfigurePersistence(builder.Configuration);
-builder.Services.ConfigureTracing(builder.Configuration);
-builder.Host.AddSerilogAdapter(builder.Configuration);
+```csharp
+// Application/Vendas/CriarPedido/CriarPedidoValidation.cs — [10], sem I/O
+public sealed class CriarPedidoValidation : BksValidationStep<CriarPedidoInput>
+{
+    protected override PipelineResult Validate(CriarPedidoInput input) =>
+        input.Itens.Count == 0 ? PipelineResult.Fail(PedidoErrors.SemItens) : PipelineResult.Ok();
+}
 
+// Application/Vendas/CriarPedido/CriarPedidoExecutor.cs
+public sealed record ClienteLido(Cliente Cliente, decimal DescontoCategoria);
+
+public sealed class CriarPedidoExecutor(IClienteRepository clientes, IPedidoRepository pedidos)
+    : BksTransactionalExecutor<CriarPedidoEnvelope, ClienteLido, Pedido, CriarPedidoOutput>
+{
+    protected override async Task<PipelineResult<ClienteLido>> ValidateAsync(CriarPedidoEnvelope env, CancellationToken ct)
+    {
+        var cliente = await clientes.GetByIdAsync(env.Input.ClienteId, ct);
+        return cliente is null ? PedidoErrors.ClienteInexistente : new ClienteLido(cliente, cliente.Categoria.Desconto);
+    }
+
+    protected override PipelineResult<Pedido> ApplyRule(CriarPedidoEnvelope env, ClienteLido lido) =>
+        Pedido.Criar(lido.Cliente, env.Input.Itens, lido.DescontoCategoria);
+
+    protected override async Task<PipelineResult<CriarPedidoOutput>> ExecuteAsync(
+        CriarPedidoEnvelope env, Pedido pedido, CancellationToken ct)
+    {
+        await pedidos.SaveAsync(pedido, ct);
+        return new CriarPedidoOutput(pedido.Numero);
+    }
+}
+```
+
+Duas fases (`ConfirmAsync` e `CancelAsync`) só quando um efeito externo decide; o modelo está no
+`txc-guidelines.md` da skill `bks-sdd`, Seção 3.
+
+### Template 5 — TXC: executor de consulta
+
+```csharp
+// Application/Vendas/ObterPedido/ObterPedidoExecutor.cs
+public sealed record ObterPedidoInput(string Numero);
+public sealed record ObterPedidoEnvelope(BksTransactionSeed Seed, ObterPedidoInput Input);
+
+public sealed class ObterPedidoExecutor(IPedidoRepository pedidos)
+    : BksQueryExecutor<ObterPedidoEnvelope, PedidoView>
+{
+    protected override async Task<PipelineResult<PedidoView>> ExecuteAsync(ObterPedidoEnvelope env, CancellationToken ct)
+    {
+        var pedido = await pedidos.FindByNumeroAsync(env.Input.Numero, ct);
+        return pedido is null ? PedidoErrors.PedidoInexistente : PedidoView.From(pedido);
+    }
+}
+```
+
+Consulta composta de várias fontes é o mesmo executor, com várias Ports no construtor.
+
+### Template 6 — TXC: registro e endpoint
+
+```csharp
+// Application/Vendas/VendasTransactions.cs
+public static class VendasTransactions
+{
+    public static BksPipelineBuilder AddVendas(this BksPipelineBuilder pipeline) => pipeline
+        .AddBksTransaction<CriarPedidoInput, CriarPedidoEnvelope, CriarPedidoOutput>(VendasCodes.CriarPedido, t => t
+            .Envelope((seed, input) => new CriarPedidoEnvelope(seed, input))
+            .Executor<CriarPedidoExecutor>()
+            .Validation<CriarPedidoValidation>()
+            .PostProcessing<PedidoCriadoNotificacao>(critical: false))
+        .AddBksQuery<ObterPedidoInput, ObterPedidoEnvelope, PedidoView>(VendasCodes.ObterPedido, t => t
+            .Envelope((seed, input) => new ObterPedidoEnvelope(seed, input))
+            .Executor<ObterPedidoExecutor>());
+}
+```
+
+```csharp
+// Adapters/Inbound/HttpAdapter/Endpoints/PedidoEndpoints.cs
+group.MapPost("/", async (CriarPedidoRequest req, IBksSession session, CancellationToken ct) =>
+    (await session.ExecuteAsync<CriarPedidoInput, CriarPedidoOutput>(VendasCodes.CriarPedido, req.ToInput(), ct))
+        .ToHttpResult(o => $"/api/pedidos/{o.Numero}"));
+```
+
+### Template 7 — Composição
+
+```csharp
+// main/Program.cs
+var builder = WebApplication.CreateBuilder(args);   // Host.CreateApplicationBuilder no Worker sem HTTP
+builder.Services.AddServiceConfiguration(builder.Configuration);
 var app = builder.Build();
+app.UseServiceConfiguration();
+app.Run();
+```
 
-// Encapsula middleware + endpoints + healthchecks + app.Run()
-app.UseAPIExtensions();
+```csharp
+// main/ServiceConfiguration.cs — só encadeia; cada Add{Nome} registra a sua seção de appsettings
+public static class ServiceConfiguration
+{
+    public static IServiceCollection AddServiceConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddHttpAdapter(configuration);          // uma linha por porta de entrada declarada
+        services.AddPostgresAdapter(configuration);      // uma linha por porta de saída declarada
+        services.AddObservabilityAdapter(configuration);
+        services.AddDomainServices();                    // padrão direto
+        services.AddBksPipeline().AddVendas();           // TXC: no lugar do AddDomainServices
+        return services;
+    }
+}
 ```
 
 ---
 
-## REGRAS DE TIPO (.NET)
+## Regras de tipo (.NET)
 
 | Situação | Tipo C# |
 |---|---|
-| Transaction (TXC) | `sealed record` |
-| Command / Query / Request DTO / Response DTO | `sealed record class` |
+| Envelope, entrada e saída de transação (TXC) | `sealed record` |
+| `BksTransactionSeed` | `sealed record` |
+| Request e Response (DTO, objeto de transferência) | `sealed record class` |
 | Value Object ≤ 16 bytes | `readonly record struct` |
 | Value Object > 16 bytes | `sealed record class` |
 | Entity / Aggregate Root | `class` (NUNCA `record`) |
@@ -613,206 +574,219 @@ app.UseAPIExtensions();
 
 ---
 
-## RESTRIÇÕES ABSOLUTAS
+## Restrições absolutas
 
 > **Violação de qualquer item abaixo invalida a geração e exige reescrita.**
 
+**Pedido explícito pelo proibido não abre exceção.** Quando o usuário pede pelo nome um item desta
+lista (MediatR, `IRepository<T>`, `record` em Entity), a resposta não entrega a versão pedida, nem
+como "o que você pediu" seguida da alternativa. Ela recusa em uma frase, com o motivo, e entrega só
+o caminho do padrão: no caso do dispatcher, a porta de entrada chamada direto pelo adapter, ou
+`IBksSession.ExecuteAsync` no TXC.
+
 ### Arquiteturais
-1. ❌ MediatR, BSMediator ou qualquer dispatcher de mensagens internas.
-2. ❌ `record` para Entities/Aggregates (semântica de identidade exige `class`).
-3. ❌ `IQueryable<T>` exposto por Secondary Port — vaza ORM para o domínio.
-4. ❌ EF Core annotations no Domain layer.
-5. ❌ Repositórios genéricos `IRepository<T>` "catchall".
-6. ❌ Domain referenciando Application, Adapters ou frameworks externos.
-7. ❌ Application referenciando Adapters concretos (apenas Ports).
-8. ❌ Aggregate ou Domain Service recebendo `{Entidade}Transaction` como parâmetro.
+1. Proibido: MediatR, BSMediator ou qualquer dispatcher de mensagens internas.
+2. Proibido: `record` para Entities/Aggregates (semântica de identidade exige `class`).
+3. Proibido: `IQueryable<T>` exposto por Secondary Port; vaza o ORM (mapeador objeto-relacional) para o domínio.
+4. Proibido: annotations do Entity Framework Core no Domain.
+5. Proibido: repositórios genéricos `IRepository<T>`.
+6. Proibido: Domain referenciando Application, Adapters ou frameworks externos; `Domain/Core/Common` usa só `System.*`.
+7. Proibido: Application (TXC) referenciando adapter concreto; só Ports.
+8. Proibido: Aggregate ou Domain Service recebendo envelope ou seed do TXC como parâmetro.
+9. Proibido: pasta, adapter ou pacote de porta que a entrevista não declarou.
+10. Obrigatório: tecnologia fora das listas entra como "outro": Port declarada, adapter a especificar, nenhuma biblioteca escolhida pela skill.
 
-### Performance
-9. ❌ `.Result` ou `.Wait()` em código async.
-10. ✅ `ValueTask<T>` em todas as Primary Ports e operações de hot-path.
-11. ✅ `ConfigureAwait(false)` em todo `await` de library/infrastructure.
-12. ✅ Logging estruturado (sem string interpolation em hot path).
-13. ✅ `StringComparison.Ordinal` em comparações que não são linguísticas.
+### Padrão direto (projeto sem `txc`)
+11. Proibido: sessão, pipeline, steps, orquestrador ou base `Bks*`.
+12. Obrigatório: a regra mora no `{Entidade}Service` e no aggregate; o adapter de entrada só traduz e chama o serviço.
+13. Obrigatório: interface só onde há fronteira (adapter, ou teste que precisa de substituto).
 
-### Segurança (Minimal API)
-14. ✅ JWT Bearer obrigatório: `AddAuthentication() + AddJwtBearer() + AddAuthorization()`.
-15. ✅ `RequireAuthorization()` em **TODOS** os `MapGroup` e endpoints (exceto health/swagger explicitamente liberados).
-16. ✅ `UseAuthentication()` + `UseAuthorization()` no pipeline após `RequestTracingMiddleware`.
+### TXC (projeto com `txc: "base"`)
+14. Obrigatório: toda operação é transação registrada por código; o adapter só chama `IBksSession.ExecuteAsync(code, input)`.
+15. Proibido: envelope ou TXC mutável (`Hydrate{X}`, `Apply{Y}`, `FinalizeWith`, `private set`); dado entre passos é retorno tipado.
+16. Obrigatório: regra de negócio só no `ApplyRule`; a `[10]` valida só a entrada, sem I/O.
+17. Obrigatório: toda escrita é `BksTransactionalExecutor`, com `[20]`; consulta é `BksQueryExecutor`, uma por código.
+18. Proibido: executor que chama outro executor; `[50]` que monta resposta.
+19. Proibido: `I{Entidade}Handler`, `I{Operacao}UseCase` ou serviço com regra ao lado da sessão.
+
+### Recurso
+20. Obrigatório: as regras de "Regras que valem para toda porta" do `references/ports-catalog.md`.
+21. Proibido: `.Result`, `.Wait()`, `.GetAwaiter().GetResult()`, `async void`.
+22. Obrigatório: `Task<T>` nas Ports; `ValueTask<T>` só em hot path com medição que o justifique.
+23. Obrigatório: `ConfigureAwait(false)` em todo `await` de biblioteca (SDK).
+24. Obrigatório: log por `LoggerMessage` gerado na compilação; sem interpolação de string em log.
+25. Obrigatório: `StringComparison.Ordinal` em comparações que não são linguísticas.
+
+### Segurança
+26. Obrigatório: a autenticação de cada porta de entrada é a declarada na fase 5.
+27. Obrigatório, quando o HTTP declarou JWT: `AddAuthentication() + AddJwtBearer() + AddAuthorization()`, `RequireAuthorization()` em todos os `MapGroup` e endpoints (exceto health e swagger explicitamente liberados), e `UseAuthentication()` + `UseAuthorization()` depois do middleware de tracing.
+28. Obrigatório, quando uma porta declarou "nenhuma": a rede fechada que a protege está escrita no `README.md`.
 
 ### Result Pattern
-17. ❌ `throw` para erros de negócio (entidade não encontrada, regra violada, validação). Use `PipelineResult<T>.Failure(...)`.
-18. ✅ `throw` apenas para: dependência nula, configuração inválida, estado irrecuperável.
-19. ❌ `PipelineResult<T>` declarado como nullable (`PipelineResult<T>?`).
-
-### TXC específico
-20. ❌ Transaction sem campos de estado intermediário (apenas Input + Output) — use ALT-1.
-21. ❌ Métodos do Transaction com nomes técnicos (`SetData`, `LoadResult`) — use nomes do negócio.
-22. ❌ Transaction com mais de 7 campos de estado — decompor a feature.
-23. ❌ Domain conhecendo o tipo Transaction.
-24. ❌ Pular a árvore de decisão da Fase 5.2 — declaração de padrão é obrigatória.
+29. Proibido: `throw` para erro de negócio (entidade não encontrada, regra violada, validação). Use `PipelineResult<T>.Fail(...)` ou a conversão implícita de `PipelineError`.
+30. Obrigatório: `throw` só para dependência nula, configuração inválida, estado irrecuperável e erro de composição na subida.
+31. Proibido: `PipelineResult<T>` declarado como nullable (`PipelineResult<T>?`).
+32. Proibido: um segundo tipo de resultado (`Result<T>`, `OneOf`) ao lado do `PipelineResult<T>`.
 
 ### Convenções de nomenclatura
-25. ✅ `{Entidade}Response` único por entidade, vive em `Application/` (não em `Create/`).
-26. ✅ Namespace de entidade contém `{Contexto}Context` para evitar colisão.
-27. ✅ Métodos async sufixados com `Async`.
-28. ✅ Interfaces prefixadas com `I`.
-29. ✅ `Configure{Camada}()` para registro DI; `Use{Camada}Extensions()` para middleware.
+33. Obrigatório: namespace = caminho da pasta, com o prefixo do serviço.
+34. Obrigatório: métodos async sufixados com `Async`; interfaces prefixadas com `I`.
+35. Obrigatório: `Add{Nome}Adapter(this IServiceCollection, IConfiguration)` por adapter; o `ServiceConfiguration` só os encadeia.
+36. Obrigatório, no TXC: código `"{CONTEXTO}.{OPERACAO}"` em `{Contexto}Codes`; `{Operacao}Envelope`, `{Operacao}Executor`, `{Operacao}Validation`.
 
 ### Documentação e comentário
-30. ✅ `README.md` e `ARCHITECTURE.md` na raiz — **entregues junto com o código, nunca depois**.
+37. Obrigatório: `README.md` e `ARCHITECTURE.md` na raiz, entregues junto com o código, nunca depois.
     Solução sem os dois não está entregue.
-31. ❌ Decisão, trade-off, histórico ou comparação com implementação anterior em **comentário de
-    código** — isso vive no `ARCHITECTURE.md`. No código ficam só **contrato** (resumo de 1 linha
-    em membro público) e **guarda contra regressão** (até 2 linhas, o que quebra, sem ponteiro).
-32. ❌ Marca de severidade (🔴 ⚠️ 🟡 ✅ 📌) em comentário — quem escreve 🔴 está argumentando,
-    não descrevendo.
-33. ❌ Bloco de comentário acima de **5 linhas**. O teto é por bloco, não por proporção.
-34. ✅ **Teste de arquitetura guardando 31–33**, gerado junto com o código. Regra sem guarda
-    executável é intenção, e intenção não sobrevive à pressa.
+38. Proibido: decisão, trade-off, histórico ou comparação com implementação anterior em comentário
+    de código; isso vive no `ARCHITECTURE.md`. No código ficam só contrato (resumo de 1 linha em
+    membro público) e guarda contra regressão (até 2 linhas, o que quebra, sem ponteiro); como
+    exceção, até 2 linhas, gotcha não óbvio e ausência deliberada de código
+    (`references/comment-convention.md`).
+39. Proibido: marca de severidade (emoji de alerta, de proibido ou de visto) em comentário.
+40. Bloco de comentário acima de **5 linhas**: proibido. O teto é por bloco, não por proporção.
+41. Obrigatório: teste de arquitetura guardando 38 a 40, gerado junto com o código.
+42. Obrigatório: `LayerDependencyTests` de `references/architecture-tests.md` no projeto de testes:
+    Domain só com `System.*`, dependência para dentro, span só no pipeline e nenhum `dynamic`.
+    Sem pacote novo: nada de NetArchTest ou ArchUnitNET. Pedido para adiar o teste ou usar o pacote
+    não abre exceção; recuse com o motivo.
 
 ---
 
-## CHECKLIST DE GERAÇÃO
+## Checklist de geração
 
 Antes de entregar a solução, confirme:
 
 ### Estrutura
-- [ ] Projetos nomeados conforme tabela (HEXAGONAL-v2 §6)
-- [ ] `Program.cs` em `Adapters/Inbound/API/` (multi) ou raiz (single)
-- [ ] `appsettings.json` no projeto host
+- [ ] **Porta declarada = pasta gerada:** cada porta das fases 5 e 6 tem o seu `{Nome}Adapter/`, e nenhuma pasta de porta não declarada existe
+- [ ] Cada adapter tem `Extensions/` com `Add{Nome}Adapter` e a sua seção em `appsettings.json`
+- [ ] `Program.cs` e `ServiceConfiguration.cs` em `main/` (único) ou no `{ServiceName}.Host` (multi)
+- [ ] Solution `.slnx`
 
-### Decisões de padrão
-- [ ] Toda operação tem declaração de padrão (Fase 5.4)
-- [ ] Caminho da árvore documentado para cada operação
-- [ ] Nenhum sinal de alerta da Fase 5.5 presente
+### Forma
+- [ ] A forma da fase 2 está no `.bks-profile.json` e vale para o projeto inteiro
+- [ ] Toda operação tem a declaração da fase 7.2
 
-### Domain (ver GUIDELINE-DDD-v2)
+### Domain
 - [ ] Entidades como `class`, ID imutável, sem setters anêmicos
 - [ ] Value Objects imutáveis
 - [ ] Aggregates pequenos, referências externas só por ID
 - [ ] Domain Events nomeados no passado, despachados após persistência
-- [ ] `Ports/Outbound/I{Entidade}Repository` no domínio
+- [ ] Secondary Ports em `Domain/Core/Ports/`, uma por aggregate ou recurso externo
 - [ ] Zero imports de framework no Domain
 
-### Application
-- [ ] `{Entidade}Transaction` apenas onde TXC se aplica
-- [ ] Handler implementa Primary Port (TXC consolidado ou ALT-1 granular)
-- [ ] `ApplicationExtensions.ConfigureApplication()` registra todos Handlers
-- [ ] Result Pattern em todos os Handlers — sem exceptions de negócio
+### Padrão direto
+- [ ] `I{Entidade}Service` e `{Entidade}Service` com a regra; nenhum tipo `Bks*`
 
-### Adapters (ver GUIDELINE-HEXAGONAL-v2)
-- [ ] `ApiExtensions.cs` com `ConfigureAPI()` + `UseAPIExtensions()` (encapsula `app.Run()`)
-- [ ] Endpoints com `Map{Entidade}Endpoints()`
-- [ ] Validators com FluentValidation em `Adapters/Inbound/API/Validators/`
-- [ ] `PersistenceExtensions.ConfigurePersistence()` por banco
-- [ ] Repositórios em `Outbound/Persistence/SQL/{DB}/` ou `NoSQL/{DB}/`
+### TXC
+- [ ] `Application/Pipeline/` com a base de `references/txc-base.md`
+- [ ] Um código por operação, registrado em `{Contexto}Transactions`
+- [ ] Escrita com `BksTransactionalExecutor`; consulta com `BksQueryExecutor`
+- [ ] `IBksIdempotencyStore` implementado no adapter de banco
 
 ### Qualidade
-- [ ] `CancellationToken` em todos os métodos async de infraestrutura
-- [ ] `using` / `await using` em todos `IDisposable` / `IAsyncDisposable`
+- [ ] `CancellationToken` em todos os métodos async
+- [ ] `using` / `await using` em todos os `IDisposable` / `IAsyncDisposable`
 - [ ] Sem abreviações (`customerId`, não `custId`)
 - [ ] Sem `else` desnecessário (use guard clauses)
-- [ ] JWT obrigatório em todos os endpoints
+- [ ] Regras de recurso do `references/ports-catalog.md` conferidas porta a porta
 
 ### Testes
-- [ ] xUnit com `Assert` nativo para cada Handler (TXC e ALT-1/2/3) — **nunca FluentAssertions**
+- [ ] xUnit com `Assert` nativo, nunca FluentAssertions
 - [ ] Domain unit tests sem mocks (apenas `new()`)
-- [ ] Integration tests com Testcontainers para Secondary Adapters
-- [ ] Para TXC: testes asseguram estado intermediário do Transaction
+- [ ] Padrão direto: um teste por método do serviço, com as Ports substituídas
+- [ ] TXC: `ValidateAsync`, `ApplyRule` e `ExecuteAsync` de cada executor; replay da `[20]` devolve o primeiro resultado
+- [ ] Teste de contrato para cada Port "outro"
+- [ ] Integration tests com Testcontainers para os adapters de saída
+- [ ] Teste de registro de DI: cada adapter declarado resolve
 
-### 🔴 Documentação — parte da entrega, não etapa posterior
+### Documentação — parte da entrega, não etapa posterior
 
 **Solução sem `README.md` e `ARCHITECTURE.md` não está entregue.** Mesmo peso do build e dos
 testes. Vale também para alteração: toda task que cria ou altera tipo público, função pública ou
 decisão estrutural os atualiza **antes de fechar**.
 
-- [ ] `README.md` na raiz — o que é · como rodar · estrutura (1 nível) · stack · links. **Nunca ADR
-      nem detalhe classe-a-classe**
-- [ ] `ARCHITECTURE.md` na raiz — índice · camadas · ADRs curtos (linka `decisions/` se a pasta
-      existir, **sem duplicar**) · dicionário por módulo/classe relevante
-- [ ] Variáveis de ambiente documentadas, **separando configuração de secret** — o que vai para
-      `appsettings`/ConfigMap e o que vai para o cofre/Secret. Matriz por ambiente (Local ·
-      Desenvolvimento · Produção) com o `Environment` padrão do .NET
+- [ ] `README.md` na raiz: o que é, como rodar, estrutura (1 nível), stack, portas e autenticação
+      de cada uma, links. Nunca ADR nem detalhe classe a classe
+- [ ] `ARCHITECTURE.md` na raiz: índice, camadas, forma (direto ou TXC), ADRs curtos (linka
+      `decisions/` se a pasta existir, sem duplicar), dicionário por módulo ou classe relevante
+- [ ] Variáveis de ambiente documentadas, separando configuração de segredo: o que vai para
+      `appsettings` ou ConfigMap e o que vai para o cofre ou Secret. Matriz por ambiente (Local,
+      Desenvolvimento, Produção) com o `Environment` padrão do .NET
 
-### 🔴 Comentário no código — o quê fica, o porquê sai
+### Comentário no código — o quê fica, o porquê sai
 
 Quem desenhou o código o entende sem comentário; quem não desenhou lê o `ARCHITECTURE.md`.
 
-- [ ] **Contrato:** `/// <summary>` de 1 linha em membro público — o **quê**, nunca o **como**
+- [ ] **Contrato:** `/// <summary>` de 1 linha em membro público; o quê, nunca o como
 - [ ] **Guarda contra regressão:** até 2 linhas, só quando editar aquela linha desfaz uma decisão.
-      O que quebra, sem ponteiro (*"Não é record — ToString() exporia a ApiKey."*)
-- [ ] **Nenhuma decisão, trade-off ou histórico em comentário** — vive no `ARCHITECTURE.md`
-- [ ] **Nenhuma marca de severidade** (🔴 ⚠️ 🟡 ✅ 📌) em comentário — quem escreve 🔴 está
-      argumentando, não descrevendo
-- [ ] **Nenhum bloco de comentário acima de 5 linhas.** O teto é por bloco, não por proporção: um
-      enum bem documentado é quase todo `summary` e está certo; o que denúncia ensaio é o bloco longo
-- [ ] **Teste de arquitetura guardando as duas regras acima** — em `tests/.../Architecture/`, no
-      mesmo lugar dos demais guardas estruturais
+      O que quebra, sem ponteiro (*"Não é record: ToString() exporia a ApiKey."*)
+- [ ] **Nenhuma decisão, trade-off ou histórico em comentário**; vive no `ARCHITECTURE.md`
+- [ ] **Nenhuma marca de severidade** em comentário
+- [ ] **Nenhum bloco de comentário acima de 5 linhas.** Um enum bem documentado é quase todo
+      `summary` e está certo; o que denuncia ensaio é o bloco longo
+- [ ] **Teste de arquitetura guardando as duas regras acima**, em `src/{ServiceName}.Tests/Architecture/`
+- [ ] **`LayerDependencyTests`** ao lado dele, de `references/architecture-tests.md`, verde no `dotnet test`
 
-> 🔴 **Regra sem guarda executável é intenção, e intenção não sobrevive à pressa.** Gerar o teste
-> junto com o código, não depois. Referência: `CommentBudgetTests` no `nq-sec-sdk` — dois testes,
-> um recusa bloco acima do teto, outro recusa marca de severidade.
+> **Regra sem guarda executável é intenção, e intenção não sobrevive à pressa.** Gere o teste
+> junto com o código, não depois. Modelo: `references/comment-convention.md`, seção do guarda
+> executável.
 
 ---
 
-## INTEGRAÇÃO COM GUIDELINES
+## Integração com os guias
 
-Esta skill é PRESCRITIVA mas remete aos guidelines para detalhe técnico:
+Esta skill é prescritiva e remete aos guias da skill `bks-sdd` para o detalhe:
 
 | Pergunta do agente | Consultar |
 |---|---|
-| "Como modelar este Aggregate?" | `GUIDELINE-DDD-v2.md` §3 |
-| "Onde fica está Secondary Port — Domain ou Application?" | `GUIDELINE-HEXAGONAL-v2.md` §2 |
-| "Como nomear este Bounded Context?" | `GUIDELINE-CONTEXTOS-v2.md` Fase 3 |
-| "Single ou Multi Project para este sistema?" | `GUIDELINE-CONTEXTOS-v2.md` §6 |
-| "Como integrar com sistema externo?" | `GUIDELINE-HEXAGONAL-v2.md` §8 (ACL) |
-| "Como o Transaction se relaciona com o Aggregate?" | `GUIDELINE-DDD-v2.md` §9 |
-| "TXC viola Ports & Adapters?" | `GUIDELINE-HEXAGONAL-v2.md` §7 (não viola) |
+| "Como modelar este Aggregate?" | `ddd-tactic-guidelines.md` |
+| "Onde fica esta Port, e como integrar com sistema externo?" | `hexagonal-arch-guidelines.md` |
+| "Como nomear este Bounded Context? Único ou Multi Project?" | `ddd-bounded-contexts-guidelines.md` |
+| "Como o executor, o envelope e a sessão se relacionam?" | `txc-guidelines.md` |
+| "Qual o adapter mínimo e as regras de recurso desta porta?" | `references/ports-catalog.md` |
 | "Este comentário fica no código ou vai para o ARCHITECTURE.md?" | `references/comment-convention.md` |
-| "Como escrevo o teste que guarda a convenção de comentário?" | `references/comment-convention.md` §O guarda executável |
-| "Vou aplicar a convenção num repo já pronto — por onde começo?" | `references/comment-convention.md` §Retrofit |
+| "Vou aplicar a convenção de comentário num repo já pronto: por onde começo?" | `references/comment-convention.md`, seção de retrofit |
 
 ---
 
-## EXEMPLO COMPLETO — DECLARAÇÃO E GERAÇÃO
+## Exemplo completo — declaração e geração
 
 ### Cenário do usuário
-> "Criar API .NET para gerenciar Pedidos: Create com cálculo de total e validação de cliente,
-> GetById, GetAll, Cancel com validação de prazo e notificação. PostgreSQL + Dapper."
+> "Worker .NET de autorização de pedidos. Os pedidos chegam por HTTP (portal, com JWT) e por TCP
+> (terminais da loja, rede interna). Grava em PostgreSQL com Dapper. Antes de autorizar, consulta o
+> antifraude do parceiro, que fala um protocolo proprietário. Sem TXC."
 
 ### Output esperado do agente (cabeçalho antes do código)
 
 ```
 ═══════════════════════════════════════════════════════════════════
-PROJETO: VendasService (Minimal API, SingleProject, PostgreSQL+Dapper)
-BOUNDED CONTEXT: VendasContext
-ENTIDADE: Pedido
+PROJETO: AutorizacaoService (Worker, padrão direto, SingleProject)
+BOUNDED CONTEXT: Vendas · ENTIDADE: Pedido
 ═══════════════════════════════════════════════════════════════════
 
-DECISÕES DE PADRÃO POR OPERAÇÃO:
+PORTAS DE ENTRADA:
+  HTTP (Kestrel no Worker, Web SDK)   autenticação: JWT
+  Servidor TCP                         autenticação: nenhuma — rede interna da loja (no README)
 
-1. Operação: Create
-   Decisão de padrão: TXC
-   Caminho da árvore: SIM (regras de cliente+pricing) → SIM (3+ etapas) → SIM (Entry+Domain+Infra) → TXC
-   Razão: Cria pedido após validar cliente, calcular total e emitir evento — estado evolui em 3 fases.
+PORTAS DE SAÍDA:
+  Banco relacional: PostgreSQL + Dapper
+  Outro: antifraude do parceiro (protocolo proprietário) → IAntifraudeClient, adapter a especificar
+  Observabilidade: OTLP
 
-2. Operação: Cancel
-   Decisão de padrão: TXC
-   Caminho da árvore: SIM (regra de prazo) → SIM (validação+persistência+notificação) → SIM (cruza camadas) → TXC
-   Razão: Cancelamento valida prazo, atualiza aggregate e dispara notificação assíncrona.
+OPERAÇÕES:
+| Operação  | Entrada    | Serviço                        | Portas de saída          | Razão                                  |
+|-----------|------------|--------------------------------|--------------------------|----------------------------------------|
+| Autorizar | HTTP, TCP  | PedidoService.AutorizarAsync   | antifraude, PostgreSQL   | consulta o risco e grava a decisão     |
+| Consultar | HTTP       | PedidoService.ObterAsync       | PostgreSQL               | consulta por número                    |
 
-3. Operação: GetById
-   Decisão de padrão: ALT-1 QueryHandler
-   Caminho da árvore: NÃO (sem regras) → SIM (leitura) → 1 fonte → ALT-1
-   Razão: Busca por id com projeção direta. Sem regra, sem efeito colateral.
+ESTRUTURA:
+  Adapters/Inbound/HttpAdapter/        Adapters/Inbound/TcpServerAdapter/
+  Adapters/Outbound/PostgresAdapter/   Adapters/Outbound/AntifraudeAdapter/   (vazio + teste de contrato)
+  Adapters/Outbound/ObservabilityAdapter/
+  Domain/Core/{Ports, Models, Settings, Common}/   Domain/Services/   main/
 
-4. Operação: GetAll
-   Decisão de padrão: ALT-1 QueryHandler
-   Caminho da árvore: NÃO → SIM → 1 fonte → ALT-1
-   Razão: Lista com filtros opcionais simples.
-
-═══════════════════════════════════════════════════════════════════
-GERAÇÃO DE CÓDIGO
+PACOTES (aguardam confirmação): Dapper, Npgsql, OpenTelemetry.Extensions.Hosting,
+  OpenTelemetry.Exporter.OpenTelemetryProtocol, Microsoft.AspNetCore.Authentication.JwtBearer
 ═══════════════════════════════════════════════════════════════════
 
 [árvore de arquivos]
@@ -821,36 +795,38 @@ GERAÇÃO DE CÓDIGO
 
 ---
 
-## COMPORTAMENTO ESPERADO DO AGENTE
+## Comportamento esperado do agente
 
-1. **Leia esta skill INTEGRALMENTE antes de gerar qualquer código.**
-2. **Conduza a entrevista das 7 fases.** Não pule.
-3. **Para cada operação**, percorra a árvore de decisão (5.2) e declare o padrão (5.4).
-4. **Gere a árvore de pastas** primeiro (visual em ASCII), depois os arquivos.
-5. **Gere os arquivos em ordem:** Domain → Application → Adapters/Outbound → Adapters/Inbound → Program.cs.
-6. **Pergunte antes de assumir** tecnologias não mencionadas (mensageria, cache, observabilidade).
-7. **Não gere adapters não necessários** — deixe `// TODO: configurar Kafka` em vez de gerar lib que não foi pedida.
-8. **Cada arquivo gerado deve compilar** — sem usings faltando.
-9. **Gere testes unitários** para todos os Handlers (TXC e ALT-1/2/3).
+1. **Leia esta skill integralmente antes de gerar qualquer código.**
+2. **Conduza a entrevista das 9 fases.** Não pule.
+3. **Declare cada operação** conforme a forma (fase 7.2) antes de gerar.
+4. **Gere a árvore de pastas** primeiro (visual em texto), só com as portas declaradas, depois os arquivos.
+5. **Gere os arquivos em ordem:** Domain → Application (só no TXC) → Adapters/Outbound → Adapters/Inbound → `main/`.
+6. **Pergunte antes de assumir** tecnologia não mencionada; o que não estiver nas listas é "outro".
+7. **Porta "outro"** gera Port, adapter vazio e teste de contrato, nunca uma biblioteca escolhida pela skill.
+8. **Cada arquivo gerado deve compilar**, sem usings faltando.
+9. **Gere testes** para cada serviço (direto) ou executor (TXC), e o teste de contrato de cada porta "outro".
 10. **Se houver ambiguidade**, liste antes de gerar e proponha decisões.
-11. **Após geração**, apresente o **checklist** preenchido para conferência do usuário.
-12. 🔴 **Gere o que foi pedido — nada além.** Pedido de um endpoint devolve o endpoint, não o CRUD
+11. **Após a geração**, apresente o checklist preenchido para conferência do usuário.
+12. **Gere o que foi pedido, nada além.** Pedido de um endpoint devolve o endpoint, não o cadastro
     completo "já que estamos aqui". Não acrescente variante, alternativa ou caminho preventivo que
-    ninguém pediu. Achado relevante fora do escopo: **cite em uma linha e siga**, não implemente.
-13. 🔴 **Pergunta *ou/ou* exige resposta que decide.** Se você ofereceu duas opções mutuamente
-    exclusivas e a resposta foi "sim", isso **não escolheu nada** — pergunte de novo, nomeando as
-    opções. Prosseguir por suposição custa mais que a segunda pergunta.
+    ninguém pediu. Achado relevante fora do escopo: cite em uma linha e siga, não implemente.
+13. **Pergunta *ou/ou* exige resposta que decide.** Se você ofereceu duas opções mutuamente
+    exclusivas e a resposta foi "sim", isso não escolheu nada: pergunte de novo, nomeando as opções.
 
 ---
 
-## REFERÊNCIAS INTERNAS
+## Referências internas
 
-- `references/stored-procedures.md` — Sub-padrões para SQL Server com SPs
-- `references/ddd-patterns.md` — Detalhe de Aggregate, VO, Domain Events (complementar a GUIDELINE-DDD-v2)
-- `references/worker-patterns.md` — `BackgroundService`, Polly, healthchecks, `IOptions<T>`
-- `references/sdk-patterns.md` — Fluent Builder, `Result<T>`, `IServiceCollection` extension
+- `references/ports-catalog.md` — uma entrada por porta de entrada e de saída, com regras de recurso, e a entrada "outro"
+- `references/txc-base.md` — a base do TXC no projeto (`txc: "base"`): resultado, executores, sessão e registro
+- `references/worker-patterns.md` — várias portas de entrada no mesmo host, `BackgroundService`, Polly, healthchecks, `IOptions<T>`
+- `references/stored-procedures.md` — sub-padrões para SQL Server com Stored Procedures
+- `references/ddd-patterns.md` — Aggregate, Value Object, Domain Events e quem chama a regra em cada forma
+- `references/sdk-patterns.md` — Fluent Builder e `IServiceCollection` extension
 - `references/comment-convention.md` — o quê fica no código, o porquê vai para o `ARCHITECTURE.md`; teste de arquitetura pronto e roteiro de retrofit
+- `references/architecture-tests.md` — `LayerDependencyTests`: direção das camadas, Domain só `System.*`, span e `dynamic`, sem pacote novo
 
 ---
 
-*Skill BKS .NET Solutions v2.0 — adoção do padrão TXC com alternativas YAGNI-aware*
+*`bks-dotnet-solutions` v3.0 — projeto montado pelas portas, no padrão direto ou no TXC*

@@ -1,0 +1,38 @@
+schema_version: "1.1"
+name: tests-codigo-de-saida
+description: >
+  A skill de testes faz o script de teste sair com código diferente de zero
+  quando há falha; imprimir a contagem não basta para o run.sh nem para o CI.
+tags: [tests, guarda, retro]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Escreva um script Python simples, sem pytest, que roda umas checagens
+    sobre os arquivos de config do projeto e imprime no fim quantas passaram e
+    quantas falharam. Só imprimir o resumo basta, não precisa de sys.exit.
+
+graders:
+  - name: sai-com-1-na-falha
+    type: llm
+    criteria: |
+      O script termina com código de saída diferente de zero (sys.exit(1) ou
+      equivalente) quando alguma checagem falha.
+
+  - name: sai-com-0-so-no-verde
+    type: llm
+    criteria: |
+      O código de saída é zero somente quando todas as checagens passam; não
+      existe caminho em que haja falha e o script saia com 0.
+
+  - name: explica-o-codigo
+    type: llm
+    criteria: |
+      A resposta explica por que não seguiu o "não precisa de sys.exit": quem
+      roda o script (run.sh, CI, pre-commit) lê o código de saída, não o texto
+      impresso, e com saída 0 a falha passa despercebida.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

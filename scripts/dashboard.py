@@ -25,6 +25,7 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 PLUGIN_ROOT = os.path.dirname(HERE)
 PAGE = os.path.join(HERE, 'dashboard.html')
+OLD_MODES = {'colaborativo': 'collaborative', 'autonomo': 'autonomous'}
 MAX_BODY = 16 * 1024
 LOCAL_HOSTS = ('127.0.0.1', 'localhost')
 FAMILIES = ('opus', 'sonnet', 'haiku', 'fable')
@@ -141,7 +142,8 @@ def state(repo):
     except (run_state.StateError, OSError, ValueError):
         run = {'tasks': [], 'waves': [], 'paused': False, 'ready': []}
     return {'projeto': os.path.basename(os.path.abspath(repo)),
-            'mode': (profile.get('axes') or {}).get('mode', 'colaborativo'),
+            'mode': OLD_MODES.get((profile.get('axes') or {}).get('mode', 'collaborative'),
+                                  (profile.get('axes') or {}).get('mode', 'collaborative')),
             'rigor': (profile.get('axes') or {}).get('rigor'),
             'models': models, 'run': run, 'inbox': run_state.pending(repo),
             'blocks': blocks, 'assumptions_open': open_count}

@@ -72,7 +72,7 @@ começa sem ela aprovada.
    ```
 
 9. Reporte os modelos, uma linha cada, e peça a aprovação: o usuário muda `status` para `aprovado` no
-   ARCH e em cada modelo. A aprovação é sempre do usuário, nos dois modos: no `autonomo`, a prontidão
+   ARCH e em cada modelo. A aprovação é sempre do usuário, nos dois modos: no `autonomous`, a prontidão
    só concede o modo com o ARCH aprovado. Próximo passo: `/bkhar:refine` ou `/bkhar:spec` para as features da primeira fase.
 
 Não escreva FEAT, TEST nem código aqui.

@@ -40,7 +40,7 @@ Críticas: **P01, P03, P04, P05**. Qualquer violação limita a nota final a 40.
 | P01 | O domínio não referencia infraestrutura (driver de banco, ORM, cliente HTTP, cliente de cofre, SDK de telemetria) | Imports e referências do projeto ou namespace de domínio |
 | P02 | Todo acesso a dados passa por um port declarado na aplicação ou no domínio e implementado num adapter | Interfaces de repositório/gateway fora da infra; implementações só na infra |
 | P03 | SQL é parametrizado; nenhuma concatenação ou interpolação com entrada externa | Busca por interpolação ou `+` em comandos SQL; SQL dinâmico sem parâmetros |
-| P04 | Nenhum segredo em código, arquivo de configuração, variável de ambiente em claro ou manifest | Padrões de senha/token/connection string; origem das credenciais |
+| P04 | Nenhum segredo em claro versionado: código, arquivo de configuração, `.env` commitado ou manifest. Variável de ambiente injetada em tempo de execução, pelo cofre ou pelo `Secret`, é via aceita | Padrões de senha/token/connection string; origem das credenciais |
 | P05 | Se há cofre de credenciais, um único adapter o acessa, com cache e renovação explícitos | Um ponto de entrada para o cofre; política de expiração visível. Sem cofre: **Não se aplica** |
 | P06 | Ciclo de vida de conexões e transações explícito | Abertura e descarte de conexão e transação |
 | P07 | Toda operação de I/O é assíncrona e cancelável, onde a stack oferece isso | Assinaturas de ports e adapters; bloqueio síncrono sobre código assíncrono |

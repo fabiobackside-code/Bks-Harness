@@ -21,15 +21,20 @@ lógica que importa (ver `wiki/architecture/arquitetura-custo-contexto-ia.md`).
 só entra quando paga o próprio preço. Refatorar código simples com IA é mais
 barato que navegar abstração que tentou adivinhar o futuro (YAGNI).
 
-## Padrão-base: Hexagonal + Pipeline + TXC + Result
+## Padrão-base: Hexagonal + Result; Pipeline e TXC quando o projeto adota o TXC
 - **Hexagonal real, não ritualística:** domínio referência só `System.*`;
   infra entra por Porta. Sem camadas/arquivos que não carregam valor.
-- **TXC (Transaction Context):** estado transacional em um `record` imutável
-  que flui pela pipeline; a aplicação lê, não muta. Conceito geral em
-  `wiki/patterns/txc-transaction-context.md`; aplicação concreta de cada
-  projeto fica no `brain/methodology/` do repo dele.
-- **Pipeline explícito:** Validação → Idempotência → Enriquecimento →
-  Processamento → PósProcessamento. **NUNCA MediatR** — orquestração explícita.
+- **TXC (Transaction Context):** identidade da execução (código, correlation id,
+  usuário, tenant, trace, chave de idempotência), somente leitura, criada pela sessão;
+  não carrega retorno. Dado entre passos é retorno tipado, nunca campo de objeto que
+  muda. Opcional por projeto (`txc` no `.bks-profile.json`); o modelo está em
+  `bks-sdd/references/txc-guidelines.md`.
+- **Pipeline explícito, só com `txc` declarado:** Validation [10] → Idempotency [20] → Processing [40] →
+  PostProcessing [50]; a `[20]` só no executor que grava, e a regra de negócio só no
+  executor da `[40]`. Extensão de domínio entra entre `[20]` e `[40]` e é declarada no
+  `brain/methodology/` do projeto (ex.: o NQuantic tem a `[30]` de resolução de conta).
+  No padrão direto não há pipeline: a regra mora no serviço e no aggregate.
+  **NUNCA MediatR** — orquestração explícita.
 - **Result Pattern:** operações retornam um tipo `Result<T>` (ou o equivalente
   que o projeto definir — ex.: `NqResultado<T>` no NQuantic); exceptions de
   negócio não escapam da pipeline.
@@ -56,13 +61,15 @@ como cerimônia obrigatória:
 ## Legado .NET Framework 4.7.0 / .NET Core 2.1
 
 Green field é sempre **.NET 10**. Quando o contexto obriga o legado, o padrão-base
-continua valendo (Hexagonal, TXC, Pipeline, Result) — muda só a tecnologia de borda.
+continua valendo (Hexagonal, Result e, se o projeto o adota, TXC com a pipeline) — muda só a
+tecnologia de borda.
 
 **Stack prescrita no 4.7.0 (não é opção, é o default do legado):**
 - **Serviços expostos: WCF SOAP Services.** Contrato por `[ServiceContract]` /
   `[OperationContract]`; DTOs em `[DataContract]` / `[DataMember]`. O `.svc` e o WCF
   são **Adapter Inbound** — o contrato SOAP nunca vaza para o domínio: o adapter
-  traduz o request no TXC e devolve o `Result<T>` mapeado. Sem regra de negócio
+  traduz o request na entrada, chama o serviço ou a sessão (que cria o TXC) e devolve o
+  `Result<T>` mapeado. Sem regra de negócio
   dentro da classe de serviço.
 - **Processos de background: Worker Service hospedado com TopShelf.** Um único
   executável console que roda como Windows Service (`Service.Install` /
@@ -70,8 +77,9 @@ continua valendo (Hexagonal, TXC, Pipeline, Result) — muda só a tecnologia de
   aciona a mesma pipeline do domínio, nada de lógica no ponto de entrada.
 - **Concorrência e estado no worker: Akka.NET.** Ator por unidade de estado; supervisão
   para reinicializar o ramo que falhou; mailbox no lugar de lock manual. Os atores são
-  **infraestrutura de concorrência**, não o domínio — o ator recebe a mensagem, monta
-  o TXC e chama a pipeline; a regra permanece testável sem `ActorSystem`.
+  **infraestrutura de concorrência**, não o domínio — o ator recebe a mensagem, traduz
+  na entrada e chama o serviço ou a sessão, que cria o TXC; a regra permanece testável sem
+  `ActorSystem`.
 
 **O que cai no 4.7.0 e o substituto:**
 
@@ -89,8 +97,10 @@ continua valendo (Hexagonal, TXC, Pipeline, Result) — muda só a tecnologia de
 > não de projeto novo.
 
 ## Idioma do código
-Inglês por padrão. **Exceção por projeto quando o repo definir** (ex.: NQuantic
-usa pt-BR sem acentos). O `REPO-CLAUDE.md` de cada projeto manda.
+Identificadores em inglês por padrão. **Exceção por projeto quando o repo definir** (ex.:
+NQuantic usa identificadores em pt-BR sem acentos). O `REPO-CLAUDE.md` de cada projeto manda.
+A exceção vale só para identificador: comentário e texto para quem lê seguem em PT-BR com
+acentuação (`documentacao.md`).
 
 ## Comentário e documentação externa
 Comentário no código é exceção, não regra: resumo de 1 linha em classe/método público

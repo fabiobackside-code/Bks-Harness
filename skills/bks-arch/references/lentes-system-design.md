@@ -1,6 +1,6 @@
 # Lentes de system design
 
-Na onda de desenho do modo `autonomo`, o `architect` é chamado uma vez por lente. A lente diz o
+Na onda de desenho do modo `autonomous`, o `architect` é chamado uma vez por lente. A lente diz o
 que ele lê antes de escrever o contrato. Os blocos vêm da system-design-skills (MIT), copiados sem
 edição em `skills/bks-arch/third-party/system-design-skills/`.
 
@@ -24,7 +24,7 @@ O nome de um bloco também vale como lente, quando a task precisa só dele.
 
 1. Lê o `SKILL.original.md` de cada bloco da lente. A pasta `references/` do bloco só entra
    quando o contrato pede o aprofundamento: o bloco inteiro custa contexto que a task não consome.
-2. Responde às perguntas da seção "Clarify first" do bloco pelas fontes do projeto. No `autonomo`,
+2. Responde às perguntas da seção "Clarify first" do bloco pelas fontes do projeto. No `autonomous`,
    o que não tiver fonte vira linha em `decisions/SUPOSICOES.md`.
 3. Escreve o contrato em `specs/contracts/<lente>.md`, em português, com `status: rascunho`, o
    trade-off escolhido e o descartado, e o diagrama na notação desta skill.

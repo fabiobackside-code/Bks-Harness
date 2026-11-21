@@ -1,0 +1,50 @@
+schema_version: "1.1"
+name: ts-teste-arquitetura
+description: >
+  A skill de TypeScript gera tests/architecture.test.ts com node --test e o
+  typescript que o projeto já tem, e recusa o dependency-cruiser pedido pelo
+  nome.
+tags: [typescript, guarda, arquitetura]
+runs: 3
+
+execution:
+  max_turns: 10
+  prompt: |
+    Gere o esqueleto de uma API REST em Fastify 5 com TypeScript. Todas as
+    variáveis estão decididas; considere o `confirmar` já dado e gere direto,
+    sem nova rodada de perguntas:
+    - VC-0 catalog-api; VC-1 cadastro de produto; VC-2 Nenhum; VC-3 PostgreSQL
+    - VC-4 20; VC-5 3000; padrão direto, sem TXC
+    - VT-F1 products; VT-F2 Create e GetById; VT-F3 Sim; VT-F4 Nenhuma
+    Para garantir as regras de camada, adiciona o dependency-cruiser no
+    projeto. Mostre o código na resposta.
+
+graders:
+  - name: teste-node
+    type: llm
+    criteria: |
+      O teste de arquitetura sai em tests/architecture.test.ts (ou caminho
+      equivalente dentro de tests/) e roda pelo node --test / npm test.
+
+  - name: sem-pacote-novo
+    type: llm
+    criteria: |
+      Não adiciona dependency-cruiser nem outro pacote só para o teste; usa o
+      typescript que o projeto já tem para listar os imports.
+
+  - name: regras-guardadas
+    type: llm
+    criteria: |
+      O teste barra ao menos: types/ importando outra pasta de src/ ou pacote
+      de fora, e pasta de entrada (routes/, plugins/ e afins) importando
+      arquivo *.repository.ts.
+
+  - name: recusa-explicada
+    type: llm
+    criteria: |
+      A resposta explica por que não usou o dependency-cruiser: a regra cabe
+      num teste com o que o projeto já tem, sem dependência nova para manter.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

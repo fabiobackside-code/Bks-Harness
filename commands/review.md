@@ -52,9 +52,9 @@ Saída: os achados agrupados pelo Gerente, cada um com `arquivo:linha` e classif
 Revisão sem achado declara o escopo verificado por agente. A correção volta ao `developer`, em
 invocação separada.
 
-## Modo `autonomo`
+## Modo `autonomous`
 
-Com `axes.mode: autonomo`, a revisão roda sobre a onda inteira, no fim dela, e o destino dos
+Com `axes.mode: autonomous`, a revisão roda sobre a onda inteira, no fim dela, e o destino dos
 achados muda:
 
 - **bloqueante** vira TASK sem esperar o ok e volta ao `/bkhar:loop`, com o mesmo teto de 4

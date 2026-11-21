@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Medidor de tokens e custo de sessoes do Claude Code.
 
-Le os transcripts JSONL em ~/.claude/projects/<slug>/<sessionId>.jsonl,
+Le os transcripts JSONL em <CLAUDE_CONFIG_DIR ou ~/.claude>/projects/<slug>/<sessionId>.jsonl,
 agrega uso por modelo e calcula custo em USD com base em pricing.json.
 
 Uso:
@@ -32,7 +32,16 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 HOME = Path(os.path.expanduser("~"))
-PROJECTS_DIR = HOME / ".claude" / "projects"
+
+
+def projects_dir(env=os.environ):
+    """Pasta dos transcripts: CLAUDE_CONFIG_DIR quando definida, senão ~/.claude."""
+    config = env.get("CLAUDE_CONFIG_DIR")
+    base = Path(os.path.expanduser(config)) if config else HOME / ".claude"
+    return base / "projects"
+
+
+PROJECTS_DIR = projects_dir()
 PRICING_PATH = Path(__file__).resolve().parent / "pricing.json"
 
 

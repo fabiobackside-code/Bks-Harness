@@ -154,7 +154,7 @@ def test_inbox():
     try:
         rs.init(root)
         write(root, '.bks-profile.json', json.dumps({'profile': 'backend', 'category': 'p',
-                                                     'axes': {'mode': 'autonomo'}}))
+                                                     'axes': {'mode': 'autonomous'}}))
         r1 = rs.submit(root, {'tipo': 'pausar'})
         r2 = rs.submit(root, {'tipo': 'mensagem', 'task': 'T-001', 'texto': 'use o schema public'})
         r3 = rs.submit(root, {'tipo': 'modelo', 'papel': 'developer', 'modelo': 'opus'})

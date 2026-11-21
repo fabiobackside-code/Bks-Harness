@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import sys
 import tempfile
 from datetime import datetime
@@ -63,7 +64,7 @@ def task(tid, onda, estado, tentativa=0, tipo='construcao', titulo=''):
             'estado': estado, 'tentativa': tentativa, 'eventos': []}
 
 
-def project(tasks=(), blocks=(), mode='autonomo'):
+def project(tasks=(), blocks=(), mode='autonomous'):
     root = os.path.join(tempfile.mkdtemp(), 'proj')
     write(root, 'STATUS.md', STATUS)
     write(root, '.bks-profile.json', json.dumps({'axes': {'mode': mode}}))
@@ -84,7 +85,7 @@ def test_build():
     check('cabeçalho diz que é espelho e não se edita', 'Espelho gerado de STATUS.md e outputs/run/' in text
           and 'Não editar à mão' in text)
     check('data da geração entra', 'Atualizado: 2026-11-06 15:30' in text)
-    check('modo vem do perfil', 'Modo: autonomo' in text)
+    check('modo vem do perfil', 'Modo: autonomous' in text)
     check('etapa é a primeira onda aberta', 'Etapa: onda 2 de 2 — construcao' in text, text)
     check('progresso conta só as passadas', 'Concluídas: 1/3' in text)
     check('frase copiada do STATUS.md', 'Onda 2 em curso, sem bloqueio de decisão.' in text)
@@ -99,11 +100,18 @@ def test_build():
 
 def test_empty():
     print('\nprojeto sem execução')
-    root = project(mode='colaborativo')
+    old = project(mode='autonomo')
+    check('valor antigo do modo é lido como o novo', 'Modo: autonomous' in status_note.build(old, NOW))
+    shutil.rmtree(old, ignore_errors=True)
+    root = project(mode='collaborative')
     os.remove(os.path.join(root, '.bks-profile.json'))
     text = status_note.build(root, NOW)
-    check('sem perfil vale colaborativo', 'Modo: colaborativo' in text)
+    check('sem perfil vale collaborative', 'Modo: collaborative' in text)
     check('sem ondas', 'Etapa: sem execução em ondas · Concluídas: 0/0' in text)
+    runner = Runner()
+    status_note.sync(root, cli='maestri', runner=runner, now=NOW)
+    check('sem tasks o floor recebe 0%, que a CLI aceita', runner.calls[-1][-2:] == ['--progress', '0%'],
+          str(runner.calls[-1]))
     check('listas vazias aparecem como nenhum', '## Itens da spec\nnenhum' in text
           and '## Falhas\nnenhuma' in text and '## Bloqueios\nnenhum' in text)
     os.remove(os.path.join(root, 'STATUS.md'))

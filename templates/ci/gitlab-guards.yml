@@ -1,0 +1,6 @@
+bkhar-guards:
+  image: python:3.12
+  before_script:
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+  script:
+    - python .bkhar/guards/precommit.py --all

@@ -58,7 +58,8 @@ modelos são vivos: ADR, contrato ou plano mais novo que um modelo o deixa defas
 ### 5 · Especificação
 
 `/bkhar:refine` (ou `/bkhar:spec`, sem rito) — gera `specs/features/FEAT-*.md` apoiada nos modelos
-aprovados. Depois de aprovado, `specs/tests/TEST-*.md`. Depois de aprovado, `specs/tasks/TASK-*.md`.
+aprovados. Depois de aprovado, `specs/tests/TEST-*.md`. Depois de aprovado, `/bkhar:tasks` gera
+`specs/tasks/TASK-*.md`, uma task por peça.
 
 Não pule a aprovação entre os três. Spec aprovada sem teste vira código sem critério.
 

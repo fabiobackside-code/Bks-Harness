@@ -25,6 +25,7 @@ MAX_BLOCK_LINES = 5
 SEVERITY_MARKS = ['\U0001F534', '⚠', '\U0001F7E1', '✅', '\U0001F4CC',
                   '\U0001F6D1', '❌', '\U0001F7E2', '\U0001F525']
 
+POINTER = re.compile(r'(?i)\b(ver|veja|vide|consulte|see|refer to)\b.{0,30}?\b(ARCHITECTURE|README)\b')
 LINE_COMMENT = re.compile(r'^\s*(///|//)')
 BLOCK_OPEN = re.compile(r'^\s*/\*')
 BLOCK_CLOSE = re.compile(r'\*/')
@@ -82,6 +83,14 @@ def check(payload):
                     'ela vive no ARCHITECTURE.md.'.format(
                         f=name, n=idx + 1, src=line.strip()[:120])
                 )
+        if POINTER.search(line):
+            deny(
+                'Bloqueado: ponteiro para documento em comentario, {f} linha {n}.\n\n'
+                '  {src}\n\n'
+                'O ARCHITECTURE.md existe e diz na abertura para que serve; o comentario nao '
+                'aponta para ele. Tire o ponteiro e deixe no codigo so contrato ou guarda contra '
+                'regressao.'.format(f=name, n=idx + 1, src=line.strip()[:120])
+            )
 
     for start, size in comment_blocks(lines):
         if size > MAX_BLOCK_LINES:

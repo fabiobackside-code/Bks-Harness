@@ -2,12 +2,16 @@
 """Aprendizado candidato: propõe, filtra dado sensível, leva ao vault, promove e rejeita. Sem modelo.
 
 Uso:
-  learning.py propose [REPO] --tipo correcao|aprendizado --regra TEXTO --evidencia TEXTO --origem TEXTO
+  learning.py propose [REPO] --type correction|learning|contradiction --rule TEXTO --evidence TEXTO --origin TEXTO
   learning.py list [REPO]
   learning.py export [REPO] [--vault DIR]          padrão: BKS_VAULT
-  learning.py promote [REPO] --arquivo F --escopo projeto|vault|kit [--vault DIR] [--kit DIR]
-  learning.py reject [REPO] --arquivo F --motivo TEXTO
-  learning.py scrub --texto TEXTO
+  learning.py promote [REPO] --file F --scope project|vault|kit [--vault DIR] [--kit DIR]
+  learning.py reject [REPO] --file F --reason TEXTO
+  learning.py resolve [REPO] --file F --fix TEXTO   contradição corrigida no guia
+  learning.py apply --file F --skill NOME [--kit DIR]     proposta para-eval no histórico da skill
+  learning.py scrub --text TEXTO
+
+Flag e valor de flag em inglês; o arquivo da proposta grava tipo e escopo em português.
 """
 import argparse
 import glob
@@ -22,8 +26,10 @@ from datetime import date, datetime, timezone
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-KINDS = ('correcao', 'aprendizado')
+KINDS = ('correcao', 'aprendizado', 'contradicao')
 SCOPES = ('projeto', 'vault', 'kit')
+TYPE_FLAG = {'correction': 'correcao', 'learning': 'aprendizado', 'contradiction': 'contradicao'}
+SCOPE_FLAG = {'project': 'projeto', 'vault': 'vault', 'kit': 'kit'}
 KIT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SENSITIVE = (
@@ -164,18 +170,63 @@ def reject(repo, path, reason):
     return dest
 
 
+def resolve(repo, path, correction):
+    """Arquiva a contradição corrigida no guia, com o que foi corrigido."""
+    if not _one_line(correction):
+        raise LearningError('resolução precisa dizer o que foi corrigido')
+    m = meta(path)
+    m.update(status='corrigida', correcao=correction, corrigida_em=date.today().isoformat())
+    dest = _write(_free(os.path.join(repo, 'archive', 'proposals', os.path.basename(path))), m, _body(path))
+    os.remove(path)
+    return dest
+
+
+HISTORY = '## Histórico de regras'
+
+
+def apply(kit, path, skill):
+    """Leva a proposta promovida ao kit para o histórico da skill e a arquiva como aplicada."""
+    if not os.path.isfile(path):
+        raise LearningError('proposta %s não existe' % path)
+    m = meta(path)
+    if m.get('status') != 'para-eval':
+        raise LearningError('só proposta promovida ao kit (status para-eval) se aplica; esta está %s'
+                            % m.get('status'))
+    target = os.path.join(kit, 'skills', skill or '', 'SKILL.md')
+    if not skill or not os.path.isfile(target):
+        raise LearningError('skill %r não existe no kit' % skill)
+    rule = _one_line(re.sub(r'(?m)^#.*$', '', _body(path)))
+    name = os.path.basename(path)
+    today = date.today().isoformat()
+    line = '- %s · %s · origem: `archive/proposals/%s` (%s; evidência: %s)' % (
+        today, rule, name, m.get('origem', '?'), m.get('evidencia', '?'))
+    with io.open(target, encoding='utf-8') as fh:
+        text = fh.read()
+    if HISTORY not in text:
+        text = text.rstrip('\n') + '\n\n%s\n\nRegra que entrou pelo `/bkhar:retro`, com a proposta de origem.\n' % HISTORY
+    text = text.rstrip('\n') + '\n' + line + '\n'
+    with io.open(target, 'w', encoding='utf-8', newline='\n') as fh:
+        fh.write(text)
+    m.update(status='aplicada', skill=skill, aplicada_em=today, eval='pendente')
+    dest = _write(_free(os.path.join(kit, 'archive', 'proposals', name)), m, _body(path))
+    os.remove(path)
+    return dest
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description='aprendizado candidato do bkhar')
-    ap.add_argument('cmd', choices=('propose', 'list', 'export', 'promote', 'reject', 'scrub'))
+    ap.add_argument('cmd', choices=('propose', 'list', 'export', 'promote', 'reject', 'resolve', 'apply', 'scrub'))
     ap.add_argument('repo', nargs='?', default=os.getcwd())
-    for flag in ('--tipo', '--regra', '--evidencia', '--origem', '--arquivo', '--escopo', '--vault',
-                 '--kit', '--motivo', '--texto'):
+    ap.add_argument('--type', choices=sorted(TYPE_FLAG))
+    ap.add_argument('--scope', choices=sorted(SCOPE_FLAG))
+    for flag in ('--rule', '--evidence', '--origin', '--file', '--vault', '--kit', '--reason', '--fix',
+                 '--text', '--skill'):
         ap.add_argument(flag)
     a = ap.parse_args(argv)
     repo = os.path.abspath(a.repo)
     try:
         if a.cmd == 'propose':
-            print(propose(repo, a.tipo, a.regra, a.evidencia, a.origem))
+            print(propose(repo, TYPE_FLAG.get(a.type), a.rule, a.evidence, a.origin))
         elif a.cmd == 'list':
             for p in candidates(repo):
                 print('%s  %s' % (os.path.basename(p), meta(p).get('origem', '')))
@@ -185,11 +236,15 @@ def main(argv=None):
             for x in r['recusadas']:
                 print('recusada: %s — %s' % (os.path.basename(x['arquivo']), '; '.join(x['achados'])))
         elif a.cmd == 'promote':
-            print(promote(repo, a.arquivo, a.escopo, a.vault or os.environ.get('BKS_VAULT'), a.kit))
+            print(promote(repo, a.file, SCOPE_FLAG.get(a.scope), a.vault or os.environ.get('BKS_VAULT'), a.kit))
         elif a.cmd == 'reject':
-            print(reject(repo, a.arquivo, a.motivo))
+            print(reject(repo, a.file, a.reason))
+        elif a.cmd == 'resolve':
+            print(resolve(repo, a.file, a.fix))
+        elif a.cmd == 'apply':
+            print(apply(os.path.abspath(a.kit) if a.kit else KIT_ROOT, a.file, a.skill))
         elif a.cmd == 'scrub':
-            hits = scrub(a.texto)
+            hits = scrub(a.text)
             print('\n'.join(hits) or 'limpo')
             return 1 if hits else 0
     except LearningError as exc:

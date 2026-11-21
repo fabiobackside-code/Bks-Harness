@@ -1,6 +1,6 @@
 {
   "name": "bkhar",
-  "version": "3.0.0-beta",
+  "version": "3.0.1",
   "description": "Kit BKS de Spec-Driven Development para Claude Code: skills de SDD, arquitetura hexagonal .NET, TypeScript e Go, comandos de workbench e agentes especializados.",
   "author": {
     "name": "Fabio Magalhaes",

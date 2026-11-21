@@ -15,28 +15,36 @@ public class Pedido : AggregateRoot
 
     private Pedido() { } // para ORM
 
-    // Factory method — construção controlada
-    public static Pedido Criar(ClienteId clienteId) => new()
+    // Factory method — construção controlada; regra violada volta como erro, não como exceção
+    public static PipelineResult<Pedido> Criar(ClienteId clienteId, IReadOnlyList<ItemPedido> itens)
     {
-        Id = PedidoId.Novo(),
-        ClienteId = clienteId,
-        Status = PedidoStatus.Rascunho
-    };
-
-    public void AdicionarItem(ItemPedido item)
-    {
-        if (Status != PedidoStatus.Rascunho)
-            throw new DomainException("Pedido não pode ser alterado após confirmação");
-        _itens.Add(item);
+        if (itens.Count == 0) return PedidoErrors.SemItens;
+        var pedido = new Pedido { Id = PedidoId.Novo(), ClienteId = clienteId, Status = PedidoStatus.Rascunho };
+        pedido._itens.AddRange(itens);
+        return pedido;
     }
 
-    public void Confirmar()
+    public PipelineResult AdicionarItem(ItemPedido item)
     {
-        if (!_itens.Any())
-            throw new DomainException("Pedido sem itens não pode ser confirmado");
+        if (Status != PedidoStatus.Rascunho) return PipelineResult.Fail(PedidoErrors.JaConfirmado);
+        _itens.Add(item);
+        return PipelineResult.Ok();
+    }
+
+    public PipelineResult Confirmar()
+    {
+        if (_itens.Count == 0) return PipelineResult.Fail(PedidoErrors.SemItens);
         Status = PedidoStatus.Confirmado;
         AddDomainEvent(new PedidoConfirmado(Id, ClienteId));
+        return PipelineResult.Ok();
     }
+}
+
+// Erros de negócio do contexto, como valores
+public static class PedidoErrors
+{
+    public static readonly PipelineError SemItens = new("PEDIDO.SEM_ITENS", "Pedido sem itens.");
+    public static readonly PipelineError JaConfirmado = new("PEDIDO.JA_CONFIRMADO", "Pedido não pode ser alterado após confirmação.");
 }
 ```
 
@@ -44,7 +52,8 @@ public class Pedido : AggregateRoot
 - Setters sempre `private`
 - Constructor privado para ORM
 - Factory method estático para criação controlada
-- Métodos de comportamento encapsulam regras
+- Métodos de comportamento encapsulam regras e devolvem `PipelineResult` (ou `PipelineResult<T>`):
+  regra violada é `PipelineError`, nunca `throw` (`SKILL.md`, restrição 29)
 - Domain Events nomeados no passado, disparados via `AddDomainEvent` após mudança de estado
 
 ## Value Objects
@@ -76,20 +85,18 @@ public sealed record PedidoConfirmado(PedidoId PedidoId, ClienteId ClienteId)
 }
 ```
 
-## Application Service (Orquestração via Pipeline)
+## Quem chama a regra do aggregate
 
-Application Services não contêm regra de negócio. Orquestram via PipelineOrchestrator.
+O aggregate guarda a regra (`Pedido.Criar`, `pedido.Cancelar`); quem o chama depende da forma do
+projeto, declarada na fase 2 da entrevista:
 
-```csharp
-public sealed class CreatePedidoUseCase(
-    PipelineOrchestrator<TransactionCreatePedido, PedidoResponse> pipeline)
-    : ICreatePedidoUseCase
-{
-    public ValueTask<PipelineResult<PedidoResponse>> ExecuteAsync(
-        TransactionCreatePedido transaction, CancellationToken ct = default)
-        => pipeline.ExecuteAsync(transaction, ct);
-}
-```
+| Forma | Quem chama | Onde |
+|---|---|---|
+| Padrão direto | `{Entidade}Service`, implementação de `I{Entidade}Service` | `Domain/Services/` |
+| TXC (Transaction Context) | `ApplyRule` do executor transacional | `Application/{Contexto}/{Operacao}/` |
+
+Nos dois, quem chama não repete a regra: lê o que ela precisa, entrega ao aggregate e grava o
+resultado pela Port. Não há `I{Entidade}Handler` nem orquestrador.
 
 ## Repositório (Port no Domain)
 

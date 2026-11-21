@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Índice das decisões e dos casos de repos/ do vault, incremental e sem modelo, mais as checagens do harvest.
+"""Índice das decisões e dos casos de repos/ do vault e do próprio kit, incremental e sem modelo, mais as checagens do harvest.
 
 Uso:
-  harvest.py index [VAULT]                 atualiza knowledge/wiki/experiencia/_index.json
+  harvest.py index [VAULT]                 atualiza knowledge/wiki/experiencia/_index.json, com o kit em kit/bks-harness
   harvest.py themes [VAULT] [--json]       contagem por tema, para a consolidação
   harvest.py check --page ARQUIVO [VAULT]  recusa página com termo da lista de bloqueio ou dado sensível
   harvest.py stale REPO [VAULT]            sai 1 quando o projeto tem ADR ou caso mais novo que o índice
@@ -23,11 +23,27 @@ import learning  # noqa: E402
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
+KIT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+KIT_NAME = 'bks-harness'
 FULL = ('backside', 'private')
 HISTORY = ('old',)
 CONCEPT_ONLY = {'w3': ('nquantic',)}
 DATE = re.compile(r'\b(\d{4}-\d{2}-\d{2})\b')
 STATUS = re.compile(r'(?i)status\W{0,6}\s*([a-zà-ú-]+)')
+STATES = {
+    'aceita': 'aceita', 'aceito': 'aceita', 'accepted': 'aceita',
+    'proposta': 'proposta', 'proposto': 'proposta', 'proposed': 'proposta',
+    'superada': 'superada', 'superado': 'superada', 'superseded': 'superada',
+    'substituída': 'superada', 'substituído': 'superada', 'substituida': 'superada',
+    'revertida': 'revertida', 'revertido': 'revertida', 'reverted': 'revertida',
+    'rejeitada': 'rejeitada', 'rejeitado': 'rejeitada', 'rejected': 'rejeitada', 'recusada': 'rejeitada',
+    'depreciada': 'depreciada', 'deprecated': 'depreciada', 'cancelada': 'cancelada',
+}
+
+
+def state(head):
+    """Primeiro estado conhecido do cabeçalho; palavra solta depois de 'status' não é estado."""
+    return next((STATES[m.group(1).lower()] for m in STATUS.finditer(head) if m.group(1).lower() in STATES), None)
 THEMES = (
     ('dados', r'banco|dapper|ef core|\bsql\b|postgres|schema|migration|reposit[óo]rio|oracle|mongo'),
     ('mensageria', r'rabbit|kafka|\bfila|mensageria|consumer'),
@@ -60,9 +76,26 @@ def _read(path):
         return fh.read()
 
 
-def sources(vault):
-    """(caminho, categoria, projeto, historico, conceito) de cada arquivo que entra no índice."""
-    out = []
+def _decision_files(proj_dir):
+    files = sorted(glob.glob(os.path.join(proj_dir, 'decisions', 'ADR-*.md')))
+    learn = os.path.join(proj_dir, 'LEARNINGS.md')
+    if os.path.isfile(learn):
+        files.append(learn)
+    return files
+
+
+def _rel(vault, path, kit):
+    if kit and os.path.normcase(os.path.abspath(path)).startswith(os.path.normcase(os.path.abspath(kit)) + os.sep):
+        return 'kit/%s/%s' % (KIT_NAME, os.path.relpath(path, kit).replace(os.sep, '/'))
+    return os.path.relpath(path, vault).replace(os.sep, '/')
+
+
+def sources(vault, kit=None):
+    """(caminho, categoria, projeto, historico, conceito) de cada arquivo que entra no índice.
+
+    O kit fica fora do vault; com kit, as decisões dele entram na categoria kit.
+    """
+    out = [(f, 'kit', KIT_NAME, False, False) for f in _decision_files(kit)] if kit else []
     for cat_dir in sorted(glob.glob(os.path.join(vault, 'repos', '*'))):
         cat = os.path.basename(cat_dir)
         if not os.path.isdir(cat_dir) or (cat not in FULL + HISTORY and cat not in CONCEPT_ONLY):
@@ -71,17 +104,13 @@ def sources(vault):
             proj = os.path.basename(proj_dir)
             if not os.path.isdir(proj_dir) or (cat in CONCEPT_ONLY and proj not in CONCEPT_ONLY[cat]):
                 continue
-            files = sorted(glob.glob(os.path.join(proj_dir, 'decisions', 'ADR-*.md')))
-            learn = os.path.join(proj_dir, 'LEARNINGS.md')
-            if os.path.isfile(learn):
-                files.append(learn)
-            for f in files:
+            for f in _decision_files(proj_dir):
                 out.append((f, cat, proj, cat in HISTORY, cat in CONCEPT_ONLY))
     return out
 
 
-def _key(vault, path, concept):
-    rel = os.path.relpath(path, vault).replace(os.sep, '/')
+def _key(vault, path, concept, kit=None):
+    rel = _rel(vault, path, kit)
     if concept:
         return '%s:%s' % (rel.split('/')[2], hashlib.sha1(rel.encode('utf-8')).hexdigest()[:12])
     return rel
@@ -91,7 +120,8 @@ def _parse(path, cat, proj, historic, concept):
     text = _read(path)
     if os.path.basename(path) == 'LEARNINGS.md':
         chunks = re.split(r'(?m)^## ', text)[1:]
-        items = [('learning', c.splitlines()[0].strip(), c) for c in chunks if c.strip()]
+        items = [('learning', c.splitlines()[0].strip(), c) for c in chunks
+                 if c.strip() and '{{' not in c.splitlines()[0]]
     else:
         title = next((l[2:].strip() for l in text.splitlines() if l.startswith('# ')), os.path.basename(path))
         items = [('adr', title, text)]
@@ -104,22 +134,20 @@ def _parse(path, cat, proj, historic, concept):
         if concept:
             e['conceito'] = True
         else:
-            s = STATUS.search(head)
-            e.update(titulo=title, estado=s.group(1).lower() if s else None,
-                     arquivo=None)
+            e.update(titulo=title, estado=state(head), arquivo=None)
             if historic:
                 e['historico'] = True
         entries.append(e)
     return entries
 
 
-def index(vault):
+def index(vault, kit=None):
     path = index_path(vault)
     old = json.loads(_read(path)) if os.path.isfile(path) else {}
     files_old, entries_old = old.get('arquivos', {}), old.get('entradas', {})
     files, entries, reread = {}, {}, 0
-    for f, cat, proj, historic, concept in sources(vault):
-        fkey = _key(vault, f, concept)
+    for f, cat, proj, historic, concept in sources(vault, kit):
+        fkey = _key(vault, f, concept, kit)
         mtime = os.path.getmtime(f)
         cached = files_old.get(fkey)
         if cached and cached['mtime'] == mtime and all(k in entries_old for k in cached['entradas']):
@@ -131,7 +159,7 @@ def index(vault):
         for n, e in enumerate(_parse(f, cat, proj, historic, concept)):
             k = fkey if e['tipo'] == 'adr' else '%s#%d' % (fkey, n + 1)
             if not concept:
-                e['arquivo'] = os.path.relpath(f, vault).replace(os.sep, '/')
+                e['arquivo'] = _rel(vault, f, kit)
             e['mtime'] = mtime
             entries[k] = e
             keys.append(k)
@@ -204,7 +232,7 @@ def main(argv=None):
         print('vault sem repos/: defina BKS_VAULT ou passe o caminho')
         return 2
     if cmd == 'index':
-        data = index(vault)
+        data = index(vault, KIT_ROOT)
         print('índice: %d entradas, %d arquivo(s) relido(s)' % (len(data['entradas']), data['relidos']))
     elif cmd == 'themes':
         t = themes(vault)
