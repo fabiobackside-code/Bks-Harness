@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atlas do BKS Harness — Manual da Equipe de Agentes · v2.0.0</title>
+<title>Atlas do BKS Harness — Manual da Equipe de Agentes · v2.0.1</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,12 +39,12 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">FABIO · BKS · BKS HARNESS</div>
 <div><h1>Atlas do BKS Harness</h1><p class="sub">Manual da Equipe de Agentes: conceitos, arquitetura, equipe, ritos, aprendizado, comandos com manual de uso, skills e um case de ponta a ponta.</p></div>
-<div class="meta">Versão 2.0.0 · Claude primeiro, plugável a DeepSeek, Ollama e outros</div></section>
+<div class="meta">Versão 2.0.1 · Claude primeiro, plugável a DeepSeek, Ollama e outros</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#prefacio">Prefácio</a></li><li><a href="#parte-i-fundamentos">Parte I — Fundamentos</a></li><li><a href="#parte-ii-arquitetura">Parte II — Arquitetura</a></li><li><a href="#parte-iii-a-equipe">Parte III — A Equipe</a></li><li><a href="#parte-iv-ritos-e-dialogo">Parte IV — Ritos e diálogo</a></li><li><a href="#parte-v-o-ciclo-de-aprendizado">Parte V — O ciclo de aprendizado</a></li><li><a href="#parte-vi-fluxo-e-comandos">Parte VI — Fluxo e comandos</a></li><li><a href="#parte-vii-case-comprovante-pix">Parte VII — Case: comprovante PIX</a></li><li><a href="#parte-viii-implantacao">Parte VIII — Implantação</a></li><li><a href="#parte-ix-evolucao-skills-plugaveis">Parte IX — Evolução: skills plugáveis</a></li><li><a href="#parte-x-manual-de-comandos">Parte X — Manual de comandos</a></li><li><a href="#apendices">Apêndices</a></li></ol></nav>
 <h2 id="prefacio">Prefácio</h2>
 <p>Este manual descreve o BKS (Backside) Harness: uma equipe de sete papéis, seis agentes e o Gerente, que trabalha com você, conversa com você e faz o seu padrão de desenvolvimento crescer a cada projeto. Ele não é uma ferramenta de vibe coding. O código é consequência de conversas, decisões registradas e verificações executadas.</p>
 <p>O harness nasceu de dois projetos. O <strong>2brains</strong> (<code>${BKS_VAULT}</code>, template público em <code>bks-2brains</code>) é o vault: guarda o que atravessa projetos. Ali ficam quem você é (<code>workbench/</code>), o que você aprendeu (<code>knowledge/</code>) e os projetos em <code>repos/{backside|w3|private}/</code>, cada um com git e memória próprios. O <strong>BKS kit</strong> (<code>bks-sdd-kit</code>, plugin <code>bks</code> 0.7.0) era a ferramenta: 17 skills, 12 comandos <code>/bks:*</code>, quatro agentes, guardas em <code>hooks/</code> e 20 casos de eval.</p>
-<p>O harness é esse kit evoluído e rebatizado <code>bkhar</code>, sobre o mesmo vault. Na 3.0.0-beta ele tem 19 skills, 25 comandos <code>/bkhar:*</code>, seis agentes, oito guardas, 48 regras registradas e 28 casos de eval. Nenhum comando lê o vault para funcionar: cada projeto segue autossuficiente.</p>
+<p>O harness é esse kit evoluído e rebatizado <code>bkhar</code>, sobre o mesmo vault. Na 3.0.1 ele tem 19 skills, 25 comandos <code>/bkhar:*</code>, seis agentes, oito guardas, 48 regras registradas e 28 casos de eval. Nenhum comando lê o vault para funcionar: cada projeto segue autossuficiente.</p>
 <p><strong>Para quem é.</strong> Para você, como arquiteto e dono do padrão. E, mais adiante, para a sua equipe de devs júnior e pleno, que podem trabalhar com os mesmos agentes e o mesmo padrão.</p>
 <p><strong>Como ler.</strong> Fundamentos e Arquitetura explicam o porquê e a estrutura. Equipe, Ritos e Aprendizado são o coração: quem trabalha, como dialoga e como aprende. Fluxo e comandos é a referência. O case mostra tudo funcionando. Implantação conta o caminho até aqui e o que vem depois. Evolução mostra como o harness cresce com skills novas. O Manual de comandos detalha cada comando. Os apêndices trazem templates e o histórico de versões.</p>
 <p>Três documentos completam este: o guia para quem chega (<code>docs/artefatos/guia/</code>), que explica o desenho por pergunta; o treinamento (<code>docs/artefatos/treinamento/</code>), que ensina a instalar e usar; e o <code>docs/ARCHITECTURE.md</code>, com o porquê de cada decisão.</p>
@@ -1103,14 +1103,9 @@ evidencia: ADR-007; CPF completo em log de Debug
 <td>pausada: o Maestri a substituiu</td>
 </tr>
 <tr>
-<td>3.0.0-beta</td>
-<td>a equipe em terminais do Maestri, despacho por papel, comandos delegados, Bash limitado do Arquiteto</td>
-<td>publicada no público</td>
-</tr>
-<tr>
-<td>3.0.0</td>
-<td>as lacunas de Harness Engineering: recuperação da task, observabilidade, sensores de arquitetura, registro de regras, deriva, linha de base dos evals, <code>/bkhar:tasks</code>, guia para quem chega</td>
-<td>em construção, no roteiro <code>06-fechamento-3.0.0.md</code></td>
+<td>3.0.1</td>
+<td>a equipe em terminais do Maestri, despacho por papel, comandos delegados, Bash limitado do Arquiteto; e as lacunas de Harness Engineering: recuperação da task, observabilidade, sensores de arquitetura, registro de regras, deriva, linha de base dos evals, <code>/bkhar:tasks</code>, guia para quem chega</td>
+<td>feita: tag <code>v3.0.0</code> no privado; a <code>v3.0.1</code>, com o manifesto em 3.0.1, no privado e no público</td>
 </tr>
 <tr>
 <td>validação pós-3.0.0</td>
@@ -1167,7 +1162,7 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 <li>[x] Equipe, Gerente e ritos (0.9.0)</li>
 <li>[x] Modos, ondas, painel, portão de arquitetura, biblioteca, <code>retro</code> e <code>harvest</code> (1.0.0)</li>
 <li>[x] Provedores pelo lançador, com a chave cifrada (1.1.0)</li>
-<li>[x] Equipe em terminais do Maestri, com queda para subagente (3.0.0-beta)</li>
+<li>[x] Equipe em terminais do Maestri, com queda para subagente (3.0.1)</li>
 <li>[x] Recuperação da task, métrica por fase, sensores de arquitetura, registro de regras e deriva (3.0.0)</li>
 <li>[x] Linha de base dos evals: 28 casos, delta médio +0,19 (3.0.0)</li>
 <li>[ ] Fechar a 3.0.0: arrumação, atestado, merge, tag e publicação (Ações 013 a 015)</li>
@@ -3566,9 +3561,15 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 </tr>
 <tr>
 <td>Atlas do BKS Harness</td>
+<td>2.0.1</td>
+<td>2026-11-21</td>
+<td>3.0.0 e 3.0.1 feitas no roteiro de versões; contagem da Visão geral referida à 3.0.1</td>
+</tr>
+<tr>
+<td>Atlas do BKS Harness</td>
 <td>2.0.0</td>
 <td>2026-11-20</td>
-<td>Revisão completa contra a 3.0.0-beta: guias e sensores nos Fundamentos; a Arquitetura passa a ser o plugin real, com a Figura 3 refeita e sem o core hexagonal, o <code>routing.yaml</code> e o policy engine; equipe em terminais do Maestri; <code>/bkhar:tasks</code> no fluxo; seções novas de travas e recuperação e de regras, deriva e medição; tabela dos 25 comandos; case com RED e tasks; Implantação com o caminho real das versões; catálogo das 19 skills; Apêndice B com a definição de provedor; glossário com o vocabulário do guia. Seções do case em diante renumeradas de 28–42 para 30–44</td>
+<td>Revisão completa contra a 3.0: guias e sensores nos Fundamentos; a Arquitetura passa a ser o plugin real, com a Figura 3 refeita e sem o core hexagonal, o <code>routing.yaml</code> e o policy engine; equipe em terminais do Maestri; <code>/bkhar:tasks</code> no fluxo; seções novas de travas e recuperação e de regras, deriva e medição; tabela dos 25 comandos; case com RED e tasks; Implantação com o caminho real das versões; catálogo das 19 skills; Apêndice B com a definição de provedor; glossário com o vocabulário do guia. Seções do case em diante renumeradas de 28–42 para 30–44</td>
 </tr>
 <tr>
 <td>Atlas do BKS Harness</td>

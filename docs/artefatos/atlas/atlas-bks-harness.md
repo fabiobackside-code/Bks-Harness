@@ -2,7 +2,7 @@
 
 Oct 18, 2026 · @Fabio Magalhaes
 
-Versão 2.0.0, revisada contra o `bkhar` 3.0.0-beta. A 2.0.0 reescreve o Atlas sobre o que existe no repositório: guias e sensores, o plugin como arquitetura, a equipe em terminais do Maestri, o `/bkhar:tasks`, a recuperação da task, o registro de regras, a deriva, a medição e o caminho real das versões. O que não existe sai marcado como *proposto*. O histórico de versões está no Apêndice F.
+Versão 2.0.1, revisada contra o `bkhar` 3.0.1. A 2.0.0 reescreve o Atlas sobre o que existe no repositório: guias e sensores, o plugin como arquitetura, a equipe em terminais do Maestri, o `/bkhar:tasks`, a recuperação da task, o registro de regras, a deriva, a medição e o caminho real das versões. O que não existe sai marcado como *proposto*. O histórico de versões está no Apêndice F.
 
 ## Prefácio
 
@@ -10,7 +10,7 @@ Este manual descreve o BKS (Backside) Harness: uma equipe de sete papéis, seis 
 
 O harness nasceu de dois projetos. O **2brains** (`${BKS_VAULT}`, template público em `bks-2brains`) é o vault: guarda o que atravessa projetos. Ali ficam quem você é (`workbench/`), o que você aprendeu (`knowledge/`) e os projetos em `repos/{backside|w3|private}/`, cada um com git e memória próprios. O **BKS kit** (`bks-sdd-kit`, plugin `bks` 0.7.0) era a ferramenta: 17 skills, 12 comandos `/bks:*`, quatro agentes, guardas em `hooks/` e 20 casos de eval.
 
-O harness é esse kit evoluído e rebatizado `bkhar`, sobre o mesmo vault. Na 3.0.0-beta ele tem 19 skills, 25 comandos `/bkhar:*`, seis agentes, oito guardas, 48 regras registradas e 28 casos de eval. Nenhum comando lê o vault para funcionar: cada projeto segue autossuficiente.
+O harness é esse kit evoluído e rebatizado `bkhar`, sobre o mesmo vault. Na 3.0.1 ele tem 19 skills, 25 comandos `/bkhar:*`, seis agentes, oito guardas, 48 regras registradas e 28 casos de eval. Nenhum comando lê o vault para funcionar: cada projeto segue autossuficiente.
 
 **Para quem é.** Para você, como arquiteto e dono do padrão. E, mais adiante, para a sua equipe de devs júnior e pleno, que podem trabalhar com os mesmos agentes e o mesmo padrão.
 
@@ -585,8 +585,7 @@ A implantação partiu do kit que já funcionava e nunca parou os projetos em cu
 | 1.0.0 | modos e prontidão, ondas pelo grafo, painel com inbox, arquitetura como portão, biblioteca, `retro` e `harvest` | feita |
 | 1.1.0 | lançador `bkhar` com Claude, DeepSeek e OpenRouter, chave cifrada, skill `bks-design-system` | feita |
 | 2.0.0 | aplicação com CLI e web | pausada: o Maestri a substituiu |
-| 3.0.0-beta | a equipe em terminais do Maestri, despacho por papel, comandos delegados, Bash limitado do Arquiteto | publicada no público |
-| 3.0.0 | as lacunas de Harness Engineering: recuperação da task, observabilidade, sensores de arquitetura, registro de regras, deriva, linha de base dos evals, `/bkhar:tasks`, guia para quem chega | em construção, no roteiro `06-fechamento-3.0.0.md` |
+| 3.0.1 | a equipe em terminais do Maestri, despacho por papel, comandos delegados, Bash limitado do Arquiteto; e as lacunas de Harness Engineering: recuperação da task, observabilidade, sensores de arquitetura, registro de regras, deriva, linha de base dos evals, `/bkhar:tasks`, guia para quem chega | feita: tag `v3.0.0` no privado; a `v3.0.1`, com o manifesto em 3.0.1, no privado e no público |
 | validação pós-3.0.0 | as provas do piloto, as execuções de referência e o contexto por papel | depois da tag `v3.0.0` |
 | 4.0.0 | portabilidade: o harness em outro executor além do Claude Code | *proposta* |
 
@@ -638,7 +637,7 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 - [x] Equipe, Gerente e ritos (0.9.0)
 - [x] Modos, ondas, painel, portão de arquitetura, biblioteca, `retro` e `harvest` (1.0.0)
 - [x] Provedores pelo lançador, com a chave cifrada (1.1.0)
-- [x] Equipe em terminais do Maestri, com queda para subagente (3.0.0-beta)
+- [x] Equipe em terminais do Maestri, com queda para subagente (3.0.1)
 - [x] Recuperação da task, métrica por fase, sensores de arquitetura, registro de regras e deriva (3.0.0)
 - [x] Linha de base dos evals: 28 casos, delta médio +0,19 (3.0.0)
 - [ ] Fechar a 3.0.0: arrumação, atestado, merge, tag e publicação (Ações 013 a 015)
@@ -912,7 +911,8 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 | Artefato | Versão | Data | O que mudou |
 | --- | --- | --- | --- |
 | Apresentação BKS Harness | 3.0.0 | 2026-11-20 | Revista contra o Atlas 2.0.0: quatro slides novos (guias e sensores, a equipe em terminais, travas e recuperação, regras e medição), arquitetura, componentes, modelo e provedor, comandos, caminho e versões reescritos; `/tasks` no fluxo; o que não existe sai como proposto; 34 slides |
-| Atlas do BKS Harness | 2.0.0 | 2026-11-20 | Revisão completa contra a 3.0.0-beta: guias e sensores nos Fundamentos; a Arquitetura passa a ser o plugin real, com a Figura 3 refeita e sem o core hexagonal, o `routing.yaml` e o policy engine; equipe em terminais do Maestri; `/bkhar:tasks` no fluxo; seções novas de travas e recuperação e de regras, deriva e medição; tabela dos 25 comandos; case com RED e tasks; Implantação com o caminho real das versões; catálogo das 19 skills; Apêndice B com a definição de provedor; glossário com o vocabulário do guia. Seções do case em diante renumeradas de 28–42 para 30–44 |
+| Atlas do BKS Harness | 2.0.1 | 2026-11-21 | 3.0.0 e 3.0.1 feitas no roteiro de versões; contagem da Visão geral referida à 3.0.1 |
+| Atlas do BKS Harness | 2.0.0 | 2026-11-20 | Revisão completa contra a 3.0: guias e sensores nos Fundamentos; a Arquitetura passa a ser o plugin real, com a Figura 3 refeita e sem o core hexagonal, o `routing.yaml` e o policy engine; equipe em terminais do Maestri; `/bkhar:tasks` no fluxo; seções novas de travas e recuperação e de regras, deriva e medição; tabela dos 25 comandos; case com RED e tasks; Implantação com o caminho real das versões; catálogo das 19 skills; Apêndice B com a definição de provedor; glossário com o vocabulário do guia. Seções do case em diante renumeradas de 28–42 para 30–44 |
 | Atlas do BKS Harness | 1.9.0 | 2026-11-04 | Modos de condução e prontidão (seção 25), ondas e painel (seção 26), modelo por papel, Parte V com o aprendizado candidato, `/bkhar:retro` e `/bkhar:harvest`; tabela de comandos com toda a 1.0.0; prefixo `/bkhar:` no texto do estado atual; Parte X com o manual 1.4.1 |
 | Apresentação BKS Harness | 2.0.0 | 2026-11-04 | Slides novos de modos e de ondas e painel; aprendizado com retro e harvest; roadmap com a 1.0.0 |
 | Apresentação BKS Harness | 1.9.0 | 2026-11-04 | Fluxo com a arquitetura antes da especificação; `/bkhar:library` nos comandos e no manual de uso |

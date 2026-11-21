@@ -1,6 +1,6 @@
 # Guia do bks-harness — O harness explicado para quem chega
 
-Versão 0.1.0, escrito sobre o plugin `bkhar` 3.0.0-beta.
+Versão 0.1.0, escrito sobre o plugin `bkhar` 3.0.1.
 
 ## Para que serve este guia
 

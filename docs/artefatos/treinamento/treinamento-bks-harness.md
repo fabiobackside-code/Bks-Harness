@@ -1,6 +1,6 @@
 # Treinamento do bks-harness — Instalação e uso
 
-Versão 1.5.0, sobre o plugin `bkhar` 3.0.0-beta. A instalação foi testada com o Claude Code 2.1.303 e o `bkhar` 0.9.0; a prova numa instalação limpa da 3.0.0 ainda não rodou.
+Versão 1.5.0, sobre o plugin `bkhar` 3.0.1. A instalação foi testada com o Claude Code 2.1.303 e o `bkhar` 0.9.0; a prova numa instalação limpa da 3.0.0 ainda não rodou.
 
 ## Antes de começar
 
@@ -104,7 +104,7 @@ plugin é lido direto da pasta: o que estiver no disco vale na próxima sessão.
 
 ```
 ❯ bkhar@bks-harness
-  Version: 3.0.0-beta
+  Version: 3.0.1
   Scope: user
   Status: ✔ enabled
 ```
@@ -459,7 +459,7 @@ O detalhe de cada comando, com passo a passo e exemplo, está no manual de coman
 
 | Versão | Data | O que mudou |
 |---|---|---|
-| 1.5.0 | 2026-11-20 | Alinhado à 3.0.0-beta: `/bkhar:tasks` no ciclo e na referência, `/bkhar:audit`, `--resume` do loop, Bash limitado do `architect` e ponteiro para o guia para quem chega |
+| 1.5.0 | 2026-11-20 | Alinhado à 3.0: `/bkhar:tasks` no ciclo e na referência, `/bkhar:audit`, `--resume` do loop, Bash limitado do `architect` e ponteiro para o guia para quem chega |
 | 1.4.0 | 2026-11-06 | Capítulo 13, "Usar com o Maestri", com o `/bkhar:maestri` e o ponteiro para o guia do Maestri |
 | 1.3.0 | 2026-11-05 | Guia de preparação da máquina e dos provedores de modelo, apontando para o manual de comandos |
 | 1.2.0 | 2026-11-04 | Capítulo 11, "Rodar no modo autônomo": prontidão, suposições, ondas, painel e `/bkhar:retro`; referência rápida com toda a 1.0.0 |
