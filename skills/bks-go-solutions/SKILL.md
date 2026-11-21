@@ -8,15 +8,16 @@ description: >
   coleta de variáveis específicas, confirmação e geração. Também use quando o usuário mencionar:
   projeto Go, golang, chi router, go.mod, goroutine, graceful shutdown, context.Context, table-driven
   test, testcontainers-go, sqlc, pgx, segmentio/kafka-go, cobra CLI, layout cmd/internal/pkg.
-  ADOTA o padrão TXC na forma que Go admite — struct por valor, imutabilidade por disciplina — e
-  `error` idiomático no lugar de Result[T].
-version: "1.0"
+  Gera o padrão direto ou, quando o .bks-profile.json declara txc, o TXC (Transaction Context) por
+  executor tipado (txc.Op), com `error` idiomático no lugar de Result[T].
+version: "2.0"
 ---
 
 # bks-go-solutions
 
 > Agente orquestrador para geração de soluções Go sob os padrões BKS.
-> Referências em `references/`: `go-api-chi`, `go-worker`, `go-consumer`, `go-cli`, `go-sdk`.
+> Referências em `references/`: `go-api-chi`, `go-worker`, `go-consumer`, `go-cli`, `go-sdk` e
+> `go-txc` (a base do TXC, só quando a VC-6 é TXC).
 
 ---
 
@@ -40,7 +41,12 @@ código — ele é pré-requisito, não leitura complementar.
 - Nunca declare interface no pacote que a implementa — a interface pertence ao consumidor
 - Nunca use container de DI por reflexão (`dig`, `fx`) — wiring manual em `main.go`
 - Nunca use biblioteca de asserção em teste — `testing` da stdlib, table-driven
+- Nunca gere o esqueleto sem `internal/architecture_test.go`, nem use arch-go ou outro módulo para
+  ele: o teste usa só `go/parser` da stdlib. Pedido pelo nome não abre exceção; recuse com o motivo
 - Nunca gere adapter que não foi pedido — deixe `// TODO: configurar Kafka` no lugar
+- Nunca misture as formas: o projeto é padrão direto ou TXC (VC-6), nunca os dois
+- Com TXC, nunca crie o seed no adapter nem encadeie passo fora do `txc` — o adapter preenche o
+  `txc.Call` e chama o `txc.Op`; sem `UseCase` nem `Handler` por operação como Primary Port
 - Nunca traduza construção .NET sem equivalente em Go — a tabela da seção 1 de `go-standards.md`
   dá a saída padrão da linguagem; o que está em "não se traduz" simplesmente não se gera
 - Não pule a FASE 4 — o desenvolvedor valida antes da geração
@@ -78,6 +84,13 @@ código — ele é pré-requisito, não leitura complementar.
 | VC-3 | Banco de dados | PostgreSQL, SQL Server, MongoDB, Redis, nenhum     | Sim         |        |
 | VC-4 | Observabilidade| OpenTelemetry, `log/slog` apenas, nenhuma          | Não         | `log/slog` |
 | VC-5 | Contextos      | lista de contextos de domínio (ex: Order, Payment) | Sim         |        |
+| VC-6 | Forma          | padrão direto, TXC                                 | API, WORKER e CONSUMER | o `txc` do `.bks-profile.json` |
+
+A VC-6 sai do `.bks-profile.json`: `txc: "base"` é TXC; ausente é padrão direto. Sem o arquivo,
+pergunte. `txc: "motor"` não se aplica ao Go (o motor do `bks-motor-sdk` é pacote .NET): pergunte
+se o projeto fica no padrão direto ou com `base`. CLI e SDK são sempre padrão direto. Padrão direto é handler → serviço do contexto →
+store; TXC é adapter → `txc.Op` montado por `txc.NewTransaction` ou `txc.NewQuery`
+(`references/go-txc.md`), uma transação por código.
 
 `ModulePath` define o import de todo o projeto — pergunte primeiro, e o nome do binário sai do
 último segmento salvo indicação contrária.
@@ -152,19 +165,23 @@ construção .NET vira em Go, e o que não se traduz de jeito nenhum. Consulte-a
 premissa BKS estiver escrita em termos de C# — é o que evita gerar `Result[T]`, AutoMapper ou
 container de DI em Go.
 
-O resto do arquivo decide: como o erro sobe, como o TXC
-fica imutável sem `record`, onde a interface é declarada, como o composition root é montado, e o
-que de Object Calisthenics vale e o que não vale.
+O resto do arquivo decide: como o erro sobe, como o TXC fica somente leitura sem `record`, onde a
+interface é declarada, como o composition root é montado, e o que de Object Calisthenics vale e o
+que não vale.
+
+Com a VC-6 = TXC, leia também `references/go-txc.md` e gere o pacote `internal/platform/txc` uma
+vez, antes do primeiro contexto.
 
 Declare explicitamente, antes de escrever o primeiro arquivo:
 
 - os contextos de domínio e o pacote de cada um
 - onde cada interface consumida é declarada
-- se a solução tem pipeline por estágios ou chamada direta
+- a forma (VC-6) e, com TXC, o catálogo de códigos por contexto: escrita em `txc.NewTransaction`,
+  leitura em `txc.NewQuery`
 
-Solução simples não recebe pipeline. Um CRUD de três campos é handler, use case e store — a
-pipeline entra quando há estágio real a ordenar (validação, idempotência, enriquecimento). Impor
-estágio vazio é a complexidade acidental que a premissa manda cortar.
+Padrão direto não recebe pipeline: um CRUD de três campos é handler, serviço e store. O TXC é
+escolha do projeto, para sistema com escrita que precisa de idempotência, rastro e compensação; não
+se liga por operação.
 
 ## 6. BASE DE APRENDIZADO — LER ANTES, ESCREVER DEPOIS
 
@@ -216,9 +233,14 @@ Geração sem nada disso não vira página.
 6. Nenhuma goroutine sem caminho de término definido
 7. Graceful shutdown por `signal.NotifyContext` em todo binário de longa duração
 8. `README.md` e `ARCHITECTURE.md` escritos ou atualizados
-9. Comentário só em símbolo exportado, começando pelo nome do símbolo; teto de cinco linhas
+9. Comentário só em símbolo exportado, começando pelo nome do símbolo; teto de 5 linhas
 10. Código passou pelo `go-review-checklist.md` da skill `bks-standards` — erro, concorrência,
     interface, segurança
 11. Base de aprendizado alimentada (seção 6), com a wiki anonimizada e o índice atualizado
+12. Com TXC: adapter só preenche o `txc.Call` e chama o `txc.Op`; nenhum seed criado fora do `txc`
+13. Com TXC: toda escrita em `txc.NewTransaction` com `IdempotencyStore`; dado entre passos por
+    retorno tipado, sem campo mutável nem ponteiro para o seed
+14. `internal/architecture_test.go` gerado de `references/architecture-tests.md` e verde: contexto
+    sem import de adapter, adapter sem import de outro adapter, nenhum `Result[T]`
 
 </context>

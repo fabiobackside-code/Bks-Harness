@@ -24,7 +24,7 @@ Exclusivas do orquestrador — subagentes descrevem, não editam:
 | Arquivo | Por quê |
 |---|---|
 | `Program.cs` (Composition Root) | Todo registro de feature/adapter passa aqui |
-| `{Feature}/{Operação}/*Steps.cs` do Pipeline Orchestrator | Toda operação registra estágios aqui |
+| `main/ServiceConfiguration.cs` e, no TXC, `Application/{Contexto}/{Contexto}Transactions.cs` | Todo adapter e toda transação se registram aqui |
 | `db/migrations/NNN_*` | Numeração colide |
 | `decisions/ADR-NNN.md` | Numeração ADR-NNN colide |
 | `specs/tasks/` | Numeração TASK-NNN colide |
@@ -41,13 +41,13 @@ ls specs/tasks/ | tail -1
 
 ## Zonas paralelizáveis
 Dois agentes só ao mesmo tempo se cada um ficar inteiramente dentro de:
-- `Features/{ContextoA}/` vs `Features/{ContextoB}/` (bounded contexts distintos)
+- `Domain/{ContextoA}/` vs `Domain/{ContextoB}/` e, no TXC, `Application/{ContextoA}/` vs `Application/{ContextoB}/` (bounded contexts distintos)
 - `FEAT-*.md`/`TEST-*.md` de features distintas em `specs/`
 
 ## Áreas sensíveis — revisão independente obrigatória (`/bkhar:review`)
 - Autenticação/autorização (`Identidade/`, JWT, RBAC)
-- Qualquer código que mova dinheiro, altere saldo ou grava contábil (TXC: `DataContabil`, `Nsu`)
-- Isolamento entre tenants/inquilinos (`InquilinoId` no TXC)
+- Qualquer código que mova dinheiro, altere saldo ou grave lançamento contábil
+- Isolamento entre tenants/inquilinos (`TenantId` no TXC, quando o projeto o adota)
 - Dado pessoal/regulado (LGPD)
 - Assinatura/validação de webhook, integração TCP externa
 
@@ -55,7 +55,7 @@ Dois agentes só ao mesmo tempo se cada um ficar inteiramente dentro de:
 - Zero `float`/`double` em campo monetário — sempre `decimal`
 - Idempotência por CONSTRAINT de banco, nunca só checagem em código
 - Toda query filtra por `InquilinoId`/`tenant` — sem exceção, inclusive agregados/relatórios
-- TXC é lido, nunca mutado pela aplicação
+- No TXC, o contexto é lido, nunca mutado pela aplicação
 - `<invariantes específicas deste projeto>`
 
 ## Perfis disponíveis

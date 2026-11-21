@@ -1,7 +1,7 @@
 ---
 tipo: manual
-versao: 1.6.0
-atualizado: 2026-11-06
+versao: 1.7.0
+atualizado: 2026-11-20
 ---
 
 # Manual de comandos do `bkhar`
@@ -14,7 +14,7 @@ Todo comando responde com o prefixo do plugin: `/bkhar:brain`, `/bkhar:save`. Os
 |---|---|---|
 | Entrada e vault | `brain`, `new-project`, `ingest` | raiz do vault (`brain` também roda na raiz do repo) |
 | Contexto e requisito | `note`, `canonize`, `prd`, `plan` | raiz do repo (`canonize` e `prd` aceitam a raiz do vault e perguntam o projeto) |
-| Arquitetura, biblioteca e especificação | `arch`, `library`, `refine`, `spec` | raiz do repo |
+| Arquitetura, biblioteca e especificação | `arch`, `library`, `refine`, `spec`, `tasks` | raiz do repo |
 | Execução e qualidade | `loop`, `review`, `maintainability`, `status` | raiz do repo |
 | A equipe e os ritos | `ask`, `panel` | raiz do repo |
 | Fechamento e migração | `save`, `migrate`, `mode`, `retro` | raiz do repo |
@@ -242,7 +242,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 2. Lê `profiles/{perfil}.md` e pergunta só os eixos e as questões que o perfil usa.
 3. Mostra caminho, perfil e eixos, e espera o aceite. Nada é criado antes disso.
 4. Copia o esqueleto para `${BKS_VAULT}/repos/{categoria}/{nome}/` e preenche os arquivos iniciais.
-5. Roda `git init` e faz o primeiro commit com a estrutura.
+5. Roda `git init`, instala os guardas (`scripts/install_guards.py`, com o host do `git_host`) e faz o primeiro commit com a estrutura e os guardas.
 6. Informa, em até cinco linhas, onde criou, qual perfil e o primeiro comando a rodar.
 
 Os perfis disponíveis:
@@ -267,6 +267,7 @@ Os eixos que o perfil pode perguntar:
 | `architecture_renderer` | `mermaid`, `archify`, `togaf`, `c4` | `mermaid` |
 | `frontend_target` | `web`, `mobile`, `both` | `web`, só em `frontend` e `fullstack` |
 | `rigor` | `producao`, `poc` | `producao` |
+| `git_host` | `github`, `gitlab`, `none` | `github`; decide o CI dos guardas, e `none` instala só o pre-commit |
 
 **O que produz.** Em `${BKS_VAULT}/repos/{categoria}/{nome}/`:
 
@@ -276,6 +277,7 @@ Os eixos que o perfil pode perguntar:
 - `JOURNAL.md` com a entrada "Projeto criado"
 - `README.md` e `CLAUDE.md` a partir dos templates `PROJECT-README.md` e `REPO-CLAUDE.md`
 - as pastas do esqueleto: `app/`, `brain/`, `decisions/`, `docs/`, `outputs/`, `specs/`
+- `.bkhar/guards/` com a cópia dos guardas, `.githooks/pre-commit` e o CI do host
 - o repositório git com o primeiro commit
 
 Os templates são resolvidos primeiro em `${BKS_VAULT}/workbench/templates/` e, na falta, no plugin.
@@ -392,10 +394,10 @@ cd ${BKS_VAULT}
 
 **Pré-requisito.** Nenhum. Na primeira vez, o comando cria a pasta.
 
-**Argumentos.** `<assunto> [--pasta <subpasta>]`.
+**Argumentos.** `<assunto> [--folder <subpasta>]`.
 
 - `<assunto>` vira o nome do arquivo em `SCREAMING-KEBAB.md`, sem data: "regras de emissão" vira `REGRAS-DE-EMISSAO.md`.
-- `--pasta <subpasta>` grava em `docs/input/notas/<subpasta>/`, para a fila de um colaborador externo.
+- `--folder <subpasta>` grava em `docs/input/notas/<subpasta>/`, para a fila de um colaborador externo.
 
 **O que ele faz, passo a passo.**
 
@@ -634,7 +636,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 
 **Cuidados.**
 
-- A aprovação é sua, nos dois modos. No `autonomo`, a prontidão só concede o modo com o ARCH e os modelos aprovados e em dia.
+- A aprovação é sua, nos dois modos. No `autonomous`, a prontidão só concede o modo com o ARCH e os modelos aprovados e em dia.
 - Um modelo fica defasado quando um ADR, um contrato ou o PLAN muda depois do `atualizado` dele. O `/bkhar:save`, o `/bkhar:brain` e o fim de cada onda avisam; o `--update` refaz.
 - FEAT que contradiz um modelo aprovado não entra: a mudança vira ADR e `--update`.
 
@@ -774,6 +776,49 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 - FEAT, TEST e TASK são escritos em português com acentuação. Nome de arquivo fica sem acento: `FEAT-emissao-comprovante.md`.
 - Se os arquivos do repo estiverem sem acento, o comando escreve certo mesmo assim e avisa em uma linha.
 
+### `/bkhar:tasks`
+
+**Para que serve.** Decompõe uma feature aprovada nas tasks que o `/bkhar:loop` executa. O `architect` lê a FEAT, o TEST e a arquitetura e escreve uma task por peça.
+
+**Onde rodar.** Raiz do repo do projeto.
+
+**Quando usar.** Depois que a FEAT e o TEST da feature foram aprovados, antes do primeiro `/bkhar:loop`. Uma feature por vez.
+
+**Pré-requisito.** O ARCH e os modelos aprovados, e a FEAT e o TEST com `**Status:** Aprovada`. O `/bkhar:refine` e o `/bkhar:spec` gravam esse status quando você aprova. Faltando um, o comando para e diz qual comando destrava.
+
+**O que ele faz, passo a passo.**
+
+1. Confere o portão: arquitetura, FEAT e TEST aprovados.
+2. Numera as tasks a partir do maior `T-NNN` do projeto, em `specs/tasks/` e no grafo do plano.
+3. Chama o `architect`, que escreve uma task por peça: no padrão TXC, uma por passo da ficha de cada transação; no padrão direto, setup, regra, adapter e integração.
+4. Lista as tasks com os cenários do TEST que cada uma cobre e avisa se algum cenário ficou sem task.
+5. Espera a sua aprovação; aprovada, preenche a tabela de tasks da FEAT e a marca `Em execução`.
+
+Não há par Teste e Implementação: o teste que falha é escrito pelo `tester` no passo 0 do `/bkhar:loop`, a partir dos cenários que a task carrega.
+
+**O que produz.**
+
+- `specs/tasks/TASK-[feature].md`, com uma seção por task e a seção "Tentativas" que o loop preenche
+
+**Exemplo.**
+
+```
+/bkhar:tasks emissao-comprovante
+→ ARCH, FEAT e TEST aprovados.
+→ T-012 validação da entrada [10]           cenários C1, B1
+→ T-013 ValidateAsync lê a transação         C2, B2
+→ T-014 ApplyRule decide a emissão           C3, B3
+→ T-015 ExecuteAsync grava o comprovante     C1, C4
+→ T-016 registro e adapter de entrada        C5
+  Nenhum cenário sem task. Aprova? — sim
+→ Próximo: /bkhar:loop T-012
+```
+
+**Cuidados.**
+
+- O comando nunca implementa nem escreve teste.
+- Task que já saiu de `Pendente` nunca é reescrita.
+
 ## 5. Execução e qualidade
 
 ### `/bkhar:loop`
@@ -797,18 +842,32 @@ Os goals padrão, ajustáveis por task:
 
 **O que ele faz, passo a passo.**
 
-1. **Passo 0.** Chama o `tester` com a TASK, o TEST e as entradas do `LEARNINGS.md` cujas tags batem com a área da task. Ele escreve os testes dos cenários e roda.
-2. **Portão "RED confirmado".** Os testes precisam compilar e falhar pelo motivo certo, com a saída colada. Teste que já passa volta ao `tester`. Sem o portão aberto, não há tentativa.
+1. **Passo 0.** Abre a branch `task/T-NNN` a partir da branch atual. Recusa árvore suja e branch protegida. Chama o `tester` com a TASK, o TEST e as entradas do `LEARNINGS.md` cujas tags batem com a área da task. Ele escreve os testes dos cenários e roda.
+2. **Portão "RED confirmado".** Os testes precisam compilar e falhar pelo motivo certo, com a saída colada. Teste que já passa volta ao `tester`. O portão aberto vira commit na branch da task; sem ele, não há tentativa.
 3. Em cada tentativa, chama o `developer` com a TASK, a FEAT, o TEST, os testes RED e o registro das tentativas anteriores.
-4. Confere na sessão: `dotnet build` e `dotnet test`. Audita `G3` e `G4` explicitamente.
-5. Se todos os goals passaram: marca a task como concluída em `specs/tasks/TASK-[feature].md`, roda o `/bkhar:save`, reporta e para.
+4. Confere na sessão: `dotnet build` e `dotnet test`. Audita `G3` e `G4` explicitamente. Guarda a tentativa como foto fora do histórico, com o placar.
+5. Se todos os goals passaram: revisão; aprovada, vira commit e a task entra na branch de origem por `merge --no-ff`. Marca a task como concluída em `specs/tasks/TASK-[feature].md`, roda o `/bkhar:save`, reporta e para.
 6. Se algum falhou: registra o erro e a hipótese de correção na seção "Tentativas" da task e começa a próxima tentativa.
-7. Depois da quarta tentativa sem sucesso: para e gera o registro de bloqueio.
+7. Depois da quarta tentativa sem sucesso: para, volta a árvore ao portão RED e gera o registro de bloqueio.
 
 **O que produz.**
 
-- testes em código, do `tester`, e o código de produção, do `developer`, em `app/`
-- ou `outputs/BLOQUEIO-[task].md`, com o goal que falhou, o erro exato, o que foi tentado e a pergunta que você precisa responder
+- testes em código, do `tester`, e o código de produção, do `developer`, em `app/`, com a ordem `red → review` no histórico da branch
+- ou `outputs/BLOQUEIO-T-NNN.md`, com quatro partes:
+  - o goal que falhou, o erro exato e a pergunta que você precisa responder;
+  - o placar de cada tentativa;
+  - as opções de resolução;
+  - a seção `## Retomada`, que você preenche.
+
+**Retomar: `/bkhar:loop T-NNN --resume`.** O mesmo comando cobre bloqueio e queda.
+
+- **Bloqueio:** preencha "O que mudou" e "Partir de" no BLOQUEIO. As opções são:
+  - `spec`: o `tester` refaz o RED;
+  - `red`: os testes valem;
+  - `impl-K`: retoma da foto daquela tentativa.
+
+  As opções `spec` e `red` pedem commit novo no FEAT ou no TEST. A retomada abre um ciclo novo com o contador zerado, e o `developer` recebe o seu texto e o placar anterior. Sem informação nova, a retomada é recusada. No terceiro bloqueio a retomada fecha e a task volta ao `/bkhar:refine`.
+- **Queda da sessão no meio:** volta ao último ponto seguro sem pedir nada. A tentativa interrompida não conta, e duas quedas na mesma tentativa viram bloqueio.
 
 **Exemplo.**
 
@@ -828,22 +887,24 @@ Caso de bloqueio:
 
 ```
 → Tentativa 4: G2 falha no teste de integração com o PostgreSQL.
-→ Parado. Gerado outputs/BLOQUEIO-emitir-comprovante.md
+→ Parado. Gerado outputs/BLOQUEIO-T-003.md
   Pergunta: o worker de emissão pode ler a transação antes do commit da liquidação?
+  Opções: corrigir FEAT/TEST e partir de spec ou red · informar o Dev e partir de impl-4
+  Retomar: preencha "## Retomada" e rode /bkhar:loop T-003 --resume
 ```
 
 **Cuidados.**
 
-- Proibido: quinta tentativa, relaxar o goal, marcar como concluído com teste falhando, pular o passo 0 ou o `developer` editar o teste do `tester`.
+- Proibido: quinta tentativa, relaxar o goal, marcar como concluído com teste falhando, pular o passo 0, o `developer` editar o teste do `tester` ou voltar a um ponto fora do `--resume`. O `git reset --hard` fora da branch da task é recusado pelo `secret_guard`.
 - Decisão que foge da FEAT volta do `developer` para a sessão, que pergunta a você antes da próxima tentativa.
 - Os goals padrão são de .NET. Em outra stack, ajuste `G1` e `G2` na task.
 - O registro de cada tentativa fica na própria task, não em arquivo solto: quem retoma o trabalho lê a task e vê o que já foi tentado.
 
-**Em ondas: `/bkhar:loop --wave N`.** No modo `autonomo`, o loop executa o grafo `outputs/GRAPH-{projeto}.json` onda por onda (`N` é o número da onda, ou `next`).
+**Em ondas: `/bkhar:loop --wave N`.** No modo `autonomous`, o loop executa o grafo `outputs/GRAPH-{projeto}.json` onda por onda (`N` é o número da onda, ou `next`).
 
 1. **Ponto de controle.** Aplica os pedidos do painel em `outputs/run/inbox/` (`run_state.py inbox`).
 2. **Liberação.** `wave_graph.py ready` devolve as tasks da onda cujas entradas (`consome`) estão aprovadas, até 4 simultâneas.
-3. **Disparo em paralelo.** Task de `desenho` chama o `architect` com a lente da task e escreve o contrato em `specs/contracts/`, em rascunho; task de construção, front ou integração ganha worktree própria (`git worktree add ../{repo}-wt/T-00X -b wave/N/T-00X`) e roda o LOOP-4 acima, com FEAT e TEST escritos pelo `/bkhar:refine` no modo `autonomo` quando faltam. Cada passo vira estado em `outputs/run/`, pelo `run_state.py start`, `attempt` e `finish`.
+3. **Disparo em paralelo.** Task de `desenho` chama o `architect` com a lente da task e escreve o contrato em `specs/contracts/`, em rascunho; task de construção, front ou integração ganha worktree própria (`git worktree add ../{repo}-wt/T-00X -b wave/N/T-00X`) e roda o LOOP-4 acima, com FEAT e TEST escritos pelo `/bkhar:refine` no modo `autonomous` quando faltam. Cada passo vira estado em `outputs/run/`, pelo `run_state.py start`, `attempt` e `finish`.
 4. **Task travada.** `bloqueada` gera `outputs/BLOQUEIO-[task].md`, segura só a cadeia que depende dela e avisa você por notificação e pelo painel.
 5. **Fim da onda.** Merge de cada `wave/N/T-00X` em ordem de id (conflito para a onda), build e suíte completos, `/bkhar:review` sobre o diff da onda, `library.py stale` para a arquitetura viva, remoção das worktrees e `outputs/run/onda-N/RELATORIO.md` com tentativas, modelo, custo, suposições novas e bloqueios.
 6. **Próxima onda.** Só segue sem portão aberto: em `rigor: producao`, os contratos da onda de desenho e a entrega final esperam você.
@@ -1002,6 +1063,29 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 → bloqueios: nenhum · suposições abertas: 3
 ```
 
+### `/bkhar:audit`
+
+**Para que serve.** Procura deriva de coerência: guia que deixou de bater com o sensor, cópia dos guardas que ficou para trás, `STATUS.md` que não descreve mais o repositório.
+
+**Onde rodar.** Raiz do kit ou do projeto. Só lê.
+
+**O que ele faz.** Roda `scripts/audit.py`, que detecta o contexto. No kit, confere o registro de regras (`rules.json`), os parâmetros repetidos entre guia e sensor e o `docs/regras.md`. No projeto, confere a cópia em `.bkhar/guards/` contra o kit, arquivo por arquivo, o CI do `git_host` e a deriva do `STATUS.md`. Cada achado vem com o comando que destrava.
+
+**Exemplo.**
+
+```
+/bkhar:audit
+→ auditoria do projeto em .../layan-platform
+→ [guardas] secret_guard.py difere do kit
+→     destrava: python .../scripts/install_guards.py . --host none
+→ 1 achado(s)
+```
+
+**Cuidados.**
+
+- Não corrige nada: aponta. A correção é um passo separado, com o seu ok.
+- "Sem deriva" quer dizer que o que o registro declara está coerente, não que todo guia está certo.
+
 ---
 
 ## 6. Fechamento e migração
@@ -1025,7 +1109,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 5. Reescreve o `STATUS.md` por inteiro. Defasagem do canônico entra na seção do que trava.
 6. Acrescenta ao topo do `JOURNAL.md` a entrada com data, título e duas a quatro linhas do que mudou. Os aprendizados que os agentes devolveram nos ritos entram na mesma entrada, sob `### Aprendizados`.
    Os casos de defeito resolvido que o `quality` devolveu vão para o `LEARNINGS.md`, um por caso. Caso sem evidência fica de fora, e o comando diz isso em uma linha.
-7. Mede o consumo da sessão pelo `session_cost.py`. Sem o script, diz em uma linha que pulou.
+7. Mede o consumo da sessão pelo `session_cost.py`. Sem o script, diz em uma linha que pulou. Depois, mede as tasks do `/bkhar:loop` por fase com o `metrics.py`: o `outputs/run/metrics/METRICAS.md` diz qual fase gasta mais e onde o fluxo travou.
 8. Confirma em até cinco linhas, uma por arquivo gravado.
 
 O destino de cada coisa:
@@ -1042,7 +1126,7 @@ O destino de cada coisa:
 | padrão técnico que se firmou | `brain/engineering/` |
 | decisão sobre o processo de trabalho, rara | `${BKS_VAULT}/workbench/decisions/` |
 
-A medição de consumo segue `commands/references/medicao-consumo.md`:
+A medição de consumo segue `skills/bks-team/references/medicao-consumo.md`:
 
 1. Grava o checkpoint no ledger `{repo}/.logs/cost-ledger.jsonl`, com a fase e um rótulo curto da sessão.
 2. Mostra a tabela da sessão e a linha `TOTAL GERAL` do acumulado.
@@ -1163,15 +1247,15 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 
 ### `/bkhar:mode`
 
-**Para que serve.** Troca o modo de condução do projeto: `colaborativo`, em que a equipe pergunta e espera, ou `autonomo`, em que a pergunta vira suposição registrada e a construção roda em ondas.
+**Para que serve.** Troca o modo de condução do projeto: `collaborative`, em que a equipe pergunta e espera, ou `autonomous`, em que a pergunta vira suposição registrada e a construção roda em ondas.
 
 **Onde rodar.** Raiz do repo do projeto.
 
-**Quando usar.** Sem argumento, para ver o modo atual e a prontidão. Com `autonomo`, depois de canônico, PRD, PLAN, grafo, ARCH e modelos aprovados.
+**Quando usar.** Sem argumento, para ver o modo atual e a prontidão. Com `autonomous`, depois de canônico, PRD, PLAN, grafo, ARCH e modelos aprovados.
 
 **O que ele faz, passo a passo.**
 
-1. Lê o `.bks-profile.json`; `axes.mode` ausente vale `colaborativo`.
+1. Lê o `.bks-profile.json`; `axes.mode` ausente vale `collaborative`.
 2. Roda `scripts/readiness.py` e cola a saída: Contexto, Plano, Arquitetura, Abertos e Execução, cada um `ok` ou com o que falta.
 3. Recusada a prontidão, não troca e diz qual comando resolve cada item.
 4. Concedida, mostra o que muda e espera o ok.
@@ -1182,7 +1266,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 **Exemplo.**
 
 ```
-/bkhar:mode autonomo
+/bkhar:mode autonomous
 → prontidão RECUSADA
 → Plano: PLAN com status rascunho · outputs/GRAPH-{projeto}.json não existe
 → Abertos: PLAN-p.md: Pergunta 1 do PRD: forma do mobile.
@@ -1210,7 +1294,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 
 **Cuidados.**
 
-- Só você promove. Regra promovida passa a valer no modo `autonomo`.
+- Só você promove. Regra promovida passa a valer no modo `autonomous`.
 - Regra do kit só fica se o `claude plugin eval` mostrar delta entre os braços `with` e `without`.
 - Vault e kit recusam proposta com dado pessoal ou segredo.
 
@@ -1427,7 +1511,7 @@ python hooks/scripts/writing_guard.py docs/ARCHITECTURE.md
 | `/bkhar:retro` | raiz do repo | propostas em `inbox/proposals/` | regras em `brain/engineering/regras/`, no vault ou no kit; rejeitadas em `archive/` |
 | `/bkhar:harvest` | raiz do vault | ADRs em `repos/` | `knowledge/wiki/experiencia/_index.json` e uma página por tema |
 | `/bkhar:status` | raiz do repo | nenhum | tabela da execução em ondas, só na conversa |
-| `/bkhar:mode` | raiz do repo | canônico, PRD, PLAN, grafo e ARCH aprovados, para `autonomo` | `axes.mode` no perfil, ADR da troca, entrada no `JOURNAL.md` |
+| `/bkhar:mode` | raiz do repo | canônico, PRD, PLAN, grafo e ARCH aprovados, para `autonomous` | `axes.mode` no perfil, ADR da troca, entrada no `JOURNAL.md` |
 | `/bkhar:migrate` | raiz do repo | árvore limpa, projeto no `bks` | `.bkhar.json`, prefixo trocado no `WORKFLOW.md` e no `CLAUDE.md` |
 
 Só `/bkhar:brain`, `/bkhar:new-project` e `/bkhar:harvest` são de vault. Todos os outros escrevem no repositório onde a sessão está aberta.

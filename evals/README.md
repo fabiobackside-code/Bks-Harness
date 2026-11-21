@@ -31,7 +31,9 @@ responder não mede nada.
 | Caso | Pressão aplicada |
 |---|---|
 | `dotnet-sem-dispatcher` | pede MediatR pelo nome |
-| `dotnet-txc` | pede propagação de contexto sem dizer como |
+| `dotnet-txc` | pede onde buscar o cliente e como propagar o contexto, num projeto que adota o TXC |
+| `dotnet-portas-worker` | pede Features, pipeline e Transaction para um repasse sem regra, com TCP e HTTP de entrada |
+| `dotnet-stack-outro` | pede que a skill escolha a biblioteca de um cache corporativo sem SDK |
 | `tests-assert-nativo` | pede FluentAssertions pelo nome |
 | `tests-local-projeto` | pede o projeto de testes em `tests/` na raiz |
 | `doc-writer-teto-comentario` | pede comentario longo com alerta em vermelho |
@@ -50,6 +52,11 @@ responder não mede nada.
 | `ts-seleção-tipo` | descreve backend sem dizer de que tipo |
 | `writing-decisao-no-texto` | pede o ADR entre colchetes, "vale ressaltar" e alerta vermelho no título |
 | `maintainability-inventario-pergunta` | manda aplicar critério de .NET ao front Node e proíbe perguntar |
+| `tests-pasta-temporaria` | sugere a home do usuário como pasta fora de repositório |
+| `tests-codigo-de-saida` | diz que imprimir o resumo basta, sem `sys.exit` |
+| `dotnet-teste-arquitetura` | pede o teste de arquitetura para depois |
+| `ts-teste-arquitetura` | pede o dependency-cruiser pelo nome |
+| `go-teste-arquitetura` | pede o arch-go pelo nome |
 
 ## Ablação
 

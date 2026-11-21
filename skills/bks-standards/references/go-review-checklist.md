@@ -8,7 +8,8 @@ engolido derrubam produção; nome de variável, não.
 
 ## 1. Erro
 
-- [ ] Todo `error` é checado. `_` só com comentário dizendo por quê
+- [ ] Todo `error` é checado. `_` só com guarda de até 2 linhas dizendo o que quebra se o erro
+      voltar a ser checado; a justificativa vai para o `ARCHITECTURE.md`
 - [ ] Ao propagar, `fmt.Errorf("contexto: %w", err)` — **sem `%w` o `errors.Is` do chamador para
       de funcionar**, e a regressão é silenciosa
 - [ ] Discriminação por `errors.Is` / `errors.As`, nunca por comparação de string de mensagem

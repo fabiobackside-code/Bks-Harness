@@ -22,6 +22,9 @@ id_ed25519*
 **/.cache/
 *.log
 
+# --- espelho da nota de status do canvas: regerado pelo status_note.py ---
+outputs/run/status-canvas.md
+
 # --- resultado de eval: gerado, nao versionado ---
 evals/results/
 evals/evals/
@@ -50,3 +53,6 @@ __pycache__/
 # --- dependência de ferramenta local ---
 node_modules/
 .playwright-mcp/
+
+# --- patch da contribuição do público, gerado pelo publish.py --incoming ---
+outputs/publish/

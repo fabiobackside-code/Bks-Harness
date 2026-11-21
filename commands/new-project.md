@@ -47,7 +47,8 @@ Pergunte apenas os eixos que o perfil usa:
 | `architecture_renderer` | ver `profiles/architecture-renderers/` | `mermaid` |
 | `frontend_target` | `web`, `mobile`, `both` | `web` — só em `frontend` e `fullstack` |
 | `rigor` | `producao`, `poc` | `producao` |
-| `mode` | `colaborativo`, `autonomo` | `colaborativo` — o `autonomo` não se escolhe aqui: o projeto nasce sem as entradas que a prontidão exige; depois, `/bkhar:mode autonomo` |
+| `mode` | `collaborative`, `autonomous` | `collaborative` — o `autonomous` não se escolhe aqui: o projeto nasce sem as entradas que a prontidão exige; depois, `/bkhar:mode autonomous` |
+| `git_host` | `github`, `gitlab`, `none` | `github` — vale para todo perfil; decide o CI dos guardas, e `none` instala só o pre-commit |
 
 Mais as perguntas específicas que o arquivo do perfil lista em "O que perguntar na criação".
 
@@ -75,7 +76,8 @@ Copie `${CLAUDE_PLUGIN_ROOT}/templates/project-skeleton/` para
     "architecture_renderer": "mermaid",
     "frontend_target": null,
     "rigor": "producao",
-    "mode": "colaborativo"
+    "mode": "collaborative",
+    "git_host": "github"
   },
   "library": { "export": "knowledge/wiki/projetos/{projeto}" }
 }
@@ -102,7 +104,14 @@ linhas.
 **`CLAUDE.md`** — do template `REPO-CLAUDE.md`, mesma precedência. Declare as skills que o perfil
 carrega e aponte `brain/domain/` e `brain/engineering/`.
 
-**`git init`** — todo projeto nasce versionado. Primeiro commit com a estrutura.
+**`git init`** — todo projeto nasce versionado.
+
+**Guardas** — depois do `git init` e antes do primeiro commit, rode
+`python "${CLAUDE_PLUGIN_ROOT}/scripts/install_guards.py" {caminho-do-projeto} --host {git_host}`.
+Ele copia os guardas para `.bkhar/guards/`, escreve o hook pre-commit, ativa o `core.hooksPath` e
+põe o CI do host. Repasse ao usuário toda linha `aviso` da saída.
+
+Primeiro commit com a estrutura e os guardas.
 
 ## Passo 5 — informar
 

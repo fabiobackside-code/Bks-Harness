@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checagem de prontidão do modo autonomo, sem chamada de modelo.
+"""Checagem de prontidão do modo autônomo, sem chamada de modelo.
 
 Uso: readiness.py [REPO] [--json]
 Sai 0 quando concede o modo, 1 quando recusa e lista o que falta por nível.
@@ -155,7 +155,7 @@ def evaluate(repo):
 
 
 def render(result):
-    out = ['prontidão do modo autonomo: %s' % ('CONCEDIDA' if result['granted'] else 'RECUSADA')]
+    out = ['prontidão do modo autônomo: %s' % ('CONCEDIDA' if result['granted'] else 'RECUSADA')]
     for l in result['levels']:
         out.append('  %-11s %s' % (l['level'], 'ok' if l['ok'] else 'falta'))
         out.extend('              - %s' % m for m in l['missing'])

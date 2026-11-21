@@ -26,33 +26,24 @@ export async function settleCart(cartId: string): Promise<Cart> {
 
 - Narrates implementation steps that can change.
 - Repeats type information.
-- Omits errors, preconditions, and side effects.
-- Does not tell callers how to use the function safely.
+- Spends five lines where one would state the contract.
 
 ### Strong Output
 
 ```ts
-/**
- * Finalizes a cart for checkout by persisting line totals with tax and marking
- * the cart as settled.
- *
- * @param cartId - Existing cart id in the current tenant.
- * @returns The settled cart with tax applied per line.
- * @throws {CartNotFoundError} When the cart does not exist in this tenant.
- * @throws {EmptyCartError} When the cart has no lines.
- *
- * Side effects: writes carts and cart_lines. Does not charge payment.
- */
+/** Settles the cart for checkout: line totals with tax, cart marked as settled. */
 export async function settleCart(cartId: string): Promise<Cart> {
   // ...
 }
 ```
 
+The errors (`CartNotFoundError`, `EmptyCartError`), the tables written and the fact that it does
+not charge payment go in the module README or `ARCHITECTURE.md`.
+
 ### Why This Is Strong
 
-- Describes the contract, not the algorithm.
-- Names tenant assumption and side effects.
-- Clarifies what this function does not do.
+- Describes the contract, not the algorithm, in one line.
+- Leaves errors, side effects and preconditions to the document that already holds them.
 
 ## Example 2: Useful Inline Comment
 

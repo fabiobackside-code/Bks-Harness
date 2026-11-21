@@ -76,13 +76,13 @@ public async Task<TResponse> ExecuteAsync(TInput input, CancellationToken ct)
 ## Connection Factory
 
 ```csharp
-// Domain/Core/Ports/Outbound/IDbConnectionFactory.cs
+// Domain/Core/Ports/IDbConnectionFactory.cs
 public interface IDbConnectionFactory
 {
     IDbConnection CreateConnection();
 }
 
-// Infrastructure — SQL Server
+// Adapters/Outbound/SqlServerAdapter/ — SQL Server
 public sealed class SqlServerConnectionFactory : IDbConnectionFactory
 {
     private readonly string _connectionString;
@@ -91,7 +91,7 @@ public sealed class SqlServerConnectionFactory : IDbConnectionFactory
     public IDbConnection CreateConnection() => new SqlConnection(_connectionString);
 }
 
-// Infrastructure — PostgreSQL
+// Adapters/Outbound/PostgreSqlAdapter/ — PostgreSQL
 public sealed class PostgreSqlConnectionFactory : IDbConnectionFactory
 {
     private readonly string _connectionString;
@@ -107,11 +107,11 @@ public sealed class PostgreSqlConnectionFactory : IDbConnectionFactory
 
 | Elemento | Padrão | Exemplo |
 |---|---|---|
-| Transaction | `Transaction{NomeSP}` | `TransactionBloqueioSaldo` |
-| UseCase Port | `I{NomeSP}UseCase` | `IBloqueioSaldoUseCase` |
-| UseCase impl | `{NomeSP}UseCase` | `BloqueioSaldoUseCase` |
-| Validation Step | `{NomeSP}ValidationStep` | `BloqueioSaldoValidationStep` |
-| Processing Step | `{NomeSP}ProcessingStep` | `BloqueioSaldoProcessingStep` |
+| Serviço (padrão direto) | `{Grupo}Service` | `SaldoService` |
+| Código da transação (TXC) | `{Contexto}Codes.{NomeSP}` | `SaldoCodes.BloqueioSaldo = "SALDO.BLOQUEIO"` |
+| Envelope (TXC) | `{NomeSP}Envelope` | `BloqueioSaldoEnvelope` |
+| Validação `[10]` (TXC) | `{NomeSP}Validation` | `BloqueioSaldoValidation` |
+| Executor (TXC) | `{NomeSP}Executor` | `BloqueioSaldoExecutor` |
 | Repository Port | `I{Grupo}Repository` | `IBloqueioSaldoRepository` |
 | Repository impl | `{DB}{Grupo}Repository` | `SqlServerBloqueioSaldoRepository` |
 | SP Result record | `{NomeSP}Result` | `BloqueioSaldoResult` |

@@ -40,10 +40,12 @@ public sealed class MeuSdkBuilder
         if (string.IsNullOrWhiteSpace(_apiKey))
             throw new InvalidOperationException("ApiKey é obrigatória");
 
-        return new MeuSdkImpl(_apiKey, _timeout, _baseUrl ?? DefaultUrl);
+        if (_baseUrl is null)
+            throw new InvalidOperationException("BaseUrl é obrigatória");
+
+        return new MeuSdkImpl(_apiKey, _timeout, _baseUrl);
     }
 
-    private static readonly Uri DefaultUrl = new("https://api.example.com");
 }
 
 // Uso:
@@ -71,44 +73,29 @@ public static class MeuSdkExtensions
 }
 ```
 
-## Result<T> em vez de Exceptions
+## PipelineResult<T> em vez de exceção
 
-```csharp
-// Resultado de operações — nunca exceptions para fluxo de negócio
-public readonly record struct Result<T>
-{
-    public T? Value { get; }
-    public string? Error { get; }
-    public bool IsSuccess { get; }
-
-    private Result(T? value, string? error, bool isSuccess)
-        => (Value, Error, IsSuccess) = (value, error, isSuccess);
-
-    public static Result<T> Ok(T value) => new(value, null, true);
-    public static Result<T> Fail(string error) => new(default, error, false);
-
-    public TOut Match<TOut>(Func<T, TOut> onSuccess, Func<string, TOut> onFailure)
-        => IsSuccess ? onSuccess(Value!) : onFailure(Error!);
-}
-```
+O SDK usa o mesmo `PipelineResult<T>` e `PipelineError` das soluções (definição em
+`references/txc-base.md`, seção "Resultado"), em `Models/PipelineResult.cs`. Um estilo de erro só:
+nada de `Result<T>` próprio ao lado dele.
 
 ## ConfigureAwait(false) — Obrigatório em Libraries
 
 ```csharp
 // CORRETO — evita deadlocks em contextos síncronos (WinForms, ASP.NET Classic)
-public async Task<Result<DadosResponse>> BuscarAsync(string id, CancellationToken ct)
+public async Task<PipelineResult<DadosResponse>> BuscarAsync(string id, CancellationToken ct)
 {
     var response = await _httpClient.GetAsync($"/dados/{id}", ct).ConfigureAwait(false);
 
     if (!response.IsSuccessStatusCode)
-        return Result<DadosResponse>.Fail($"HTTP {(int)response.StatusCode}");
+        return new PipelineError("sdk.http", $"HTTP {(int)response.StatusCode}");
 
     var content = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
     var dados = JsonSerializer.Deserialize<DadosResponse>(content, _jsonOptions);
 
     return dados is not null
-        ? Result<DadosResponse>.Ok(dados)
-        : Result<DadosResponse>.Fail("Falha ao desserializar resposta");
+        ? dados
+        : new PipelineError("sdk.desserializacao", "Falha ao desserializar resposta");
 }
 ```
 
@@ -127,5 +114,5 @@ MeuSdk/
 │       └── MeuSdkHttpClient.cs  ← internal sealed
 └── Models/
     ├── DadosResponse.cs
-    └── Result.cs
+    └── PipelineResult.cs
 ```

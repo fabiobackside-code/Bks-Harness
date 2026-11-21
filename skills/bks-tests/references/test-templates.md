@@ -53,7 +53,6 @@ public class [ClassName]Tests
         var result = await _sut.[NomeDoMetodo1](input);
 
         // Assert
-        Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Equal(valorEsperado, result.Value);
         
@@ -87,9 +86,8 @@ public class [ClassName]Tests
         var result = await _sut.[NomeDoMetodo1](stringInvalida);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.IsFailure);
-        Assert.Contains("inválid", result.Error);
+        Assert.False(result.IsSuccess);
+        Assert.Contains(result.Errors, e => e.Code == "[CODIGO_DO_ERRO]");
     }
 
     [Fact]
@@ -170,7 +168,7 @@ public class [Feature]IntegrationTests : IClassFixture<CustomWebApplicationFacto
     public async Task Get_[Endpoint]_DeveRetornar200ComLista()
     {
         // Arrange - Seed data
-        await _factory.SeedDatabaseAsync();
+        await _factory.SeedAsync([ClassName]Builder.CreateMany(5).ToArray());
 
         // Act
         var response = await _client.GetAsync("/api/[endpoint]");
@@ -255,59 +253,35 @@ public static class [ClassName]Builder
 ```csharp
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Testcontainers.PostgreSql;
 
 namespace [SolutionName].Tests.Shared.Fixtures;
 
-/// <summary>
-/// Factory customizada para testes de integração.
-/// Compartilhada entre todos os testes de integração.
-/// </summary>
-public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+/// <summary>Factory dos testes de integração, com o banco real num container.</summary>
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    private readonly PostgreSqlContainer _db = new PostgreSqlBuilder().Build();
+
+    public string ConnectionString => _db.GetConnectionString();
+
+    public async Task InitializeAsync()
     {
-        builder.ConfigureServices(services =>
-        {
-            // Remover DbContext real
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            
-            if (descriptor != null)
-                services.Remove(descriptor);
-
-            // Adicionar DbContext InMemory
-            services.AddDbContext<AppDbContext>(options =>
-            {
-                options.UseInMemoryDatabase("InMemoryDbForTesting");
-            });
-
-            // Build service provider
-            var sp = services.BuildServiceProvider();
-
-            // Garantir que banco está criado
-            using var scope = sp.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.EnsureCreated();
-        });
+        await _db.StartAsync();
+        // Aplica o schema do projeto (db/schema.sql ou as migrations) contra o container.
     }
 
-    public async Task SeedDatabaseAsync()
+    public new async Task DisposeAsync() => await _db.DisposeAsync();
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder) =>
+        builder.UseSetting("ConnectionStrings:Default", ConnectionString);
+
+    public async Task SeedAsync(params [ClassName][] itens)
     {
         using var scope = Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
-        // Limpar dados existentes
-        context.Database.EnsureDeleted();
-        context.Database.EnsureCreated();
-        
-        // Adicionar dados de teste usando Builders
-        context.[Entity].AddRange(
-            [ClassName]Builder.CreateMany(5)
-        );
-        
-        await context.SaveChangesAsync();
+        var repository = scope.ServiceProvider.GetRequiredService<I[ClassName]Repository>();
+        foreach (var item in itens)
+            await repository.SaveAsync(item, CancellationToken.None);
     }
 }
 

@@ -103,19 +103,26 @@ func (c *Consumer) handle(ctx context.Context, msg kafka.Message) error {
 		return fmt.Errorf("%w: %v", ErrMalformed, err)
 	}
 
-	txc, err := order.NewOrderContext(correlationFrom(msg.Headers), evt.TenantID)
-	if err != nil {
-		return err
-	}
-	return c.useCase.Execute(msgCtx, txc, evt.ToInput())
+	return c.orders.Process(msgCtx, evt.ToInput()) // padrão direto
 }
+```
+
+Com TXC, a última linha chama o `txc.Op` e o consumer preenche o `txc.Call` a partir dos
+cabeçalhos:
+
+```go
+	call := txc.Call{CorrelationID: correlationFrom(msg.Headers), TenantID: evt.TenantID}
+	_, err := c.process(msgCtx, call, evt.ToInput()) // ToInput usa evt.ID como chave de idempotência
+	return err
 ```
 
 Mensagem malformada nunca vai render sucesso na retentativa — vai direto ao dead letter, sem
 retry. Distinguir erro permanente (payload inválido) de transitório (banco fora) é o que evita
 tanto o laço infinito quanto a perda silenciosa.
 
-O consumer é adapter inbound: desserializa, monta o TXC, chama o use case. Sem regra de negócio.
+O consumer é adapter inbound: desserializa, chama o serviço ou o `txc.Op` e devolve o erro. Sem
+regra de negócio, e no TXC sem criar seed. A `[20]` do `txc` cobre a mensagem repetida da seção
+anterior: a chave é o ID de negócio do evento, e a segunda entrega devolve o primeiro resultado.
 
 ## Dead letter (VT-C4)
 

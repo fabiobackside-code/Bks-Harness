@@ -12,3 +12,9 @@ python hooks/tests/test_status_drift.py
 
 echo
 python hooks/tests/test_architect_bash.py
+
+echo
+python hooks/tests/test_secret_guard.py
+
+echo
+python hooks/tests/test_dotnet_project.py

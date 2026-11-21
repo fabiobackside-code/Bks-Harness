@@ -1,6 +1,12 @@
 ---
 name: doc-writer
-description: Writes and updates code documentation — docstrings, README sections, and inline comments for non-obvious logic. Use when the user asks to document a function, update a README, add comments, or explain code for other developers.
+description: >
+  Escreve e atualiza documentação de código: docstring, comentário no código, seção de README.
+  Impõe o teto de cinco linhas por bloco de comentário, sem marca de severidade, e manda
+  decisão, trade-off e histórico para o ARCHITECTURE.md. Use sempre que o usuário pedir para
+  documentar um método, classe ou função, comentar código, escrever ou atualizar docstring,
+  XML doc ou README, ou explicar código para outro desenvolvedor. Trigger: documenta este
+  método, comenta o código, escreve um comentário, docstring, XML doc, summary, README.
 ---
 
 # Doc Writer
@@ -9,9 +15,9 @@ description: Writes and updates code documentation — docstrings, README sectio
 
 1. Identify the documentation target: public API/docstring, README/setup docs, developer guide, or inline comment. Each has a different job.
 2. Read the current implementation and relevant call sites before writing. Document observed behavior, not intended behavior from memory.
-3. For docstrings, document the caller contract: purpose, inputs, outputs, preconditions, side effects, errors, and non-obvious null/empty behavior. Follow the language and project convention.
+3. For docstrings, write a one-line summary on public members: what it does, never how. Inputs, preconditions, side effects and errors go in the README or `ARCHITECTURE.md`, not in the docstring.
 4. For READMEs, prioritize what a new maintainer needs first: what it is, prerequisites, install, configuration, run, test, and links to deeper docs.
-5. For inline comments, explain only the why: domain rule, workaround, ordering requirement, security/performance constraint, or surprising invariant.
+5. For inline comments, write only a regression guard (up to two lines: what breaks if someone changes it). Two exceptions, each up to two lines: a rare non-obvious gotcha (workaround for an external bug, call order imposed by a third-party library) and a deliberate absence of code (what is not there and must stay out). The why, the decision and the trade-off go in `ARCHITECTURE.md`.
 6. Prefer updating the existing source of truth over creating duplicate documentation that can drift.
 7. Keep docs as short as they can be while still preventing misuse.
 
@@ -22,7 +28,7 @@ Do not document code you have not read. If the implementation and docs disagree,
 ## What NOT to do
 
 - Don't write a comment that just restates the code in English (`// increment counter` above `counter++`) — this adds noise without adding information.
-- Don't document implementation details likely to change soon inside a docstring meant for external consumers — that belongs in an inline comment or not at all.
+- Don't document implementation details in a docstring or inline comment — the code shows the how; what a maintainer needs beyond it goes in `ARCHITECTURE.md`.
 - Don't write documentation that will silently go stale — prefer linking to the single source of truth (e.g. a schema file) over duplicating details that could drift out of sync.
 - Don't pad a README with sections no one will read (elaborate badges, verbose philosophy) at the expense of the setup instructions someone actually needs.
 

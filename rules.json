@@ -1,0 +1,986 @@
+{
+  "rules": [
+    {
+      "id": "COD-01",
+      "regra": "Sem MediatR nem dispatcher em C#",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/bks-premises.md",
+      "secao": "Padrão-base: Hexagonal + Result; Pipeline e TXC quando o projeto adota o TXC",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/no_dispatcher.py",
+          "teste": "hooks/tests/test_guards.py",
+          "camadas": [
+            "hook",
+            "pre-commit",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-02",
+      "regra": "Bloco de comentário até 5 linhas em C#",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/documentacao.md",
+      "secao": "Comentário no código",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/comment_budget.py",
+          "teste": "hooks/tests/test_guards.py",
+          "camadas": [
+            "hook",
+            "pre-commit",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ],
+      "parametros": [
+        {
+          "nome": "teto de linhas por bloco de comentário",
+          "valor": "5",
+          "em": [
+            {
+              "arquivo": "hooks/scripts/comment_budget.py",
+              "trecho": "MAX_BLOCK_LINES = 5"
+            },
+            {
+              "arquivo": "skills/bks-standards/references/documentacao.md",
+              "trecho": "Teto: 5 linhas por bloco"
+            },
+            {
+              "arquivo": "skills/bks-dotnet-solutions/SKILL.md",
+              "trecho": "Bloco de comentário acima de **5 linhas**"
+            },
+            {
+              "arquivo": "skills/bks-dotnet-solutions/SKILL.md",
+              "trecho": "Nenhum bloco de comentário acima de 5 linhas"
+            },
+            {
+              "arquivo": "skills/bks-dotnet-solutions/references/comment-convention.md",
+              "trecho": "Bloco acima de 5 linhas"
+            },
+            {
+              "arquivo": "skills/bks-sdd/SKILL.md",
+              "trecho": "bloco acima de 5 linhas"
+            },
+            {
+              "arquivo": "skills/bks-go-solutions/SKILL.md",
+              "trecho": "teto de 5 linhas"
+            },
+            {
+              "arquivo": "docs/ARCHITECTURE.md",
+              "trecho": "recusa bloco acima de 5 linhas"
+            },
+            {
+              "arquivo": "README.md",
+              "trecho": "bloco de comentario acima de 5 linhas"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "COD-03",
+      "regra": "Sem marca de severidade em comentário",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/documentacao.md",
+      "secao": "Comentário no código",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/comment_budget.py",
+          "teste": "hooks/tests/test_guards.py",
+          "camadas": [
+            "hook",
+            "pre-commit",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-04",
+      "regra": "Domínio referencia só System.*",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/dotnet-standards.md",
+      "secao": "Regras de dependência",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-dotnet-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-05",
+      "regra": "Dependência Adapters → Application → Domain, nunca o contrário",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/dotnet-standards.md",
+      "secao": "Regras de dependência",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-dotnet-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        },
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-typescript-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        },
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-go-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-06",
+      "regra": "Exceção de negócio não escapa; o serviço ou o executor devolve PipelineResult",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/bks-premises.md",
+      "secao": "Padrão-base: Hexagonal + Result; Pipeline e TXC quando o projeto adota o TXC",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/quality.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "indireto"
+        }
+      ]
+    },
+    {
+      "id": "COD-07",
+      "regra": "Sem Activity montada à mão; o span vem do pipeline",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/bks-premises.md",
+      "secao": "Padrão-base: Hexagonal + Result; Pipeline e TXC quando o projeto adota o TXC",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-dotnet-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-08",
+      "regra": "TXC é record imutável",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/bks-premises.md",
+      "secao": "Padrão-base: Hexagonal + Result; Pipeline e TXC quando o projeto adota o TXC",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/architect.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-09",
+      "regra": "Sem FluentAssertions; Assert nativo do xUnit",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/dotnet-standards.md",
+      "secao": "Solution e asserção (ADR-010, 27/08)",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/dotnet_project.py",
+          "teste": "hooks/tests/test_dotnet_project.py",
+          "camadas": [
+            "hook",
+            "pre-commit",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-10",
+      "regra": "Solution .NET 10 em .slnx",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/dotnet-standards.md",
+      "secao": "Solution e asserção (ADR-010, 27/08)",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/dotnet_project.py",
+          "teste": "hooks/tests/test_dotnet_project.py",
+          "camadas": [
+            "hook",
+            "pre-commit"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-11",
+      "regra": "Pacote NuGet só com confirmação explícita",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/dotnet-standards.md",
+      "secao": "Dependência, banco e tipagem",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/quality.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-12",
+      "regra": "Migration existente não é alterada",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/dotnet-standards.md",
+      "secao": "Dependência, banco e tipagem",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/dotnet_project.py",
+          "teste": "hooks/tests/test_dotnet_project.py",
+          "camadas": [
+            "hook",
+            "pre-commit"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-13",
+      "regra": "Sem dynamic nem object sem justificativa",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/dotnet-standards.md",
+      "secao": "Dependência, banco e tipagem",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-dotnet-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-14",
+      "regra": "record em Transaction, Value Object e DTO de resposta",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/dotnet-standards.md",
+      "secao": "Dependência, banco e tipagem",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/architect.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-15",
+      "regra": "Toda task tem teste",
+      "alvo": "codigo",
+      "fonte": "skills/bks-tests/SKILL.md",
+      "secao": "Solution .NET — o que esta skill entrega",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/tester.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-16",
+      "regra": "Projeto de testes em src/",
+      "alvo": "codigo",
+      "fonte": "skills/bks-tests/SKILL.md",
+      "secao": "Localização do projeto de testes",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/architect.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-17",
+      "regra": "Dado sensível não vai para log",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/checklist-revisao-critica.md",
+      "secao": "Núcleo (qualquer domínio)",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/security.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-18",
+      "regra": "Credencial com valor real não entra em código nem configuração",
+      "alvo": "codigo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "A guarda vale em três camadas, e cada uma só vê o que alcança",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/secret_guard.py",
+          "teste": "hooks/tests/test_secret_guard.py",
+          "camadas": [
+            "hook",
+            "pre-commit",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-19",
+      "regra": "Go: erro idiomático, sem Result[T]",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/go-standards.md",
+      "secao": "2. Erro de negócio: `error` idiomático, não `Result[T]`",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-go-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "COD-20",
+      "regra": "Go: interface declarada no consumidor",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/go-standards.md",
+      "secao": "4. Ports: a interface se declara no consumidor",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/architect.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "DOC-01",
+      "regra": "Task que cria tipo público atualiza README.md e ARCHITECTURE.md",
+      "alvo": "documentacao",
+      "fonte": "skills/bks-standards/references/documentacao.md",
+      "secao": "Quando gerar/atualizar",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/dod_docs.py",
+          "teste": "hooks/tests/test_dod_docs.py",
+          "camadas": [
+            "hook"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "DOC-02",
+      "regra": "Decisão e trade-off vão para o ARCHITECTURE.md, não para comentário",
+      "alvo": "documentacao",
+      "fonte": "skills/bks-standards/references/documentacao.md",
+      "secao": "Comentário no código",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/comment_budget.py",
+          "teste": "hooks/tests/test_guards.py",
+          "camadas": [
+            "hook",
+            "pre-commit",
+            "ci"
+          ],
+          "forca": "indireto"
+        }
+      ]
+    },
+    {
+      "id": "DOC-03",
+      "regra": "Sem ponteiro para documento em comentário",
+      "alvo": "documentacao",
+      "fonte": "skills/bks-standards/references/documentacao.md",
+      "secao": "Comentário no código",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/comment_budget.py",
+          "teste": "hooks/tests/test_guards.py",
+          "camadas": [
+            "hook",
+            "pre-commit",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "DOC-04",
+      "regra": "PT-BR com acentuação; identificador técnico em ASCII",
+      "alvo": "documentacao",
+      "fonte": "skills/bks-standards/references/documentacao.md",
+      "secao": "Idioma",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/quality.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "DOC-05",
+      "regra": "Doc viva: frase até 40 palavras, sigla definida, sem muleta nem emoji",
+      "alvo": "documentacao",
+      "fonte": "skills/bks-writing/SKILL.md",
+      "secao": "9. O que a guarda confere e o que a revisão confere",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/writing_guard.py",
+          "teste": "hooks/tests/test_writing_guard.py",
+          "camadas": [
+            "hook"
+          ],
+          "forca": "aviso"
+        }
+      ],
+      "parametros": [
+        {
+          "nome": "teto de palavras por frase",
+          "valor": "40",
+          "em": [
+            {
+              "arquivo": "hooks/scripts/writing_guard.py",
+              "trecho": "MAX_WORDS = 40"
+            },
+            {
+              "arquivo": "skills/bks-writing/SKILL.md",
+              "trecho": "Até 40 palavras"
+            },
+            {
+              "arquivo": "skills/bks-writing/SKILL.md",
+              "trecho": "Nenhuma frase passa de 40 palavras"
+            },
+            {
+              "arquivo": "README.md",
+              "trecho": "frase acima de 40 palavras"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "DOC-06",
+      "regra": "ADR citado só na nota de decisão",
+      "alvo": "documentacao",
+      "fonte": "skills/bks-writing/SKILL.md",
+      "secao": "1. A decisão entra no texto",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/writing_guard.py",
+          "teste": "hooks/tests/test_writing_guard.py",
+          "camadas": [
+            "hook"
+          ],
+          "forca": "aviso"
+        }
+      ]
+    },
+    {
+      "id": "PRC-01",
+      "regra": "Task de desenho consome o ARCH aprovado",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "A arquitetura é portão, e o modelo sabe quando ficou para trás",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "scripts/wave_graph.py",
+          "teste": "tests/test_wave_graph.py",
+          "camadas": [
+            "script"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "PRC-02",
+      "regra": "O modo autônomo só com a prontidão aprovada",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "O modo `autonomous` é concedido por script, não por pedido",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "scripts/readiness.py",
+          "teste": "tests/test_readiness.py",
+          "camadas": [
+            "script"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "PRC-03",
+      "regra": "Até 4 tasks simultâneas na onda",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "As ondas saem do grafo, e o estado tem um escritor só",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "scripts/wave_graph.py",
+          "teste": "tests/test_wave_graph.py",
+          "camadas": [
+            "script"
+          ],
+          "forca": "direto"
+        }
+      ],
+      "parametros": [
+        {
+          "nome": "tasks simultâneas na onda",
+          "valor": "4",
+          "em": [
+            {
+              "arquivo": "scripts/wave_graph.py",
+              "trecho": "MAX_PARALLEL = 4"
+            },
+            {
+              "arquivo": "commands/loop.md",
+              "trecho": "teto de 4 tasks simultâneas"
+            },
+            {
+              "arquivo": "docs/ARCHITECTURE.md",
+              "trecho": "teto de 4 tasks simultâneas"
+            },
+            {
+              "arquivo": "README.md",
+              "trecho": "onda tem até 4 tasks em paralelo"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PRC-04",
+      "regra": "Até 4 tentativas por task no LOOP-4",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "As ondas saem do grafo, e o estado tem um escritor só",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "scripts/run_state.py",
+          "teste": "tests/test_run_state.py",
+          "camadas": [
+            "script"
+          ],
+          "forca": "direto"
+        }
+      ],
+      "parametros": [
+        {
+          "nome": "tentativas por task no LOOP-4",
+          "valor": "4",
+          "em": [
+            {
+              "arquivo": "scripts/run_state.py",
+              "trecho": "MAX_ATTEMPTS = 4"
+            },
+            {
+              "arquivo": "commands/loop.md",
+              "trecho": "no máximo 4 tentativas"
+            },
+            {
+              "arquivo": "commands/loop.md",
+              "trecho": "máx 4 tentativas"
+            },
+            {
+              "arquivo": "commands/loop.md",
+              "trecho": "teto de 4 tentativas"
+            },
+            {
+              "arquivo": "commands/mode.md",
+              "trecho": "as 4 tentativas"
+            },
+            {
+              "arquivo": "agents/developer.md",
+              "trecho": "até 4 tentativas"
+            },
+            {
+              "arquivo": "docs/ARCHITECTURE.md",
+              "trecho": "o de 4 tentativas"
+            },
+            {
+              "arquivo": "README.md",
+              "trecho": "máximo 4 tentativas"
+            },
+            {
+              "arquivo": "README.md",
+              "trecho": "as 4 tentativas"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PRC-05",
+      "regra": "Painel e dashboard escrevem só na inbox",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "O painel escreve só na inbox",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "scripts/dashboard.py",
+          "teste": "tests/test_dashboard.py",
+          "camadas": [
+            "script"
+          ],
+          "forca": "indireto"
+        }
+      ]
+    },
+    {
+      "id": "PRC-06",
+      "regra": "Só o usuário promove aprendizado",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "O aprendizado volta como candidato, e só o usuário promove",
+      "sensores": [],
+      "motivo": "a promoção é ato do usuário no /bkhar:retro; não há ação de agente que um script confira"
+    },
+    {
+      "id": "PRC-07",
+      "regra": "architect: Bash só nos scripts do plugin, git de leitura e maestri ask; escrita só em specs/, decisions/, docs/ e outputs/",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "A integração com o Maestri é configuração, e o `manager` concentra os comandos delegados",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/architect_bash.py",
+          "teste": "hooks/tests/test_architect_bash.py",
+          "camadas": [
+            "hook"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "PRC-08",
+      "regra": "Agente não lê nem edita arquivo de segredo",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "A guarda vale em três camadas, e cada uma só vê o que alcança",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/secret_guard.py",
+          "teste": "hooks/tests/test_secret_guard.py",
+          "camadas": [
+            "hook"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "PRC-09",
+      "regra": "Sem remoção recursiva na raiz, no home ou fora do projeto",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "A guarda vale em três camadas, e cada uma só vê o que alcança",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/secret_guard.py",
+          "teste": "hooks/tests/test_secret_guard.py",
+          "camadas": [
+            "hook"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "PRC-10",
+      "regra": "Escrita só no projeto e nas raízes permitidas; configuração do Claude à mão",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "A guarda vale em três camadas, e cada uma só vê o que alcança",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/secret_guard.py",
+          "teste": "hooks/tests/test_secret_guard.py",
+          "camadas": [
+            "hook"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "PRC-11",
+      "regra": "STATUS.md não fica atrás do JOURNAL.md nem do git",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "A deriva do `STATUS.md` é conferida na abertura da sessão",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "hooks/scripts/session_memory.py",
+          "teste": "hooks/tests/test_status_drift.py",
+          "camadas": [
+            "hook"
+          ],
+          "forca": "aviso"
+        }
+      ]
+    },
+    {
+      "id": "PRC-12",
+      "regra": "Modelo de arquitetura defasado é avisado",
+      "alvo": "processo",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "A arquitetura é portão, e o modelo sabe quando ficou para trás",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "scripts/library.py",
+          "teste": "tests/test_library.py",
+          "camadas": [
+            "script"
+          ],
+          "forca": "aviso"
+        }
+      ]
+    },
+    {
+      "id": "PRC-13",
+      "regra": "Gerente não opina sobre técnica; conflito exposto sem escolha",
+      "alvo": "processo",
+      "fonte": "skills/bks-team/SKILL.md",
+      "secao": "O que o Gerente não faz",
+      "sensores": [],
+      "motivo": "comportamento do Gerente no rito; só o usuário confere"
+    },
+    {
+      "id": "PRC-14",
+      "regra": "Painel com invocações separadas e independentes",
+      "alvo": "processo",
+      "fonte": "skills/bks-team/SKILL.md",
+      "secao": "Escolher o painel quando o usuário não diz",
+      "sensores": [],
+      "motivo": "comportamento do Gerente no rito; só o usuário confere"
+    },
+    {
+      "id": "KIT-01",
+      "regra": "Todo guarda tem teste em hooks/tests/",
+      "alvo": "kit",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "Regra precisa de guarda executável",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "tests/test_structure.py",
+          "camadas": [
+            "suite",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "KIT-02",
+      "regra": "Todo guarda do diretório está declarado no hooks.json",
+      "alvo": "kit",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "Regra precisa de guarda executável",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "tests/test_structure.py",
+          "camadas": [
+            "suite",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "KIT-03",
+      "regra": "Caminho citado em documento existe",
+      "alvo": "kit",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "Ponteiro para arquivo é verificado",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "tests/test_structure.py",
+          "camadas": [
+            "suite",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "KIT-04",
+      "regra": "HTML dos artefatos em dia com a fonte",
+      "alvo": "kit",
+      "fonte": "README.md",
+      "secao": "Verificação",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "scripts/build_artefatos.py",
+          "camadas": [
+            "suite",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "KIT-05",
+      "regra": "Público não vaza caminho local nem e-mail",
+      "alvo": "kit",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "O público recebe uma lista, não uma cópia",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "scripts/publish.py",
+          "teste": "tests/test_publish.py",
+          "camadas": [
+            "suite",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "KIT-06",
+      "regra": "O kit passa nos próprios guardas",
+      "alvo": "kit",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "A guarda vale em três camadas, e cada uma só vê o que alcança",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "scripts/precommit.py",
+          "teste": "tests/test_precommit.py",
+          "camadas": [
+            "pre-commit",
+            "ci"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "KIT-07",
+      "regra": "Decisão no ARCHITECTURE.md, não em comentário, também no código Python do kit",
+      "alvo": "kit",
+      "fonte": "docs/ARCHITECTURE.md",
+      "secao": "Regra precisa de guarda executável",
+      "sensores": [],
+      "motivo": "conferida na revisão do próprio kit, sem ferramenta que leia comentário Python"
+    },
+    {
+      "id": "KIT-08",
+      "regra": "Mudança de skill sai com o delta do eval",
+      "alvo": "kit",
+      "fonte": "README.md",
+      "secao": "Verificação",
+      "sensores": [],
+      "motivo": "o eval custa crédito; o delta é exigido no processo de mudança de skill"
+    }
+  ]
+}

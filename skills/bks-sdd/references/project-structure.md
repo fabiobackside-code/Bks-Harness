@@ -18,7 +18,7 @@ project-[nome]/
 └── spec/
     ├── features/                        ← specs de features (Fase 5)
     │   └── FEAT-[nome].md
-    ├── tests/                           ← test specs por feature (Fase 6)
+    ├── tests/                           ← test specs por feature (Fase 5.2)
     │   └── TEST-[nome].md
     ├── tasks/                           ← tasks de implementação (Fase 5, após TEST aprovado)
     │   └── TASK-[id]-[descrição].md

@@ -59,7 +59,7 @@ def project():
     root = tempfile.mkdtemp()
     write(root, 'outputs/GRAPH-p.json', json.dumps(GRAPH))
     write(root, '.bks-profile.json', json.dumps({
-        'profile': 'backend', 'category': 'p', 'axes': {'mode': 'autonomo', 'rigor': 'poc'},
+        'profile': 'backend', 'category': 'p', 'axes': {'mode': 'autonomous', 'rigor': 'poc'},
         'models': {'developer': 'opus'}}))
     write(root, 'outputs/BLOQUEIO-T-001.md', '# Bloqueio\n\nQual schema usar?\n')
     write(root, 'decisions/SUPOSICOES.md',
@@ -143,7 +143,7 @@ def test_server():
 
         status, st = cli.call('GET', '/api/state')
         check('estado traz tasks, modo e modelos',
-              status == 200 and st['mode'] == 'autonomo' and st['run']['tasks'][0]['id'] == 'T-001', st)
+              status == 200 and st['mode'] == 'autonomous' and st['run']['tasks'][0]['id'] == 'T-001', st)
         check('modelo efetivo combina frontmatter e perfil',
               st['models']['developer'] == {'padrao': 'sonnet', 'efetivo': 'opus'}
               and st['models']['architect']['efetivo'] == 'opus', st['models'])

@@ -22,14 +22,17 @@ template `FEAT.md`, resolvido nesta ordem: `{repo}/.bks/templates/`, senao
 `${BKS_VAULT}/workbench/templates/`, senao `${CLAUDE_PLUGIN_ROOT}/templates/`. O cabeçalho da FEAT
 leva `Refinamento: não (exceção)`.
 
-Depois de aprovada, chame o agente `tester` para gerar TEST-[nome].md em specs/tests/. NUNCA
-implemente nesta etapa.
+Aprovada a FEAT, grave `**Status:** Aprovada` no cabeçalho dela e chame o agente `tester` para gerar
+TEST-[nome].md em specs/tests/. Mostre o TEST e pergunte se está aprovado; aprovado, grave
+`**Status:** Aprovada` no cabeçalho. Com os dois aprovados, o próximo passo é o
+`/bkhar:tasks [nome]`. NUNCA implemente nesta etapa.
 
-## Modo `autonomo`
+## Modo `autonomous`
 
-Com `axes.mode: autonomo`, não há entrevista: o `architect` tira as respostas do PRD, do PLAN e
+Com `axes.mode: autonomous`, não há entrevista: o `architect` tira as respostas do PRD, do PLAN e
 dos contratos que a task consome, e grava em `decisions/SUPOSICOES.md` o que precisou presumir. A
-FEAT leva `Refinamento: autonomo` e segue para o TEST sem portão. Dado pessoal, autorização e
+FEAT leva `Refinamento: autônomo` e segue para o TEST sem portão; FEAT e TEST saem com
+`**Status:** Aprovada`. Dado pessoal, autorização e
 segredo não se presumem: param em `outputs/BLOQUEIO-[nome].md`.
 
 

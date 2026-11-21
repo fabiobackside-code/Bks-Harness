@@ -171,7 +171,7 @@ projects/
     │   └── PLAN-[nome].md ← gerado por /bks-sdd --project-plan
     └── spec/
         ├── features/     ← specs de features (Fase 5)
-        ├── tests/        ← test specs por feature (Fase 6)
+        ├── tests/        ← test specs por feature (Fase 5.2)
         ├── tasks/        ← tasks de implementação (Fase 5, desbloqueadas pela Fase 6)
         └── output/       ← artefatos gerados pela execução das specs
 ```
@@ -190,6 +190,6 @@ Este workspace implementa os princípios de Harness Engineering:
 | **Memory** | `.states/` — snapshots que eliminam a amnésia entre sessões |
 | **Bootstrap** | `.logs/` — histórico que permite reinicialização rápida do contexto |
 | **Feed Forward** | `research/` → `plan/` → `projects/` — instrução estruturada antes da ação |
-| **Sensors** | `spec/tests/` — cenários de teste definidos antes da implementação (Fase 6) |
+| **Sensors** | `spec/tests/` — cenários de teste definidos antes da implementação (Fase 5.2) |
 
 O fluxo completo é: **pesquisar** → **especificar**

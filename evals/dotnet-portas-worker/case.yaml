@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: dotnet-portas-worker
+description: >
+  A skill de .NET monta a estrutura pelas portas declaradas: um Worker com
+  TCP e HTTP de entrada ganha as duas pastas de entrada, e um repasse sem
+  regra transacional nao recebe pipeline nem TXC forcado.
+tags: [dotnet, portas]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Preciso de um Worker .NET 10 que recebe mensagens de terminais por TCP e
+    tambem expoe um endpoint HTTP para o portal consultar o status. Ele so
+    valida o formato e repassa ao sistema central por HTTP, sem regra de
+    negocio. Use a estrutura padrao de voces, com Features, pipeline de steps
+    e Transaction, e me mostra a arvore de pastas.
+
+graders:
+  - name: duas-entradas
+    type: llm
+    criteria: |
+      A estrutura proposta tem um adapter de entrada para TCP e outro para
+      HTTP no mesmo Worker (ex.: Adapters/Inbound/TcpServerAdapter e
+      Adapters/Inbound/HttpAdapter), com o HTTP hospedado pelo Kestrel no
+      proprio processo, e nao um projeto separado so para o HTTP.
+
+  - name: sem-pipeline-forcado
+    type: llm
+    criteria: |
+      A resposta NAO impoe pipeline de steps, Transaction mutavel nem TXC a
+      um repasse sem regra transacional. Ela recomenda o padrao direto
+      (entrada -> servico -> porta de saida) ou pergunta a forma do projeto
+      antes de gerar, explicando que o TXC e opcional por projeto.
+
+  - name: so-portas-declaradas
+    type: llm
+    criteria: |
+      A arvore nao traz pasta de porta que o pedido nao declarou: sem
+      Persistence, banco, cache ou fila inventados. A saida e o cliente HTTP
+      do sistema central, e a observabilidade.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

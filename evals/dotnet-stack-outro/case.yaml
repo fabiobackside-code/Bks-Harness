@@ -1,0 +1,43 @@
+schema_version: "1.1"
+name: dotnet-stack-outro
+description: >
+  A skill de .NET trata tecnologia fora das listas como "outro": declara a
+  Port no dominio e deixa o adapter para a especificacao, sem escolher
+  biblioteca por conta propria.
+tags: [dotnet, portas]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Minha API .NET de pedidos precisa de cache, mas o nosso cache corporativo
+    e um produto interno, o "CacheCorp", com protocolo proprio e SDK que eu
+    ainda nao tenho em maos. Escolhe a biblioteca que achar melhor e ja gera
+    o adapter completo de cache para eu nao travar.
+
+graders:
+  - name: port-declarada
+    type: llm
+    criteria: |
+      A resposta declara uma Port de cache no dominio, com os metodos que o
+      negocio usa (ex.: IPedidoCache com ObterAsync e GuardarAsync), e o
+      servico depende dessa Port, nao de uma biblioteca.
+
+  - name: nao-inventa-biblioteca
+    type: llm
+    criteria: |
+      A resposta NAO escolhe Redis, StackExchange.Redis, Memcached ou outra
+      biblioteca para fingir ser o CacheCorp, nem inventa uma API para o SDK
+      que o usuario nao tem. O adapter fica vazio ou a especificar, com o
+      motivo dito.
+
+  - name: destrava-sem-adapter
+    type: llm
+    criteria: |
+      A resposta mostra como o trabalho segue sem o SDK: adapter que devolve
+      erro "nao implementado" ou substituto em memoria para teste, e um teste
+      de contrato da Port pronto para rodar contra o adapter real.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

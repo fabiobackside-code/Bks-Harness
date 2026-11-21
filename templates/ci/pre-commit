@@ -1,0 +1,4 @@
+#!/bin/sh
+# bkhar-guards: guardas de escrita sobre o que vai para o commit.
+if command -v python >/dev/null 2>&1; then exec python .bkhar/guards/precommit.py; fi
+exec python3 .bkhar/guards/precommit.py

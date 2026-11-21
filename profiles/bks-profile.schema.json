@@ -34,29 +34,34 @@
       "additionalProperties": false,
       "properties": {
         "output": {
-          "description": "Formato de saida dos artefatos.",
+          "description": "Formato de saída dos artefatos.",
           "enum": ["md", "html"],
           "default": "md"
         },
         "architecture_renderer": {
-          "description": "Como o diagrama e desenhado. Registro extensivel em profiles/architecture-renderers/ — outros valores sao validos se houver arquivo correspondente.",
+          "description": "Como o diagrama é desenhado. Registro extensível em profiles/architecture-renderers/ — outros valores são válidos se houver arquivo correspondente.",
           "type": "string",
           "default": "mermaid"
         },
         "frontend_target": {
-          "description": "O que a interface e. Vale para os perfis frontend e fullstack; null nos demais.",
+          "description": "O que a interface é. Vale para os perfis frontend e fullstack; null nos demais.",
           "enum": ["web", "mobile", "both", null],
           "default": null
         },
         "rigor": {
-          "description": "Quanto de disciplina. poc afrouxa a exigencia de teste e documentacao; nao a elimina.",
+          "description": "Quanto de disciplina. poc afrouxa a exigência de teste e documentação; não a elimina.",
           "enum": ["producao", "poc"],
           "default": "producao"
         },
         "mode": {
-          "description": "Como o projeto e conduzido. autonomo so e concedido pela checagem de prontidao do /bkhar:mode. Ausente vale colaborativo.",
-          "enum": ["colaborativo", "autonomo"],
-          "default": "colaborativo"
+          "description": "Como o projeto é conduzido. autonomous só é concedido pela checagem de prontidão do /bkhar:mode. Ausente vale collaborative. Os valores antigos colaborativo e autonomo ainda são lidos, e o /bkhar:audit os acusa.",
+          "enum": ["collaborative", "autonomous"],
+          "default": "collaborative"
+        },
+        "git_host": {
+          "description": "Onde o repositório remoto mora; decide o CI dos guardas instalado pelo scripts/install_guards.py. none instala só o pre-commit.",
+          "enum": ["github", "gitlab", "none"],
+          "default": "github"
         }
       }
     },
@@ -66,7 +71,7 @@
       "additionalProperties": false,
       "properties": {
         "export": {
-          "description": "Destino da exportacao, relativo ao vault; {projeto} vira o nome da pasta do projeto.",
+          "description": "Destino da exportação, relativo ao vault; {projeto} vira o nome da pasta do projeto.",
           "type": "string",
           "minLength": 1,
           "default": "knowledge/wiki/projetos/{projeto}"
@@ -87,7 +92,7 @@
       }
     },
     "stack": {
-      "description": "Opcional. Stack principal, quando o perfil gera codigo.",
+      "description": "Opcional. Stack principal, quando o perfil gera código.",
       "type": "object",
       "additionalProperties": true,
       "properties": {

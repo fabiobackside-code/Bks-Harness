@@ -1,0 +1,50 @@
+name: guards
+
+on:
+  push:
+  pull_request:
+
+# PR de fork roda sem segredo e com token só de leitura; nunca pull_request_target.
+permissions:
+  contents: read
+
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dependência do build dos artefatos
+        run: pip install markdown==3.10.2
+      - name: Guardas sobre o repositório inteiro
+        run: python scripts/precommit.py --all
+      - name: Suíte estrutural
+        run: python tests/test_structure.py
+      - name: Testes dos guardas
+        run: bash hooks/tests/run.sh
+      - name: Teste do pre-commit
+        run: python tests/test_precommit.py
+      - name: Registro de regras e relatório em dia
+        run: python scripts/rules_report.py --check
+      - name: Teste do relatório de regras
+        run: python tests/test_rules_report.py
+      - name: Teste do instalador dos guardas
+        run: python tests/test_install_guards.py
+      - name: Teste da recuperação da task
+        run: |
+          python tests/test_recovery.py
+          python tests/test_metrics.py
+      - name: Testes da auditoria de deriva e das propostas
+        run: |
+          python tests/test_audit.py
+          python tests/test_learning.py
+      - name: HTML dos artefatos em dia
+        run: python scripts/build_artefatos.py --check
+      - name: Publicação sem vazamento
+        run: |
+          python tests/test_publish.py
+          python scripts/publish.py --check

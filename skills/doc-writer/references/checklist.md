@@ -21,14 +21,9 @@ Use this checklist to write documentation that helps maintainers use code safely
 
 ## Docstring as Contract
 
-- [ ] Purpose is stated in caller terms.
-- [ ] Parameters include constraints not obvious from types.
-- [ ] Return value explains null/empty/error differences.
-- [ ] Side effects are named: DB writes, IO, cache, events, mutation.
-- [ ] Exceptions or error codes are specific.
-- [ ] Preconditions are stated when misuse is possible.
-- [ ] Security or tenant assumptions are explicit when relevant.
-- [ ] Implementation steps are omitted unless callers depend on them.
+- [ ] One line on the public member: what it does, in caller terms, never how.
+- [ ] Implementation steps and type information are not repeated.
+- [ ] Preconditions, side effects, errors and tenant assumptions are in the README or `ARCHITECTURE.md`, not in the docstring.
 
 ## README Essentials
 

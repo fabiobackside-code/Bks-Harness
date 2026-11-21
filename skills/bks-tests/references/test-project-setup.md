@@ -101,13 +101,13 @@ mkdir -p Unit
 mkdir -p Integration
 mkdir -p Shared
 
-# Estrutura Unit - espelha o projeto principal
-mkdir -p Unit/Domain/Core/Entities
-mkdir -p Unit/Domain/Core/ValueObjects
-mkdir -p Unit/Domain/Core/Aggregates
-mkdir -p Unit/Application/UseCases
-mkdir -p Unit/Application/Services
+# Estrutura Unit - espelha o projeto principal (bks-dotnet-solutions)
+mkdir -p Unit/Domain/Core/Models
+mkdir -p Unit/Domain/Services          # padrão direto
+mkdir -p Unit/Application/Pipeline     # só com txc: "base"
+mkdir -p Unit/Adapters/Inbound
 mkdir -p Unit/Adapters/Outbound
+mkdir -p Architecture
 
 # Estrutura Integration
 mkdir -p Integration/API
@@ -133,19 +133,18 @@ src/
     ├── Unit/                       # TESTES UNITÁRIOS
     │   ├── Domain/
     │   │   ├── Core/
-    │   │   │   ├── Entities/
-    │   │   │   ├── ValueObjects/
-    │   │   │   └── Aggregates/
-    │   │   └── Exceptions/
-    │   ├── Application/
-    │   │   ├── UseCases/
-    │   │   ├── Services/
-    │   │   └── Validators/
+    │   │   │   └── Models/             # aggregates, entidades, Value Objects
+    │   │   └── Services/               # padrão direto: o {Entidade}Service com a regra
+    │   ├── Application/                # só com txc: "base"
+    │   │   ├── Pipeline/
+    │   │   └── {Contexto}/             # ApplyRule com valores; executor pela sessão
     │   └── Adapters/
     │       ├── Inbound/
     │       └── Outbound/
     │
-    ├── Integration/                # TESTES DE INTEGRAÇÃO
+    ├── Architecture/               # TESTES DE ARQUITETURA (dependência entre camadas)
+    │
+    ├── Integration/                # TESTES DE INTEGRAÇÃO (Testcontainers, tecnologia real)
     │   ├── API/
     │   │   ├── Controllers/
     │   │   └── Endpoints/
@@ -187,7 +186,8 @@ dotnet add package Bogus --version 35.4.0
 
 # Para testes de integração
 dotnet add package Microsoft.AspNetCore.Mvc.Testing --version 8.0.0
-dotnet add package Microsoft.EntityFrameworkCore.InMemory --version 8.0.0
+# Banco real em container, um pacote conforme a porta de saída (sem banco em memória)
+dotnet add package Testcontainers.PostgreSql   # ou Testcontainers.MsSql
 
 # Voltar ao root
 cd ../..

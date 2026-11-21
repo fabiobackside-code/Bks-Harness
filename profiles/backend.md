@@ -5,7 +5,7 @@ Servidor e dados. API, domínio, persistência — sem interface.
 ## Gera
 
 - API e contratos
-- domínio, sob arquitetura hexagonal e padrão TXC
+- domínio, sob arquitetura hexagonal, no padrão direto ou no TXC quando o perfil declara `txc: "base"`
 - modelo de dados e scripts SQL
 - testes unitários e de integração
 - README e ARCHITECTURE

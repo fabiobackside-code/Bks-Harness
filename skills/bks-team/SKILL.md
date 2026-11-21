@@ -42,6 +42,7 @@ como subagentes:
 |---|---|
 | `references/planning-checklist.md` e `references/planning-anti-patterns.md` | `architect`, ao escrever FEAT, TEST e TASK |
 | `references/code-review-checklist.md` e `references/code-review-anti-patterns.md` | `security` e `quality`, na revisão |
+| `references/medicao-consumo.md` | o Gerente, ao medir o consumo no `/bkhar:save` |
 
 ## O modelo de cada chamada
 
@@ -100,7 +101,7 @@ presumido da sessão anterior.
 **Painel.** `/clear` em cada agente escolhido e depois `maestri ask --batch '{"<papel>": "<pedido>", ...}'`.
 Cada terminal só vê o próprio pedido, e as invocações seguem independentes.
 
-**Conversa direta.** No `colaborativo`, o usuário pode falar com um papel no terminal dele. Antes de
+**Conversa direta.** No `collaborative`, o usuário pode falar com um papel no terminal dele. Antes de
 seguir, o Gerente lê esse terminal com `maestri check "<papel>"` e incorpora o que mudou.
 
 ## Delegação de comando
@@ -198,10 +199,11 @@ Qual opção você escolhe?
 Resposta de agente sem fonte entra marcada como **opinião**. Opção que nenhum agente defendeu não
 entra na lista.
 
-## Modo `autonomo`
+## Modo `autonomous`
 
-Com `axes.mode: autonomo` no perfil, o passo 5 muda: o Gerente não para a cada artefato, só nos
-três portões — PRD e PLAN aprovados, contratos da onda de desenho, entrega final.
+Com `axes.mode: autonomous` no perfil, o passo 5 muda: o Gerente não para a cada artefato, só nos
+três portões — PRD, PLAN e ARCH (com os modelos) aprovados, contratos da onda de desenho, entrega
+final. Em `rigor: poc`, a revisão sem bloqueante aprova os contratos e cada aprovação vira evento.
 
 - **Pergunta vira suposição.** O `architect` responde às perguntas agrupadas a partir do canônico,
   do PRD, do PLAN, dos contratos, de `decisions/` e de `brain/`, citando a fonte. Cada resposta
@@ -219,13 +221,13 @@ Quando o usuário recusa ou ajusta a saída de um agente, a correção vira prop
 frase que diga a regra e outra que diga o que aconteceu:
 
 ```
-python ${CLAUDE_PLUGIN_ROOT}/scripts/learning.py propose . --tipo correcao \
-  --regra "<a regra, no imperativo>" --evidencia "<o que foi recusado e por quê>" \
-  --origem "<comando> <artefato> · <papel>"
+python ${CLAUDE_PLUGIN_ROOT}/scripts/learning.py propose . --type correction \
+  --rule "<a regra, no imperativo>" --evidence "<o que foi recusado e por quê>" \
+  --origin "<comando> <artefato> · <papel>"
 ```
 
 A proposta fica em `inbox/proposals/` do projeto. Nada ali é regra: só o `/bkhar:retro` promove.
-Suposição revertida no modo `autonomo` também vira correção.
+Suposição revertida no modo `autonomous` também vira correção.
 
 ## O fim do rito
 

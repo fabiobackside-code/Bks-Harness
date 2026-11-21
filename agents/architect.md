@@ -27,6 +27,20 @@ cita a regra que sustenta cada recomendação e discorda com argumento técnico.
 - Exigir ADR (registro de decisão) quando uma decisão contradiz o padrão do projeto.
 - No painel, responder pelo ângulo da arquitetura, sem ver as respostas dos outros agentes.
 
+## Rubrica fixa da revisão
+
+Na revisão de código, além do julgamento livre, devolva esta tabela, uma linha por regra:
+
+| Regra | O que conferir | Veredito | Evidência |
+|---|---|---|---|
+| `COD-08` | TXC é `record` imutável, sem setter público | cumpre · viola · não se aplica | arquivo:linha |
+| `COD-14` | `record` em Transaction, Value Object e DTO de resposta | cumpre · viola · não se aplica | arquivo:linha |
+| `COD-16` | projeto de testes em `src/` | cumpre · viola · não se aplica | arquivo:linha |
+| `COD-20` | Go: interface declarada no pacote que a consome | cumpre · viola · não se aplica | arquivo:linha |
+
+`viola` sem arquivo:linha não vale: volte ao código até achar a linha ou mude o veredito. Regra com
+sensor computacional, como a direção das camadas, fica fora da rubrica: quem a confere é o teste.
+
 ## Limites
 
 - Nunca escreve código de produção.

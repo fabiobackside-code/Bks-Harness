@@ -105,9 +105,19 @@ levanta.
    Os casos de defeito resolvido que o `quality` devolveu vão para o `LEARNINGS.md`, um por caso,
    no formato do template. Caso sem evidência fica de fora e é dito em uma linha.
 
-7. **Meça o consumo da sessão.** Siga `references/medicao-consumo.md`: ledger, painel
+7. **Meça o consumo da sessão.** Siga `${CLAUDE_PLUGIN_ROOT}/skills/bks-team/references/medicao-consumo.md`: ledger, painel
    `custo-tokens.md` e a tabela na entrada do `JOURNAL.md`. Se o script não existir, uma linha
    dizendo que pulou — a medição nunca bloqueia o `/bkhar:save`.
+
+   Depois, a métrica por fase das tasks do `/bkhar:loop`; rode e cole a saída:
+
+   ```
+   python ${CLAUDE_PLUGIN_ROOT}/scripts/metrics.py build .
+   ```
+
+   Ele grava `outputs/run/metrics/METRICAS.md`. Com tasks medidas, leve ao `JOURNAL.md` a linha
+   "Fase que mais gasta" e as tasks bloqueadas da seção "Onde travou". Sem task, ele diz que não
+   há o que medir: siga sem comentar.
 
 8. **Leve os candidatos ao vault.** Com `BKS_VAULT` definido, rode e cole a saída:
 

@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guia do Maestri — Usar o harness com terminais de agente · v1.0.0</title>
+<title>Guia do Maestri — Usar o harness com terminais de agente · v1.1.0</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,7 +39,7 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">BKS HARNESS · MAESTRI</div>
 <div><h1>Guia do Maestri</h1><p class="sub">Usar o harness com terminais de agente: a equipe de agentes em terminais do Maestri, a delegação de comandos e o uso fora dele.</p></div>
-<div class="meta">Versão 1.0.0 · beta: integração em prova</div></section>
+<div class="meta">Versão 1.1.0 · beta: integração em prova</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#antes-de-comecar">Antes de começar</a></li><li><a href="#o-que-e-o-maestri">O que é o Maestri</a></li><li><a href="#dois-jeitos-de-rodar">Dois jeitos de rodar</a></li><li><a href="#montar-o-workspace">Montar o workspace</a></li><li><a href="#ligar-desligar-e-conferir">Ligar, desligar e conferir</a></li><li><a href="#trabalhar-no-modo-colaborativo">Trabalhar no modo colaborativo</a></li><li><a href="#trabalhar-no-modo-autonomo">Trabalhar no modo autônomo</a></li><li><a href="#comandos-delegados">Comandos delegados</a></li><li><a href="#responder-aos-portoes">Responder aos portões</a></li><li><a href="#fora-do-maestri">Fora do Maestri</a></li><li><a href="#problemas-e-recuperacao">Problemas e recuperação</a></li><li><a href="#exercicios">Exercícios</a></li><li><a href="#referencia-rapida">Referência rápida</a></li><li><a href="#historico-de-versoes">Histórico de versões</a></li></ol></nav>
 <h2 id="antes-de-comecar">Antes de começar</h2>
 <p>Este guia mostra como usar o harness <code>bkhar</code> dentro do Maestri, com cada papel da equipe no seu
@@ -333,7 +333,7 @@ conectados a ele.</p>
 volta ao <code>manager</code> com a fonte citada.</p>
 <h2 id="trabalhar-no-modo-autonomo">Trabalhar no modo autônomo</h2>
 <ol>
-<li>Rode <code>/bkhar:mode autonomo</code> no <code>manager</code>. A checagem de prontidão concede o modo ou diz o que
+<li>Rode <code>/bkhar:mode autonomous</code> no <code>manager</code>. A checagem de prontidão concede o modo ou diz o que
    falta.</li>
 <li>Abra os terminais de construção e revisão, e o <code>architect</code> se a onda tiver tarefa de desenho.</li>
 <li>Rode <code>/bkhar:loop --wave next</code>: até 4 tarefas em paralelo, cada uma na sua worktree, com até 4
@@ -347,7 +347,7 @@ nela à mão, e ela nunca substitui o <code>STATUS.md</code>:</p>
 <pre><code># Status · meu-projeto
 &gt; Espelho gerado de STATUS.md e outputs/run/. Não editar à mão. Atualizado: 2026-11-06 15:30
 
-Modo: autonomo · Etapa: onda 2 de 5 — construcao · Concluídas: 3/9
+Modo: autonomous · Etapa: onda 2 de 5 — construcao · Concluídas: 3/9
 
 ## Em uma frase
 ## Próximo passo
@@ -380,6 +380,12 @@ com "sim".</p>
 <p>O Maestri Remote, o aplicativo para celular, abre um terminal real e permitiria responder pelo
 telefone. Ele exige o Maestri Wire ligado, o que abre acesso remoto à máquina; o harness não foi
 testado com ele.</p>
+<p><strong>O ambiente do projeto.</strong> Docker Compose, banco e variáveis não têm comando próprio: são trabalho
+de construção, planejado no plano e no grafo como qualquer task. Uma task de desenho do <code>architect</code>
+produz o contrato de infraestrutura; uma task de integração do <code>developer</code> sobe o compose no terminal
+dele; o <code>tester</code> escreve antes o teste que falha, como o healthcheck. No colaborativo, isso passa
+pelo <code>/bkhar:refine</code> e pelo <code>/bkhar:loop</code> da task; no autônomo, o <code>/bkhar:loop --wave next</code> segue a
+ordem do grafo.</p>
 <h2 id="fora-do-maestri">Fora do Maestri</h2>
 <p>Num terminal comum, na raiz do projeto:</p>
 <ol>
@@ -553,6 +559,11 @@ subagentes mesmo dentro dele.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.1.0</td>
+<td>2026-11-20</td>
+<td>Fonte única do assunto: o ambiente do projeto como task, trazido do manual do vault, que passa a apontar para cá</td>
+</tr>
 <tr>
 <td>1.0.0</td>
 <td>2026-11-06</td>

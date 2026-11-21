@@ -11,6 +11,7 @@ vault** (`${BKS_VAULT}`); dentro de um projeto, recuse e oriente.
 |---|---|
 | `repos/backside/`, `repos/private/` | por inteiro |
 | `repos/old/` | por inteiro, marcado como histórico |
+| o próprio kit (`${CLAUDE_PLUGIN_ROOT}`) | por inteiro, na categoria `kit`, apontado como `kit/bks-harness/...` |
 | `repos/w3/nquantic` | só conceito: tema e data no índice; na página, sem cliente, contrato, endpoint, volume ou dado operacional |
 | demais de `repos/w3/` | fora |
 | `backup/` | fora |

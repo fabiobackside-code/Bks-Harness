@@ -8,8 +8,19 @@ Código não se documenta a si mesmo com comentário. A intenção e a decisão 
 - Proibido: comentário que só repete o nome do método/variável.
 - Permitido: resumo de 1 linha em classe pública e método público não trivial
   (`/// <summary>` em C#, JSDoc em TS, docstring em Python) — o **quê** faz, nunca o **como**.
-- Exceção rara: "gotcha" não óbvio (workaround de bug externo, ordem de chamada imposta
-  por lib de terceiro). Pontual, não regra.
+- Teto: 5 linhas por bloco de comentário. O que denuncia ensaio é o bloco longo.
+- Proibido: marca de severidade em comentário (🔴 ⚠️ 🟡 ✅ 📌): quem a escreve está
+  argumentando, não descrevendo.
+- Proibido: ponteiro para documento ("Ver ARCHITECTURE.md", "Ver README").
+- Exceções, até 2 linhas cada: "gotcha" não óbvio (workaround de bug externo, ordem de
+  chamada imposta por lib de terceiro) e ausência deliberada de código (o que não está ali e
+  não pode entrar). Pontuais, não regra.
+
+## Idioma
+Texto para quem lê (comentário, README, ARCHITECTURE, ADR, spec) em português do Brasil
+**com acentuação e cedilha**: "transação", não "transacao". Arquivo existente sem acento não
+é licença para escrever sem acento. Exceção única: identificador técnico (nome de arquivo,
+slug, branch, chave de configuração) segue ASCII.
 
 ## README.md (raiz do projeto)
 Geral, funcional. O que é · como rodar · estrutura de pastas (1 nível) · stack · links

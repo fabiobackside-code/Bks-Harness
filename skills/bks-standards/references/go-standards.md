@@ -149,56 +149,44 @@ programação. Nunca para regra de negócio.
 
 ## 3. TXC em Go: struct por valor, imutabilidade por disciplina
 
-Go não tem `record` nem `readonly`. Imutabilidade não é garantida pelo compilador — é sustentada
-por três decisões de forma:
+Vale só no projeto que adota o TXC (VC-6 da skill `bks-go-solutions`). Go não tem `record` nem
+`readonly`. Imutabilidade não é garantida pelo compilador — é sustentada por três decisões de
+forma:
 
 - campos **não exportados**, acessíveis só por método getter do mesmo pacote;
-- construtor `NewOrderContext(...)` que valida e é o único caminho de criação;
-- passagem **por valor**, não por ponteiro, quando o struct é pequeno e o objetivo é não mutar.
+- construtor **não exportado** no pacote `txc`, chamado só por `NewTransaction` e `NewQuery`: o
+  adapter não consegue preencher um seed, e o compilador garante isso;
+- passagem **por valor**, não por ponteiro.
 
 ```go
-type OrderContext struct {
-	correlationID string
-	tenantID      string
-	traceID       string
-	requestedAt   time.Time
+// package txc
+type Seed struct {
+	code, correlationID, userID, tenantID, traceID, idempotencyKey string
 }
 
-func NewOrderContext(correlationID, tenantID string) (OrderContext, error) {
-	if correlationID == "" {
-		return OrderContext{}, errors.New("correlation id is required")
-	}
-	return OrderContext{
-		correlationID: correlationID,
-		tenantID:      tenantID,
-		requestedAt:   time.Now().UTC(),
-	}, nil
-}
+func (s Seed) CorrelationID() string { return s.correlationID }
 
-func (c OrderContext) CorrelationID() string { return c.correlationID }
+func newSeed(ctx context.Context, code string, call Call, key string) Seed { ... }
 ```
 
-**Método com receiver por valor** (`func (c OrderContext)`) não muta o original. Receiver por
-ponteiro (`func (c *OrderContext)`) muta — use só onde a mutação é o objetivo declarado.
+**Método com receiver por valor** (`func (s Seed)`) não muta o original. O TXC não tem método com
+receiver por ponteiro. A base completa está no `references/go-txc.md` da skill `bks-go-solutions`.
 
-Para evoluir o contexto ao longo da pipeline sem mutar, devolva uma cópia nova:
-
-```go
-func (c OrderContext) WithTraceID(traceID string) OrderContext {
-	c.traceID = traceID // c é cópia; o original do chamador não muda
-	return c
-}
-```
+**O TXC é só identidade da execução** (código, correlation id, usuário, tenant, trace, chave de
+idempotência), criado uma vez, na entrada da transação, com tudo que precisa. Não evolui ao longo
+da pipeline, não carrega retorno e não ganha `With*`: o que um passo produz para o seguinte é
+retorno tipado (seção 7), como no `txc-guidelines.md` da skill `bks-sdd`.
 
 **Um campo de slice ou map quebra isso.** Ambos são referências: copiar o struct copia o
 ponteiro, e o chamador consegue mutar o conteúdo. Se o contexto carrega coleção, copie na entrada
 e devolva cópia no getter — ou aceite que aquele campo não é imutável e documente.
 
-**`context.Context` não é o TXC.** `context.Context` transporta cancelamento, prazo e valores de
-infraestrutura; o TXC transporta estado de negócio. Andam juntos na assinatura, nunca fundidos:
+**`context.Context` não é o TXC.** `context.Context` transporta cancelamento e prazo; o TXC
+transporta a identidade da transação. Andam juntos na assinatura, nunca fundidos, e o TXC não vai
+para `context.WithValue`:
 
 ```go
-func (uc *CreateOrderUseCase) Execute(ctx context.Context, txc OrderContext) (OrderResult, error)
+func (x createExecutor) validate(ctx context.Context, seed txc.Seed, in CreateInput) (createLoaded, error)
 ```
 
 ## 4. Ports: a interface se declara no consumidor
@@ -243,8 +231,8 @@ func main() {
 	defer db.Close()
 
 	store := postgres.NewOrderStore(db)
-	useCase := order.NewCreateOrderUseCase(store)
-	handler := httpadapter.NewOrderHandler(useCase)
+	handler := httpadapter.NewOrderHandler(order.NewService(store)) // padrão direto
+	// TXC: httpadapter.NewOrderHandler(order.NewCreate(customers, store, idem), order.NewGet(store))
 
 	srv := newServer(cfg.Port, handler)
 	runUntilSignal(srv)
@@ -260,16 +248,16 @@ A premissa pede "sem `else`, um nível de indentação". Go chega lá pelo idiom
 **early return com guard clause**, não polimorfismo.
 
 ```go
-func (uc *CreateOrderUseCase) Execute(ctx context.Context, txc OrderContext) (OrderResult, error) {
-	o, err := uc.repo.FindByID(ctx, txc.OrderID())
+func (s *Service) Close(ctx context.Context, in CloseInput) (CloseResult, error) {
+	o, err := s.repo.FindByID(ctx, in.OrderID)
 	if err != nil {
-		return OrderResult{}, fmt.Errorf("loading order: %w", err)
+		return CloseResult{}, fmt.Errorf("loading order: %w", err)
 	}
 	if o.IsClosed() {
-		return OrderResult{}, ErrAlreadyClosed
+		return CloseResult{}, ErrAlreadyClosed
 	}
 	// caminho feliz sem indentação
-	return uc.process(ctx, o)
+	return s.close(ctx, o)
 }
 ```
 
@@ -293,26 +281,23 @@ O que **não** se traduz de .NET:
 ## 7. Pipeline explícito
 
 A premissa proíbe MediatR e dispatcher. Em Go a proibição é a mesma, e a implementação é mais
-simples do que em .NET: um estágio é uma função com assinatura fixa, e a pipeline é um slice
-percorrido em ordem.
+simples do que em .NET. No padrão direto, o serviço do contexto chama o domínio e a Port em
+sequência, como na seção 6. No TXC, a transação é uma ficha de funções com retorno tipado, e a base
+`txc` a conduz na ordem fixa `[10] → [20] → [40] → [50]`:
 
 ```go
-type Stage func(ctx context.Context, txc OrderContext) (OrderContext, error)
-
-func Run(ctx context.Context, txc OrderContext, stages ...Stage) (OrderContext, error) {
-	for _, stage := range stages {
-		next, err := stage(ctx, txc)
-		if err != nil {
-			return txc, err
-		}
-		txc = next
-	}
-	return txc, nil
-}
+return txc.NewTransaction(CodeCreate, txc.Steps[CreateInput, createLoaded, Order, CreateResult]{
+	Check:     CreateInput.check, // [10], sem I/O
+	Validate:  x.validate,        // lê pelas Ports: cliente, desconto → createLoaded
+	ApplyRule: x.applyRule,       // regra pura → Order
+	Execute:   x.execute,         // grava pela Port → CreateResult
+}, store)
 ```
 
-Estágio devolve o contexto evoluído em vez de mutar o recebido — coerente com a seção 2. A ordem
-fica visível no ponto de composição, não escondida em atributo ou registro.
+O seed entra igual em todos os passos e sai igual; `createLoaded` e `Order` têm tipo próprio. O
+consumidor não encadeia passos: a ordem é da base, e o tipo de cada passo é checado pelo
+compilador. A base e o exemplo completo estão no `references/go-txc.md` da skill
+`bks-go-solutions`.
 
 **Não use `chan` para orquestrar pipeline síncrona.** Canal é para concorrência real. Pipeline de
 estágios sequenciais é laço.
@@ -324,7 +309,8 @@ cmd/{binário}/main.go        composition root, um por executável
 internal/                    tudo que não é API pública — o compilador garante
   {contexto}/                pacote por contexto de domínio, não por camada técnica
     order.go                 tipo, regra e a interface que o pacote consome
-    usecase.go
+    service.go               padrão direto; no TXC, codes.go e um arquivo por transação
+  platform/txc/              só no TXC: a base de go-txc.md
   adapter/
     http/                    inbound
     postgres/                outbound

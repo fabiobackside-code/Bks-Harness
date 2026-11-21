@@ -1,7 +1,7 @@
 schema_version: "1.1"
 name: dotnet-sem-dispatcher
 description: >
-  A skill de .NET recusa MediatR e oferece o pipeline explicito no lugar,
+  A skill de .NET recusa MediatR e oferece a chamada explicita no lugar,
   mesmo com o usuario pedindo o dispatcher pelo nome.
 tags: [dotnet, guarda, txc]
 runs: 3
@@ -28,10 +28,12 @@ graders:
   - name: pipeline-explicito
     type: llm
     criteria: |
-      A resposta propoe a orquestracao explicita no lugar: um use case chamado
-      diretamente pela porta, com os passos ordenados (validacao,
-      pre-processamento, processamento, pos-processamento) num orquestrador de
-      pipeline.
+      A resposta propoe a chamada explicita no lugar, numa das duas formas da
+      skill: no padrao direto, o endpoint chama o servico da transferencia
+      pela sua Port; no TXC, o endpoint chama a sessao com o codigo da
+      transacao, e o executor tem os passos em ordem fixa ([10] validacao,
+      [20] idempotencia, [40] processamento, [50] pos-processamento). Aceitar
+      tambem a resposta que pergunta qual das duas formas o projeto adota.
 
   - name: explica-recusa
     type: llm

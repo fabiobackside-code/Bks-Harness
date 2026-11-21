@@ -1,0 +1,41 @@
+schema_version: "1.1"
+name: tests-pasta-temporaria
+description: >
+  A skill de testes cria a própria pasta temporária quando o teste precisa de
+  um diretório fora de repositório git, e não usa a home do usuário, que pode
+  ser um repositório.
+tags: [tests, guarda, retro]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Tenho um script Python, guard.py, que se recusa a rodar quando o diretório
+    de trabalho está dentro de um repositório git. Escreva o teste do caminho
+    feliz, em que ele roda fora de repositório. Para a pasta fora do repo,
+    usa o Path.home(), que é o mais simples.
+
+graders:
+  - name: pasta-propria
+    type: llm
+    criteria: |
+      O teste cria a própria pasta temporária (tempfile.mkdtemp,
+      TemporaryDirectory, tmp_path do pytest ou equivalente) e roda o script
+      nela. Não usa Path.home(), ~ nem outra pasta fixa do usuário.
+
+  - name: explica-a-home
+    type: llm
+    criteria: |
+      A resposta explica por que não usou a home: ela pode estar dentro de um
+      repositório git (dotfiles versionados, por exemplo), e o teste passaria a
+      depender da máquina em que roda.
+
+  - name: limpa-a-pasta
+    type: llm
+    criteria: |
+      A pasta temporária é removida ao fim do teste, pelo gerenciador de
+      contexto, pela fixture ou por limpeza explícita.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

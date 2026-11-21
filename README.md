@@ -4,18 +4,24 @@ Harness de engenharia assistida para o Claude Code: o método BKS de Spec-Driven
 skills, comandos, agentes, guardas e evals, empacotados como o plugin `bkhar`. Uma equipe de
 agentes que conversa com você, não vibe coding.
 
-Para entender o desenho antes de instalar:
+Documentação e apresentações de apoio, por onde começar:
 
-| Documento | Para que |
-|---|---|
-| `docs/artefatos/atlas/atlas-bks-harness.html` | Atlas: a equipe, os ritos, os comandos e o manual de uso |
-| `docs/artefatos/apresentacao/apresentacao-bks-harness.html` | Apresentação: a visão geral em slides |
-| `docs/artefatos/manual/manual-comandos.md` | Manual de comandos |
-| `docs/ARCHITECTURE.md` | As decisões estruturais do kit e o porquê de cada uma |
+| Documento | Versão | Para que |
+|---|---|---|
+| `docs/artefatos/guia/guia-bks-harness.html` | 0.1.0 | Guia para quem chega: o que orienta o agente, o que confere, o que proíbe, o que fica guardado e como se mede |
+| `docs/artefatos/treinamento/treinamento-bks-harness.html` | 1.5.0 | Treinamento: instalar, criar o primeiro projeto e rodar o ciclo |
+| `docs/artefatos/apresentacao/apresentacao-bks-harness.html` | 3.0.0 | Apresentação: a visão geral em 34 slides |
+| `docs/artefatos/atlas/atlas-bks-harness.html` | 2.0.0 | Atlas: a referência completa, com o manual de comandos como Parte X |
+| `docs/artefatos/manual/manual-comandos.md` | 1.7.0 | Manual de comandos: cada `/bkhar:*` com passo a passo e exemplo |
+| `docs/artefatos/maestri/guia-maestri.html` | 1.1.0 | Guia do Maestri: a equipe em terminais de agente |
+| `docs/ARCHITECTURE.md` | — | As decisões estruturais do kit e o porquê de cada uma |
+| `docs/regras.md` | gerado | As 48 regras e o sensor que confere cada uma |
+| `evals/BASELINE.md` | 2026-11-19 | A linha de base dos evals: o delta de cada skill |
+| `CONTRIBUTING.md` | — | Como contribuir com skill, agente, comando ou guarda |
 
 Comandos em inglês, prefixo `bkhar`. Documentação em português do Brasil.
 
-## O kit (base 0.7.0, agora `bkhar` 3.0.0-beta)
+## O kit (base 0.7.0, agora `bkhar` 3.0.1)
 
 Plugin do Claude Code com o kit BKS de **Spec-Driven Development** — o processo que leva uma ideia
 de produto até código implementado, passando por PRD, planos, especificações de feature, cenários
@@ -24,10 +30,10 @@ de teste e tasks executáveis.
 Não e um framework de código. É o processo de trabalho: skills que conduzem o ciclo, comandos que
 operam o workbench e agentes com papéis separados.
 
-> **3.0.0-beta.** Esta versão traz a integração com o Maestri: a equipe em terminais, o
-> `/bkhar:maestri`, a delegação de comando e o `architect` com Bash sob guarda. Essa parte ainda está
-> em prova num projeto piloto. Sem o bloco `maestri` no perfil do projeto, o harness funciona como na
-> 1.1.0: papéis por subagente e comandos na própria sessão.
+> **3.0.1.** Versão final da 3.0: guias e sensores de Harness Engineering, linha de base dos evals,
+> o `/bkhar:tasks` e o guia para quem chega (`docs/artefatos/guia/`). A integração com o Maestri
+> segue em prova e evolui na 4.0.0. Sem o bloco `maestri` no perfil do projeto, o harness funciona
+> como na 1.1.0: papéis por subagente e comandos na própria sessão.
 
 ### Instalação
 
@@ -62,9 +68,9 @@ Git, Python 3 (com `python -m pip install -r requirements.txt`) e Node.js são o
 | Skill | Para que serve |
 |---|---|
 | `bks-sdd` | Ciclo SDD completo: workspace, PRD, projetos, plano macro, feature specs, cenários de teste, tasks e execução |
-| `bks-dotnet-solutions` | Geração de soluções .NET com Arquitetura Hexagonal e o padrão TXC (Transaction Context) |
-| `bks-typescript-solutions` | Backends Node.js + TypeScript: API REST, agente LangGraph, worker e consumer, também sob TXC |
-| `bks-go-solutions` | Soluções Go: API REST, worker, consumer, CLI e SDK — TXC na forma que Go admite, erro idiomático no lugar de `Result[T]` |
+| `bks-dotnet-solutions` | Geração de soluções .NET com Arquitetura Hexagonal, montadas pelas portas de entrada e de saída, no padrão direto ou no TXC (Transaction Context) |
+| `bks-typescript-solutions` | Backends Node.js + TypeScript: API REST, agente LangGraph, worker e consumer; TXC (Transaction Context) quando o projeto declara `txc: "base"` |
+| `bks-go-solutions` | Soluções Go: API REST, worker, consumer, CLI e SDK — padrão direto ou TXC (Transaction Context) quando o projeto declara `txc`, por executor tipado; erro idiomático no lugar de `Result[T]` |
 | `bks-team` | Protocolo do Gerente: conduz os ritos da equipe, chama cada agente em invocação separada, numera as opções e para antes de gerar artefato |
 | `bks-create-plan-tasks` | Decomposição de qualquer trabalho em tasks atomicas otimizadas para consumo de tokens |
 | `bks-tests` | Cobertura de testes em solution .NET: projeto xUnit único em `src/`, 90%+ em linhas, branches e métodos, conformidade SonarQube |
@@ -79,6 +85,13 @@ Git, Python 3 (com `python -m pip install -r requirements.txt`) e Node.js são o
 | `bks-writing` | Padrão de escrita da documentação viva em PT-BR: decisão sintetizada no texto, abertura pela informação, frase curta, termo definido, lista de muletas |
 | `bks-maintainability-review` | Parecer de manutenibilidade por aplicação, nota de 0 a 100 para um dev pleno, e a fundamentação teórica e técnica do projeto; critérios por stack, hoje .NET e SQL |
 | `pr-writer` | Titulo e descrição de PR a partir do diff real, não da memória da conversa |
+
+**TXC (Transaction Context)** é o padrão que o autor adota em sistemas com aspecto transacional:
+cada operação vira uma transação registrada por código, com idempotência, rastro e compensação, e o
+contexto viaja somente leitura. É recomendado para sistema complexo com várias escritas que pedem
+essas garantias, e é opcional: o projeto o adota com `"txc": "base"` no `.bks-profile.json`. Sem o
+campo, as skills geram o padrão direto (entrada → serviço → porta de saída). O modelo está em
+`skills/bks-sdd/references/txc-guidelines.md`.
 
 #### Comandos
 
@@ -95,7 +108,8 @@ Git, Python 3 (com `python -m pip install -r requirements.txt`) e Node.js são o
 | `/bkhar:arch` | Portão de arquitetura: com o PLAN aprovado, escreve o índice ARCH e um modelo por arquivo em `docs/library/architecture/`, pela `bks-arch`, para você aprovar; `--update` refaz só o que está defasado |
 | `/bkhar:library` | Biblioteca do projeto: catálogo `docs/library/LIBRARY.md`, dashboard `docs/library/site/index.html`, aviso de arquitetura defasada e exportação para `knowledge/` do vault |
 | `/bkhar:refine` | Refinamento: a equipe pergunta antes; o `architect` escreve a especificação e o `tester`, os cenários |
-| `/bkhar:loop` | LOOP-4: o `tester` escreve o teste que falha, o `developer` implementa; máximo 4 tentativas. Com `--wave N`, no modo `autonomo`, roda a onda do grafo com até 4 tasks em paralelo, cada uma em worktree |
+| `/bkhar:tasks` | Com FEAT e TEST aprovados, o `architect` decompõe a feature em `specs/tasks/TASK-[feature].md`, uma task por peça, no formato do `/bkhar:loop` |
+| `/bkhar:loop` | LOOP-4: o `tester` escreve o teste que falha, o `developer` implementa; máximo 4 tentativas. Com `--wave N`, no modo `autonomous`, roda a onda do grafo com até 4 tasks em paralelo, cada uma em worktree |
 | `/bkhar:review` | Revisão em painel: `tester`, `quality` e, em área sensível, `security`, cada um em invocação separada |
 | `/bkhar:maintainability` | Inventaria `app/`, gera um parecer de manutenibilidade por aplicação em `outputs/maintainability/` e a fundamentação do projeto em `outputs/references/` |
 | `/bkhar:ask` | Pergunta direta a um agente da equipe, com resposta que cita a fonte |
@@ -104,7 +118,8 @@ Git, Python 3 (com `python -m pip install -r requirements.txt`) e Node.js são o
 | `/bkhar:harvest` | Na raiz do vault: indexa por script os ADRs e o `LEARNINGS.md` de `repos/` e consolida por tema em `knowledge/wiki/experiencia/` |
 | `/bkhar:save` | Roteia o resultado da sessão pela regra dos dois lugares |
 | `/bkhar:status` | Estado da execução em ondas: tasks por onda, o que está liberado, bloqueios e suposições abertas; só lê |
-| `/bkhar:mode` | Troca o modo de condução (`colaborativo` ou `autonomo`): roda a checagem de prontidão, grava ADR e altera o `.bks-profile.json` |
+| `/bkhar:audit` | Deriva de coerência: no kit, registro de regras e parâmetros entre guia e sensor; no projeto, cópia dos guardas, CI e `STATUS.md`. Com `--deep [tema]`, o `quality` procura contradição de sentido entre guias e cada achado vira proposta para você decidir; só lê |
+| `/bkhar:mode` | Troca o modo de condução (`collaborative` ou `autonomous`): roda a checagem de prontidão, grava ADR e altera o `.bks-profile.json` |
 | `/bkhar:maestri` | Liga, desliga e confere a integração com o Maestri: grava o bloco `maestri` do `.bks-profile.json`, valida os terminais da equipe e do executor `ops` e diz o que criar quando falta |
 | `/bkhar:migrate` | Traz um projeto do `bks` para o `bkhar`: confere o layout, troca o prefixo no `WORKFLOW.md` e no `CLAUDE.md`, grava o `.bkhar.json`; não commita |
 
@@ -114,10 +129,10 @@ O projeto escolhe o modo em `axes.mode` do `.bks-profile.json`:
 
 | Modo | Como anda |
 |---|---|
-| `colaborativo` (padrão) | a equipe pergunta e espera você em cada FEAT (especificação da feature), TEST (cenários de teste) e tentativa |
-| `autonomo` | a pergunta vira suposição em `decisions/SUPOSICOES.md`; você aprova o PRD, o PLAN (plano macro) e o ARCH (arquitetura), os contratos da onda de desenho e a entrega |
+| `collaborative` (padrão) | a equipe pergunta e espera você em cada FEAT (especificação da feature), TEST (cenários de teste) e tentativa |
+| `autonomous` | a pergunta vira suposição em `decisions/SUPOSICOES.md`; você aprova o PRD, o PLAN (plano macro) e o ARCH (arquitetura), os contratos da onda de desenho (em `rigor: poc`, a revisão sem bloqueante os aprova) e a entrega |
 
-O `/bkhar:mode autonomo` só troca o modo quando `scripts/readiness.py` concede: canônico, PRD,
+O `/bkhar:mode autonomous` só troca o modo quando `scripts/readiness.py` concede: canônico, PRD,
 PLAN e grafo (`outputs/GRAPH-{projeto}.json`) aprovados, ARCH e modelos aprovados e em dia, sem
 questão em aberto, e a stack no perfil.
 Daí o `/bkhar:loop --wave N` roda as ondas do grafo: desenho, construção, front e integração. Cada
@@ -199,7 +214,7 @@ A arquitetura é portão nos dois modos: `prd → plan → arch (aprovado) → r
 escreve o índice `docs/library/architecture/ARCH-{projeto}.md` e um modelo por arquivo em
 `models/` (C4, dados, sequências, fronteiras sensíveis, implantação), desenhados pela notação da
 `bks-arch` no motor do perfil, todos em `status: rascunho`. Sem ARCH e modelos aprovados, o
-`/bkhar:refine` e o `/bkhar:spec` não começam, e a prontidão do `autonomo` recusa.
+`/bkhar:refine` e o `/bkhar:spec` não começam, e a prontidão do `autonomous` recusa.
 
 Os modelos são artefatos vivos. Cada um declara `atualizado` e, opcionalmente, `fontes`; ADR,
 contrato ou PLAN mais novo o deixa defasado. O `/bkhar:save`, o `/bkhar:brain` e o fim de cada onda
@@ -251,19 +266,22 @@ O `/bkhar:new-project` grava a escolha em `.bks-profile.json`. Detalhes em
 
 ### Guardas
 
-O kit instala cinco hooks. Os três primeiros **recusam a escrita** quando a regra e violada — a
+O kit instala oito hooks. Os seis primeiros **recusam a ação** quando a regra é violada — a
 razão volta no próprio bloqueio, para corrigir e repetir. O `writing_guard` não recusa: a escrita
 acontece, e os achados voltam ao agente para correção na mesma passada.
 
 | Guarda | Quando dispara | O que recusa |
 |---|---|---|
-| `no_dispatcher` | escrita em `.cs` | `MediatR`, `IMediator`, `ISender`, `IRequestHandler<>`, `AddMediatR` e equivalentes — a orquestração BKS e explicita, via `PipelineOrchestrator` |
-| `comment_budget` | escrita em `.cs` | bloco de comentario acima de 5 linhas, e marca de severidade em comentario |
+| `secret_guard` | Read, Grep, Bash, PowerShell, Write e Edit, em qualquer arquivo | ler ou editar `.env`, chave e certificado (`.env.example` passa); gravar chave privada, token ou senha com valor real; `rm -r` e `Remove-Item -Recurse` na raiz, no home ou fora do projeto; `git reset --hard` fora da branch da task (`task/*`, `wave/*`); escrever fora do projeto, do temporário e da pasta do Claude, ou nos `settings*.json` e `plugins/` dessa pasta. Raiz extra vai em `BKHAR_WRITE_ROOTS`; fixture com segredo falso leva `bkhar-allow-secret` na linha |
+| `architect_bash` | Bash e escrita do agente `architect` | Bash além dos scripts do plugin, do git de leitura e do `maestri ask`; escrita fora de `specs/`, `decisions/`, `docs/` e `outputs/` |
+| `no_dispatcher` | escrita em `.cs` | `MediatR`, `IMediator`, `ISender`, `IRequestHandler<>`, `AddMediatR` e equivalentes — a orquestração BKS é explícita: serviço pela porta no padrão direto, sessão por código no TXC |
+| `comment_budget` | escrita em `.cs` | bloco de comentario acima de 5 linhas, marca de severidade e ponteiro para documento ("Ver ARCHITECTURE.md") em comentario |
+| `dotnet_project` | escrita em `.csproj`, `.props`, `.sln` e `.cs` de `Migrations/` | `FluentAssertions`; solution nova em `.sln` (o `.sln` que já existe pode ser editado); alteração de migration que já está no `HEAD`, exceto o snapshot do modelo |
 | `dod_docs` | escrita em `.cs` que declara tipo público | a escrita, enquanto `README.md` e `ARCHITECTURE.md` não tiverem sido tocados na mesma leva |
 | `writing_guard` | depois da escrita em `.md` de documentação viva | nada — devolve ao agente ADR fora da nota de decisão, frase acima de 40 palavras, sigla sem definição, muleta e emoji do trecho escrito, e lembra o usuário de rodar o `/bkhar:review` |
 | `session_memory` | inicio de sessão | nada — carrega o `STATUS.md` do projeto, ou o perfil do usuário na raiz do vault, e avisa quando o `STATUS.md` é mais antigo que o último commit ou a última entrada do `JOURNAL.md` |
 
-Os guardas de código ignoram arquivo de teste, arquivo fora de repositório git e qualquer coisa
+Os guardas de código (`no_dispatcher`, `comment_budget`, `dod_docs`) ignoram arquivo de teste, arquivo fora de repositório git e qualquer coisa
 que não seja `.cs`. O `writing_guard` ignora `STATUS.md`, `JOURNAL.md`, `CLAUDE.md`, ADR,
 `CONTEXT*.md`, `docs/prompts/`, `docs/history/`, `docs/input/` e instrução de agente (`skills/`,
 `commands/`, `agents/`). Ele também roda como linha de comando sobre arquivos inteiros:
@@ -278,6 +296,24 @@ bash hooks/tests/run.sh
 
 Os guardas exigem `python` no PATH.
 
+#### Pre-commit e CI
+
+O `secret_guard`, o `no_dispatcher`, o `comment_budget` e o `dotnet_project` também rodam fora do Claude Code: antes de
+cada commit e no CI. Para instalar ou atualizar num projeto:
+
+```
+python scripts/install_guards.py <dir-do-projeto> --host github|gitlab|none
+```
+
+O script copia os guardas para `.bkhar/guards/` com a versão do kit, escreve `.githooks/pre-commit`,
+ativa o `core.hooksPath` e põe o CI do host (`.github/workflows/bkhar-guards.yml`, ou o job em
+`.bkhar/guards/gitlab-ci.yml` incluído pelo `.gitlab-ci.yml`). Com `none`, só o pre-commit. O
+`/bkhar:new-project` roda o script sozinho, com o host do eixo `git_host`. Para conferir o
+repositório inteiro à mão: `python .bkhar/guards/precommit.py --all`.
+
+Neste repositório, o pre-commit chama `scripts/precommit.py` direto; ative com
+`git config core.hooksPath .githooks` depois de clonar.
+
 ### Verificação
 
 Duas suites, que respondem a perguntas diferentes.
@@ -290,8 +326,15 @@ python tests/test_structure.py
 bash hooks/tests/run.sh
 ```
 
+As regras que o kit impõe estão registradas no `rules.json`, cada uma com fonte e sensor. O
+relatório `docs/regras.md` diz quantas têm verificação, e de que tipo; mudou o registro, regere com
+`python scripts/rules_report.py` (o `--check` confere que está em dia).
+
 Os scripts têm suíte própria, uma por script: `python tests/test_<script>.py` (`readiness`,
 `wave_graph`, `run_state`, `dashboard`, `learning`, `harvest`, `library`).
+
+Para contribuir, veja o `CONTRIBUTING.md`: o caminho do pull request e o checklist de instrução
+suspeita.
 
 **Comportamental** — a skill ainda decide certo? Recusa MediatR, mantém o projeto de testes em
 `src/`, pergunta antes de assumir. Roda o agente de verdade, com braco baseline sem o plugin para
@@ -333,12 +376,37 @@ trabalho atual.
 /bkhar:arch          vira arquitetura: ARCH + modelos, para aprovar (portão)
 /bkhar:refine        vira FEAT + TEST apoiada nos modelos (ou /bkhar:spec, sem rito)
                    (ou a skill bks-sdd, para o ciclo com workspace e plano macro)
-/bkhar:loop          implementa task sob goals
+/bkhar:tasks         vira tasks, uma por peça, para o loop
+/bkhar:loop          implementa task sob goals, na branch task/T-NNN
+                   (--resume retoma do BLOQUEIO ou depois de uma queda)
 /bkhar:review        revisão independente
 /bkhar:maintainability  parecer por aplicação e fundamentação
 /bkhar:library       catálogo, dashboard e exportação para o vault
 /bkhar:save          registra decisões e progresso, regera a biblioteca
 ```
+
+### Quando a task trava ou a sessão cai
+
+O `/bkhar:loop` abre a `task/T-NNN` no passo 0 e commita cada portão: os testes que falham, escritos
+pelo `tester`, e a revisão aprovada. Cada tentativa do `developer` vira uma foto fora do histórico. Na 4ª falha, o loop
+para em `outputs/BLOQUEIO-T-NNN.md` e mostra três coisas:
+
+- o diagnóstico e o placar das tentativas;
+- as opções de resolução;
+- a seção `## Retomada`.
+
+Para seguir, preencha "O que mudou" e "Partir de" (`spec`, `red` ou `impl-K`) e rode:
+
+```
+/bkhar:loop T-NNN --resume
+```
+
+O mesmo comando retoma depois de uma queda, do último ponto seguro. São no máximo três ciclos por
+task; no terceiro bloqueio, a task volta ao `/bkhar:refine`. O estado da task fica visível com
+`python scripts/recovery.py show . --task T-NNN`.
+
+O `/bkhar:save` mede as tasks por fase com `python scripts/metrics.py build .`. O resultado vai para
+`outputs/run/metrics/METRICAS.md`, que diz qual fase gasta mais e onde o fluxo travou.
 
 ### `/bkhar:spec` ou a skill `bks-sdd`?
 

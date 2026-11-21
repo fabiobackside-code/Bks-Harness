@@ -1,0 +1,51 @@
+schema_version: "1.1"
+name: go-txc
+description: >
+  A skill de Go aplica o TXC (Transaction Context) quando o projeto o adota: o
+  pacote txc cria o seed somente leitura, o adapter só chama o txc.Op com o
+  txc.Call e a entrada, o dado entre passos é retorno tipado e o erro de
+  negócio volta como error, não como pânico nem Result[T].
+tags: [go, txc]
+runs: 3
+
+execution:
+  max_turns: 6
+  prompt: |
+    Nosso serviço Go hexagonal adota o TXC (txc: "base" no .bks-profile.json).
+    Preciso do esqueleto da transação de abertura de conta: o que o handler HTTP
+    chama, o que a transação recebe e devolve, e onde busco o cliente antes de
+    aplicar a regra. Como o correlation id e o usuário chegam até lá?
+
+graders:
+  - name: seed-somente-leitura
+    type: llm
+    criteria: |
+      O seed (identidade da execução, com correlation id e usuário) é criado
+      pelo pacote txc a partir do txc.Call, não montado no handler, e não muda
+      no meio do fluxo: sem método With*, sem ponteiro para o seed, sem
+      context.WithValue carregando o TXC.
+
+  - name: adapter-chama-o-op
+    type: llm
+    criteria: |
+      O handler só preenche o txc.Call, chama a operação (um txc.Op ou função
+      equivalente montada por txc.NewTransaction) e traduz o resultado. Não
+      existe UseCase nem Handler por operação como Primary Port, e o handler
+      não encadeia validação, regra e gravação.
+
+  - name: retorno-tipado-entre-passos
+    type: llm
+    criteria: |
+      O cliente é lido no passo de validação (Validate) e entregue à regra
+      (ApplyRule) como valor de retorno tipado; a regra devolve o que o
+      Execute grava. Nada de campo mutável num objeto de transação.
+
+  - name: erro-idiomatico
+    type: llm
+    criteria: |
+      Erro de negócio volta no segundo retorno, como error de domínio
+      (sentinela ou tipo), sem Result[T] genérico e sem panic.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

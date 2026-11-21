@@ -1,0 +1,16 @@
+name: bkhar-guards
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guardas do bkhar sobre o repositório inteiro
+        run: python .bkhar/guards/precommit.py --all

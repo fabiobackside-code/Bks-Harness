@@ -79,7 +79,7 @@ xdg-open TestResults/CoverageReport/index.html
 
 ### Integration/ (Testes de Integração)
 - Testa fluxos completos
-- Pode usar banco InMemory
+- Usa a tecnologia real em container (Testcontainers); nunca banco em memória
 - Usa WebApplicationFactory
 - Mais lentos (< 5s cada)
 
@@ -158,7 +158,7 @@ open TestResults/CoverageReport/index.html
 ```
 
 ### Testes de integração falhando
-- Verificar se InMemoryDatabase está limpo
+- Verificar se o Docker está de pé e o container subiu (Testcontainers)
 - Verificar seed de dados
 - Verificar configurações no CustomWebApplicationFactory
 

@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Treinamento do bks-harness — Instalação e uso · v1.4.0</title>
+<title>Treinamento do bks-harness — Instalação e uso · v1.5.0</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,7 +39,7 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">BKS HARNESS · TREINAMENTO</div>
 <div><h1>Treinamento do bks-harness</h1><p class="sub">Instalação e uso: do zero à primeira sessão produtiva e a um ciclo completo com a equipe de agentes.</p></div>
-<div class="meta">Versão 1.4.0 · para quem instala pelo repositório público</div></section>
+<div class="meta">Versão 1.5.0 · para quem instala pelo repositório público</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#antes-de-comecar">Antes de começar</a></li><li><a href="#parte-1-instalacao">Parte 1 — Instalação</a></li><li><a href="#parte-2-uso">Parte 2 — Uso</a></li><li><a href="#historico-de-versoes">Histórico de versões</a></li></ol></nav>
 <h2 id="antes-de-comecar">Antes de começar</h2>
 <p>Este manual leva você do zero até a primeira sessão produtiva e, depois, a um ciclo completo com a
@@ -53,8 +53,9 @@ avance com uma conferência falhando. Os capítulos de uso trazem também um <st
   os seus projetos.</li>
 </ul>
 <p>Os caminhos deste manual são exemplos, como <code>C:\dev\2brains</code>. Troque pelos seus.</p>
-<p>Para o porquê de cada decisão, leia o Atlas. Para o detalhe de cada comando, o manual de comandos,
-que é a Parte X do Atlas. Os dois estão em <code>docs/artefatos/</code> do repositório.</p>
+<p>Para entender o desenho (o que orienta o agente, o que confere o trabalho, o que é proibido), leia
+o guia para quem chega. Para o porquê de cada decisão, o Atlas. Para o detalhe de cada comando, o
+manual de comandos, que é a Parte X do Atlas. Os três estão em <code>docs/artefatos/</code> do repositório.</p>
 <h2 id="parte-1-instalacao">Parte 1 — Instalação</h2>
 <h3>1. O que você vai instalar</h3>
 <p>O <strong>kit</strong> é o motor. Traz as skills (instruções que o agente carrega sob demanda), os comandos
@@ -147,13 +148,13 @@ plugin é lido direto da pasta: o que estiver no disco vale na próxima sessão.
 
 <p><strong>Confira.</strong> <code>claude plugin list</code> mostra:</p>
 <pre><code>❯ bkhar@bks-harness
-  Version: 0.9.0
+  Version: 3.0.0-beta
   Scope: user
   Status: ✔ enabled
 </code></pre>
 <p>E <code>claude plugin details bkhar@bks-harness</code> lista <code>Agents (6)  architect, developer, quality,
 scribe, security, tester</code> e os hooks <code>PreToolUse</code>, <code>SessionStart</code> e <code>PostToolUse</code>. O custo fixo
-fica em torno de 3,2 mil tokens por sessão.</p>
+medido na 0.9.0 ficou em torno de 3,2 mil tokens por sessão.</p>
 <h3>4. Montar o vault (opcional)</h3>
 <p>Pule este capítulo se quiser só o kit. Volte a ele quando sentir falta de memória entre projetos.</p>
 <p><strong>Clonar e desligar do template.</strong> O template já cumpriu o papel dele; o seu vault é outro
@@ -340,12 +341,17 @@ rode <code>/bkhar:brain</code>.</p>
 <tr>
 <td>Arquitetura</td>
 <td><code>/bkhar:arch</code></td>
-<td>o índice ARCH e os modelos (C4 nos níveis contexto e container, dados, sequências, fronteiras sensíveis) em <code>docs/library/architecture/</code>, e o README</td>
+<td>o índice ARCH (o documento de arquitetura) e os modelos (C4 nos níveis contexto e container, dados, sequências, fronteiras sensíveis) em <code>docs/library/architecture/</code>, e o README</td>
 </tr>
 <tr>
 <td>Especificação</td>
 <td><code>/bkhar:refine</code> ou <code>/bkhar:spec</code></td>
-<td>a FEAT (especificação da feature) e o TEST (os cenários), apoiados nos modelos</td>
+<td>a FEAT (especificação da feature) e o TEST (os cenários), apoiados nos modelos, os dois com <code>**Status:** Aprovada</code></td>
+</tr>
+<tr>
+<td>Tasks</td>
+<td><code>/bkhar:tasks</code></td>
+<td><code>specs/tasks/TASK-[feature].md</code>: uma task por peça, cada uma com os cenários do TEST que ela cobre</td>
 </tr>
 <tr>
 <td>Implementação</td>
@@ -366,7 +372,7 @@ rode <code>/bkhar:brain</code>.</p>
 </table>
 <p>O que não se pula é a aprovação: nenhuma etapa gera artefato sem você aprovar a anterior. A
 arquitetura é portão: o <code>/bkhar:refine</code> e o <code>/bkhar:spec</code> recusam começar sem o ARCH e os modelos em
-<code>status: aprovado</code>.</p>
+<code>status: aprovado</code>. O <code>/bkhar:tasks</code> recusa começar sem a FEAT e o TEST aprovados.</p>
 <p><strong>A biblioteca do projeto.</strong> Tudo o que o projeto produz fica catalogado em <code>docs/library/LIBRARY.md</code>
 e aparece no dashboard <code>docs/library/site/index.html</code>, que você abre no navegador. O <code>/bkhar:save</code>
 regera os dois e avisa quando um modelo ficou mais velho que um ADR ou contrato; o
@@ -395,8 +401,8 @@ documentar.</p>
 <tr>
 <td><code>architect</code></td>
 <td>Opus</td>
-<td>escrever FEAT, TASK (a tarefa do plano) e ADR (o registro de decisão)</td>
-<td>executar comando ou escrever código de produção</td>
+<td>escrever FEAT, TASK (a tarefa do plano) e ADR (o registro de decisão); no Bash, só scripts do plugin e <code>git</code> de leitura</td>
+<td>escrever código de produção ou gravar fora de <code>specs/</code>, <code>decisions/</code>, <code>docs/</code> e <code>outputs/</code></td>
 </tr>
 <tr>
 <td><code>tester</code></td>
@@ -448,14 +454,17 @@ que serve cada uma?</code></p>
 <p><strong>Confira.</strong> A primeira linha da resposta anuncia o agente, como <code>architect - Opus - ...</code>. Cada
 afirmação cita a fonte, e o que vier sem fonte aparece marcado como <strong>opinião</strong>.</p>
 <h3>10. Implementar e revisar</h3>
-<p>O <code>/bkhar:loop</code> implementa uma task do plano, no protocolo LOOP-4: no máximo quatro tentativas.</p>
+<p>O <code>/bkhar:loop T-NNN</code> implementa uma task de <code>specs/tasks/TASK-[feature].md</code>, escrita pelo
+<code>/bkhar:tasks</code>, no protocolo LOOP-4: no máximo quatro tentativas, na branch <code>task/T-NNN</code>.</p>
 <ol>
 <li><strong>Passo 0.</strong> O <code>tester</code> escreve o RED (o teste que ainda falha). Você confirma que ele falha pelo
    motivo certo: é o portão "RED confirmado".</li>
 <li><strong>Tentativas.</strong> O <code>developer</code> implementa, uma tentativa por vez, contra os goals: build limpo,
    testes verdes, cenários do TEST cobertos.</li>
 <li><strong>Falha.</strong> O erro real volta como contexto da tentativa seguinte. Nada é escondido.</li>
-<li><strong>Quarta falha.</strong> O loop para com um <code>BLOQUEIO</code> e devolve a decisão para você.</li>
+<li><strong>Quarta falha.</strong> O loop para com um <code>BLOQUEIO</code> e devolve a decisão para você. Depois de
+   preencher o que mudou, <code>/bkhar:loop T-NNN --resume</code> retoma; o mesmo <code>--resume</code> volta ao último
+   ponto seguro se a sessão cair no meio.</li>
 </ol>
 <p>Quem escreve o teste não é quem o faz passar. É essa separação que impede o teste de ser escrito
 para caber no código.</p>
@@ -468,10 +477,10 @@ bloqueante, sugestão ou aprendizado.</p>
 <p><strong>Confira.</strong> A resposta cita o <code>loop.md</code> como fonte, e você sabe dizer o que acontece na quarta
 falha: o loop para e a decisão é sua.</p>
 <h3>11. Rodar no modo autônomo</h3>
-<p>Todo projeto nasce <code>colaborativo</code>: a equipe pergunta e espera você em cada FEAT, TEST e tentativa.
-O <code>autonomo</code> deixa a equipe seguir sozinha entre três portões seus: PRD, PLAN e ARCH aprovados; os
+<p>Todo projeto nasce <code>collaborative</code>: a equipe pergunta e espera você em cada FEAT, TEST e tentativa.
+O <code>autonomous</code> deixa a equipe seguir sozinha entre três portões seus: PRD, PLAN e ARCH aprovados; os
 contratos da onda de desenho; a entrega final.</p>
-<p>O modo não se pede, se concede. O <code>/bkhar:mode autonomo</code> roda o <code>scripts/readiness.py</code>, que confere,
+<p>O modo não se pede, se concede. O <code>/bkhar:mode autonomous</code> roda o <code>scripts/readiness.py</code>, que confere,
 sem chamar modelo:</p>
 <table>
 <thead>
@@ -505,7 +514,7 @@ sem chamar modelo:</p>
 </table>
 <p>Faltando algo, a resposta lista o que é e o comando que resolve. Concedido, o modo muda no perfil e
 vira um ADR em <code>decisions/</code>.</p>
-<p><strong>O que muda.</strong> No <code>autonomo</code>, o <code>architect</code> responde as próprias perguntas pelas fontes do projeto
+<p><strong>O que muda.</strong> No <code>autonomous</code>, o <code>architect</code> responde as próprias perguntas pelas fontes do projeto
 e grava cada resposta em <code>decisions/SUPOSICOES.md</code>, para você revisar depois. Dado pessoal,
 autorização e segredo não se presumem: param num <code>BLOQUEIO</code>. O <code>/bkhar:loop --wave next</code> roda a
 próxima onda do grafo, com até quatro tasks em paralelo, cada uma na sua worktree. No fim da onda,
@@ -517,12 +526,12 @@ a sessão principal integra, roda a suíte inteira e revisa a onda.</p>
 modelo e agente. Por ele você responde a um bloqueio, pausa a onda ou troca o modelo de um papel; o
 pedido é aplicado entre tentativas. O <code>/bkhar:status</code> mostra a mesma tabela no terminal.</p>
 <p>Nenhum modo afrouxa os guardas, o RED antes do código, as quatro tentativas e a revisão de
-segurança em área sensível. A volta para o <code>colaborativo</code> é sempre permitida.</p>
+segurança em área sensível. A volta para o <code>collaborative</code> é sempre permitida.</p>
 <p><strong>O que você ensina.</strong> Cada correção sua vira proposta candidata em <code>inbox/proposals/</code>. O
 <code>/bkhar:retro</code> mostra as candidatas, e você promove cada uma a regra do projeto, do vault ou do kit,
-ou a rejeita com motivo. É assim que o <code>colaborativo</code> treina o <code>autonomo</code>.</p>
+ou a rejeita com motivo. É assim que o <code>collaborative</code> treina o <code>autonomous</code>.</p>
 <p><strong>Exercício.</strong> No <code>treino-harness</code>, rode <code>/bkhar:mode</code> sem argumento.</p>
-<p><strong>Confira.</strong> A resposta mostra o modo atual, <code>colaborativo</code>, e a prontidão recusada, com o que falta
+<p><strong>Confira.</strong> A resposta mostra o modo atual, <code>collaborative</code>, e a prontidão recusada, com o que falta
 em cada nível. Você sabe dizer qual comando resolve cada item.</p>
 <h3>12. Uma sessão de trabalho</h3>
 <p>Toda sessão segue o mesmo desenho:</p>
@@ -625,6 +634,11 @@ conectados</code>.</p>
 <td>raiz do projeto</td>
 </tr>
 <tr>
+<td><code>/bkhar:tasks</code></td>
+<td>decompor a feature aprovada em tasks</td>
+<td>raiz do projeto</td>
+</tr>
+<tr>
 <td><code>/bkhar:loop</code></td>
 <td>implementar uma task</td>
 <td>raiz do projeto</td>
@@ -675,6 +689,11 @@ conectados</code>.</p>
 <td>raiz do vault</td>
 </tr>
 <tr>
+<td><code>/bkhar:audit</code></td>
+<td>conferir deriva entre guias, sensores e estado</td>
+<td>raiz do projeto ou do kit</td>
+</tr>
+<tr>
 <td><code>/bkhar:migrate</code></td>
 <td>trazer projeto do kit antigo <code>bks</code></td>
 <td>raiz do projeto</td>
@@ -699,6 +718,11 @@ conectados</code>.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.5.0</td>
+<td>2026-11-20</td>
+<td>Alinhado à 3.0.0-beta: <code>/bkhar:tasks</code> no ciclo e na referência, <code>/bkhar:audit</code>, <code>--resume</code> do loop, Bash limitado do <code>architect</code> e ponteiro para o guia para quem chega</td>
+</tr>
 <tr>
 <td>1.4.0</td>
 <td>2026-11-06</td>

@@ -39,7 +39,7 @@ Uma **Entidade** é um objeto definido por sua **identidade**, não por seus atr
 Entity<TId>
   - Id: TId (readonly, set only on construction)
   - Métodos de comportamento com nomes do negócio
-  - Validações inline que lançam DomainException ao ser violadas
+  - Validações inline que devolvem erro tipado como valor (o Result do projeto), sem exceção de negócio
   - Sem getters/setters para estado interno sensível
 
 Exemplo de nomes corretos (linguagem ubíqua):
@@ -86,7 +86,7 @@ Exemplos:
 ```
 ValueObject
   - Todos campos readonly
-  - Construtor valida invariantes, lança DomainException se inválido
+  - Factory valida invariantes e devolve erro tipado se inválido; construtor privado
   - Equals() baseado em campos
   - GetHashCode() consistente com Equals()
   - Métodos retornam NOVO VO em vez de mutar
@@ -169,14 +169,19 @@ Opção A — Coleta na Raiz (recomendada para domínios simples):
   Aggregate Root coleta eventos em lista interna
   Repositório/UoW lê e despacha após persistência
   
-Opção B — MediatR/Message Bus (domínios distribuídos):
-  Aggregate Root registra evento
-  Após commit, framework despacha para handlers
+Opção B — Broker externo (domínios distribuídos):
+  Aggregate Root coleta eventos em lista interna
+  Após a gravação, a publicação sai por uma Port (IEventPublisher): no TXC, na [50] não
+  crítica; no padrão direto, pelo serviço, depois de gravar
+  O adapter da Port escreve no broker (Kafka, RabbitMQ), de preferência via outbox
+
+Sem MediatR nem dispatcher interno, nem para evento de domínio: a publicação é chamada
+explícita a uma Port, e o guarda no_dispatcher recusa o pacote.
 
 Fluxo correto:
   1. pedido.Confirmar() → adiciona PedidoConfirmado à lista interna
   2. repositório.Salvar(pedido) → persiste
-  3. dispatcher.Publicar(pedido.Eventos) → notifica outros contextos
+  3. publisher.PublishAsync(pedido.Eventos) → notifica outros contextos
   4. pedido.LimparEventos()
 ```
 
@@ -321,7 +326,7 @@ Antes de commitar código de domínio, verifique:
 [ ] Application Service NÃO contém lógica de negócio?
 [ ] Camada de domínio tem ZERO imports de framework/infra?
 [ ] Nomes refletem a linguagem ubíqua do contexto?
-[ ] Exceções de domínio são do tipo DomainException (não genéricas)?
+[ ] Regra violada volta como erro tipado no resultado, sem exceção de negócio?
 ```
 
 ---

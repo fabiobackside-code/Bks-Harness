@@ -28,22 +28,25 @@ Passos:
    `specs/features/FEAT-[nome].md` pelo template `FEAT.md` (precedência: `{repo}/.bks/templates/`,
    senao `${BKS_VAULT}/workbench/templates/`, senao `${CLAUDE_PLUGIN_ROOT}/templates/`), com as
    respostas dentro e o cabeçalho `Refinamento: sim`.
-5. **Aprovar.** Mostre a FEAT e pergunte se está aprovada. Ajuste volta ao `architect`.
-6. **TEST.** Aprovada a FEAT, chame o `tester` para escrever `specs/tests/TEST-[nome].md`.
+5. **Aprovar.** Mostre a FEAT e pergunte se está aprovada. Ajuste volta ao `architect`. Aprovada,
+   grave `**Status:** Aprovada` no cabeçalho dela.
+6. **TEST.** Aprovada a FEAT, chame o `tester` para escrever `specs/tests/TEST-[nome].md`. Mostre o
+   TEST e pergunte se está aprovado; aprovado, grave `**Status:** Aprovada` no cabeçalho. Com os
+   dois aprovados, o próximo passo é o `/bkhar:tasks [nome]`.
 7. **Fechar.** Liste o que o `/bkhar:save` grava: decisões pendentes e aprendizados dos agentes.
 
 NUNCA implemente nesta etapa. O rito não grava `STATUS.md` nem `JOURNAL.md`.
 
-## Modo `autonomo`
+## Modo `autonomous`
 
-Com `axes.mode: autonomo` no `.bks-profile.json`, os passos 3 e 5 mudam (skill `bks-team`, seção
-"Modo `autonomo`"):
+Com `axes.mode: autonomous` no `.bks-profile.json`, os passos 3 e 5 mudam (skill `bks-team`, seção
+"Modo `autonomous`"):
 
 3. **Presumir.** Chame o `architect` com as perguntas agrupadas. Ele responde a cada uma pelas
    fontes do projeto e grava uma linha por resposta em `decisions/SUPOSICOES.md`. Pergunta sobre
    dado pessoal, autorização ou segredo não se presume: pare em `outputs/BLOQUEIO-[nome].md`.
-5. **Sem portão.** A FEAT sai com `Refinamento: autonomo` e a lista das suposições que usou, e
-   segue direto para o TEST.
+5. **Sem portão.** A FEAT sai com `Refinamento: autônomo` e a lista das suposições que usou, e
+   segue direto para o TEST; FEAT e TEST saem com `**Status:** Aprovada`.
 
 O pedido vem da task do grafo (`outputs/GRAPH-{projeto}.json`); o contexto do agente é só o que a
 task declara em `consome`.

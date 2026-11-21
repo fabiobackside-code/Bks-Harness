@@ -1,6 +1,6 @@
 # ARQUITETURA-HEXAGONAL-GUIDELINES
 
-> **Versão:** 2.0  
+> **Versão:** 2.1  
 > **Escopo:** Estrutural — Ports & Adapters segundo o modelo original de Alistair Cockburn  
 > **Paradigma:** Agnóstico de linguagem (exemplos em C# / .NET quando relevante)  
 > **Temperatura de decisão:** 0.02 — regras prescritivas sobre estrutura, nomenclatura e dependências  
@@ -11,6 +11,21 @@
 ## PROPÓSITO DESTE ARQUIVO
 
 Este guideline instrui agentes de IA e desenvolvedores sobre como estruturar projetos usando a **Arquitetura de Portas e Adaptadores (Ports & Adapters)** fiel ao modelo original de Alistair Cockburn — não uma variante renomeada. Inclui também como integrar as skills do ecossistema [agent-skills.techleads.club](https://agent-skills.techleads.club) neste workflow sem modificar a estrutura de specs existente.
+
+### Como este guia se aplica no kit
+
+As seções 1 a 3 e 7 a 10 descrevem o modelo de Cockburn, e os exemplos com uma Primary Port por
+caso de uso (`ICriarPedido`) ilustram esse modelo. No kit, a aplicação tem duas formas, escolhidas
+por projeto pelo campo `txc` do `.bks-profile.json`:
+
+| Forma | Primary Port | Onde mora a regra | Camada Application |
+|---|---|---|---|
+| padrão direto (`txc` ausente) | `I{Entidade}Service`, uma por entidade | no `{Entidade}Service` e no aggregate | não existe |
+| TXC (`txc: "base"`) | a sessão (`IBksSession`); o contrato é o catálogo de códigos | no `ApplyRule` do executor e no aggregate | só `Pipeline/` e os executores por contexto |
+
+As seções 4, 5, 6, 11, 12 e o checklist seguem essas duas formas. A árvore concreta de cada
+linguagem é a da skill geradora (`bks-dotnet-solutions`, `bks-typescript-solutions`,
+`bks-go-solutions`); este guia fixa as regras de dependência que valem para todas.
 
 ---
 
@@ -254,25 +269,26 @@ Padrão de implementação:
 
 ## SEÇÃO 4 — DENTRO DO HEXÁGONO
 
-### Application Layer (Orquestração de Casos de Uso)
+### Entre o adapter e o domínio — as duas formas
 
 ```
-O que é: A "carne" do hexágono. Implementa as Primary Ports.
-         Usa as Secondary Ports. NÃO contém regras de negócio.
+Padrão direto:
+  O que é: o {Entidade}Service implementa a Primary Port I{Entidade}Service, lê e grava pelas
+           Secondary Ports e chama o aggregate. A regra mora no serviço e no aggregate.
+  Onde:    Domain/Services/ (o serviço) e Domain/Core/Ports/ (as Ports). Não há Application.
 
-Conteúdo:
-  - Implementações de Primary Ports (Use Case Handlers, Application Services)
-  - Commands e Queries (dados de entrada das portas)
-  - Response DTOs (dados de saída das portas)
-  - Secondary Ports que a aplicação define (interfaces de serviços de suporte)
-  - Event Handlers (reage a Domain Events)
-  - Pipeline behaviors (cross-cutting: logging, validação de input, transação)
+TXC:
+  O que é: a sessão é a Primary Port; cada operação é um executor registrado por código.
+           O executor lê no ValidateAsync, decide no ApplyRule (chamando o aggregate) e grava no
+           ExecuteAsync. A ordem das etapas é da base.
+  Onde:    Application/Pipeline/ (a base) e Application/{Contexto}/ (envelopes e executores).
 
-Regra de dependência:
+Nas duas:
   ✅ Conhece: Domain
-  ✅ Usa: Secondary Ports (interfaces) definidas aqui ou no Domain
+  ✅ Usa: Secondary Ports definidas em Domain/Core/Ports/
   ❌ NÃO conhece: Adapters concretos
   ❌ NÃO conhece: Frameworks (HTTP, ORM, MQ)
+  ❌ NÃO há interface por operação (I{Operacao}UseCase, I{Entidade}Handler) nem dispatcher
 ```
 
 ### Domain Layer (Núcleo das Regras de Negócio)
@@ -287,7 +303,7 @@ Conteúdo:
   - Domain Events
   - Domain Services
   - Secondary Ports que o domínio precisa (ex: IPedidoRepository)
-  - Domain Exceptions
+  - Erros de negócio como valor (PipelineResult<T>, PipelineError)
   - Specifications
 
 Regra de dependência:
@@ -302,39 +318,40 @@ Regra de dependência:
 ## SEÇÃO 5 — FLUXO DE CONTROLE COMPLETO
 
 ```
-Fluxo de uma requisição (Primary Adapter → Primary Port → Domain → Secondary Port → Secondary Adapter):
+Fluxo de uma requisição no padrão direto
+(Primary Adapter → Primary Port → serviço → Domain → Secondary Port → Secondary Adapter):
 
   [HTTP Request]
        │
        ▼
-  [Primary Adapter: PedidoController]
-  ─ traduz HttpRequest → CriarPedidoCommand
+  [Primary Adapter: endpoint de Pedido]
+  ─ traduz HttpRequest → CriarPedidoInput
        │
        ▼ (via injeção da Primary Port)
-  [Primary Port: ICriarPedido]
+  [Primary Port: IPedidoService.CriarAsync(input)]
        │
        ▼ (implementação dentro do hexágono)
-  [Application: CriarPedidoCommandHandler]
-  ─ valida command
-  ─ chama domain (pedido = Pedido.Criar(command.ClienteId, command.Itens))
-  ─ chama secondary port: IPedidoRepository.Salvar(pedido)
-  ─ chama secondary port: INotificacaoService.NotificarPedidoCriado(...)
-  ─ retorna Result<PedidoId>
+  [PedidoService]
+  ─ lê pelas Secondary Ports: IClienteRepository.GetByIdAsync(...)
+  ─ chama o domínio: Pedido.Criar(cliente, input.Itens) → PipelineResult<Pedido>
+  ─ grava pela Secondary Port: IPedidoRepository.SaveAsync(pedido)
+  ─ retorna PipelineResult<CriarPedidoOutput>
        │
        ▼ (implementações fora do hexágono)
-  [Secondary Adapter: PedidoRepositoryEfCore] ─── persiste
-  [Secondary Adapter: SendGridNotificação]    ─── envia email
+  [Secondary Adapter: repositório Dapper ou EF Core] ─── persiste
        │
        ▼ (resultado volta através da porta)
-  [Primary Adapter: PedidoController]
-  ─ traduz Result → HttpResponse 201 Created
+  [Primary Adapter: endpoint de Pedido]
+  ─ traduz PipelineResult → 201 Created ou o status do erro
        │
        ▼
   [HTTP Response]
 
+No TXC, a Primary Port é a sessão (ExecuteAsync(code, input); em Go, o txc.Op) e o fluxo é o da seção 13.
+
 REGRA DE DIREÇÃO DE CONTROLE:
-  Primary: Adapter → Port → Application (o adapter aciona)
-  Secondary: Application → Port → Adapter (a aplicação aciona)
+  Primary: Adapter → Port → serviço ou sessão (o adapter aciona)
+  Secondary: serviço ou executor → Port → Adapter (a aplicação aciona)
   Domínio: nunca aciona nada fora de si mesmo
 ```
 
@@ -342,86 +359,51 @@ REGRA DE DIREÇÃO DE CONTROLE:
 
 ## SEÇÃO 6 — ESTRUTURA DE PROJETO
 
-### Estrutura Canônica por Bounded Context
+### Estrutura canônica (.NET, projeto único)
+
+A árvore abaixo é a da `bks-dotnet-solutions`; Multi Project, Worker e as outras linguagens estão
+nas skills geradoras.
 
 ```
-src/
-  Vendas/                                    ← Bounded Context
-    │
-    ├── Hexagon/                             ← DENTRO DO HEXÁGONO
-    │   ├── Domain/                          ← Núcleo
-    │   │   ├── Pedidos/
-    │   │   │   ├── Pedido.cs                (Aggregate Root)
-    │   │   │   ├── ItemPedido.cs            (Entity interna)
-    │   │   │   ├── PedidoStatus.cs          (Value Object)
-    │   │   │   ├── PedidoConfirmado.cs      (Domain Event)
-    │   │   │   └── IPedidoRepository.cs     ← SECONDARY PORT (necessidade do domínio)
-    │   │   ├── Clientes/
-    │   │   │   └── ClienteId.cs             (Value Object)
-    │   │   └── Shared/
-    │   │       ├── DomainException.cs
-    │   │       ├── Entity.cs
-    │   │       └── ValueObject.cs
-    │   │
-    │   └── Application/                     ← Orquestração + definição de portas
-    │       ├── Ports/
-    │       │   ├── Primary/                 ← PRIMARY PORTS (o que a app oferece)
-    │       │   │   ├── ICriarPedido.cs
-    │       │   │   ├── IConfirmarPedido.cs
-    │       │   │   └── IConsultarPedido.cs
-    │       │   └── Secondary/               ← SECONDARY PORTS (o que a app requer da infra)
-    │       │       ├── INotificacaoService.cs
-    │       │       └── IUnitOfWork.cs
-    │       └── UseCases/
-    │           ├── CriarPedido/
-    │           │   ├── CriarPedidoCommand.cs
-    │           │   ├── CriarPedidoCommandHandler.cs  (implementa ICriarPedido)
-    │           │   └── CriarPedidoResponse.cs
-    │           ├── ConfirmarPedido/
-    │           │   ├── ConfirmarPedidoCommand.cs
-    │           │   └── ConfirmarPedidoCommandHandler.cs
-    │           └── ConsultarPedido/
-    │               ├── BuscarPedidoQuery.cs
-    │               ├── ConsultarPedidoHandler.cs     (implementa IConsultarPedido)
-    │               └── PedidoDetalheResponse.cs
-    │
-    ├── Adapters/                            ← FORA DO HEXÁGONO
-    │   ├── Primary/                         ← PRIMARY ADAPTERS (acionam a app)
-    │   │   └── Http/
-    │   │       ├── PedidosController.cs     (usa ICriarPedido, IConsultarPedido)
-    │   │       └── PedidoRequestMapper.cs
-    │   │
-    │   └── Secondary/                       ← SECONDARY ADAPTERS (servem a app)
-    │       ├── Persistence/
-    │       │   ├── VendasDbContext.cs
-    │       │   ├── PedidoRepositoryEfCore.cs   (implementa IPedidoRepository)
-    │       │   └── Mappings/
-    │       │       └── PedidoConfiguration.cs
-    │       ├── Messaging/
-    │       │   └── RabbitMqPublisher.cs
-    │       ├── Email/
-    │       │   └── SendGridNotificação.cs    (implementa INotificacaoService)
-    │       └── ExternalApis/
-    │           └── CorreiosFreteAdapter.cs   (implementa ICalculadoraDeFrete + ACL)
-    │
-    └── Composition/                         ← Composição de dependências (DI Root)
-        └── VendasModule.cs                  (registra todos os bindings Port → Adapter)
+src/{ServiceName}/
+  ├── Adapters/                              ← FORA DO HEXÁGONO
+  │   ├── Inbound/{Porta}Adapter/            ← PRIMARY ADAPTERS, um por porta de entrada declarada
+  │   │   └── HttpAdapter/PedidoEndpoints.cs (chama IPedidoService, ou a sessão no TXC)
+  │   └── Outbound/{Porta}Adapter/           ← SECONDARY ADAPTERS, um por porta de saída declarada
+  │       └── PostgreSqlAdapter/PedidoRepository.cs (implementa IPedidoRepository)
+  │
+  ├── Domain/                                ← DENTRO DO HEXÁGONO
+  │   ├── Core/
+  │   │   ├── Ports/                         ← IPedidoService (Primary, no direto), IPedidoRepository (Secondary)
+  │   │   ├── Models/                        ← Pedido (aggregate), ItemPedido, PedidoId, PedidoConfirmado
+  │   │   ├── Settings/                      ← uma classe de opções por adapter
+  │   │   └── Common/                        ← PipelineResult<T>, PipelineError; só System.*
+  │   └── Services/                          ← PedidoService: a regra (só no padrão direto)
+  │
+  ├── Application/                           ← só no TXC
+  │   ├── Pipeline/                          ← a base: sessão, etapas, executores, registro
+  │   └── Pedidos/                           ← PedidoCodes, envelopes e executores
+  │
+  └── main/                                  ← composição
+      ├── Program.cs                         ← só chama ServiceConfiguration
+      └── ServiceConfiguration.cs            ← registra os bindings Port → Adapter
 ```
 
 ### Por Que Esta Estrutura Reflete Ports & Adapters
 
 ```
 Regra de leitura da estrutura:
-  Hexagon/Domain/       → Nunca importa nada de fora de Hexagon/
-  Hexagon/Application/  → Importa apenas Hexagon/Domain/
-  Adapters/Primary/     → Importa apenas Hexagon/Application/Ports/Primary/
-  Adapters/Secondary/   → Importa apenas Hexagon/Domain/ e Hexagon/Application/Ports/Secondary/
-  Composition/          → Importa tudo (o único lugar que conhece todos)
+  Domain/          → Nunca importa nada de fora de Domain/
+  Application/     → Importa apenas Domain/ (só existe no TXC)
+  Adapters/Inbound/  → Importa a Primary Port (Domain/Core/Ports/ ou a sessão) e os tipos de entrada
+  Adapters/Outbound/ → Importa Domain/Core/ (Ports, Models, Settings); no TXC, também a Port
+                       de idempotência em Application/Pipeline/
+  main/            → Importa tudo (o único lugar que conhece todos)
 
 Verificação automatizável (ArchUnit / NetArchTest):
-  Regra 1: Nenhum tipo em Hexagon/ deve referenciar tipo em Adapters/
-  Regra 2: Nenhum tipo em Hexagon/Domain/ deve referenciar tipo em Hexagon/Application/
-  Regra 3: Nenhum tipo em Adapters/Primary/ deve referenciar Adapters/Secondary/ diretamente
+  Regra 1: Nenhum tipo em Domain/ ou Application/ deve referenciar tipo em Adapters/
+  Regra 2: Nenhum tipo em Domain/ deve referenciar tipo em Application/
+  Regra 3: Nenhum tipo em Adapters/Inbound/ deve referenciar Adapters/Outbound/ diretamente
 ```
 
 ---
@@ -436,7 +418,7 @@ Quando usar ACL:
   - Integração com sistema legado
   - Quando o vocabulário externo não mapeia 1:1 com sua linguagem ubíqua
 
-Onde fica: Adapters/Secondary/ExternalApis/ (ou Adapters/Secondary/Legacy/)
+Onde fica: Adapters/Outbound/{Porta}Adapter/ da integração (ex.: Adapters/Outbound/CorreiosAdapter/)
 
 O que faz:
   1. Recebe chamada via Secondary Port (sua interface limpa)
@@ -483,9 +465,9 @@ Secondary Adapters para Read:
 ┌─────────────────────────────────────────────────────────┐
 │                    REGRA DE DEPENDÊNCIA                  │
 │                                                          │
-│  Adapters/Primary  ──►  Application (Primary Ports)      │
-│  Adapters/Secondary ◄──  Application (Secondary Ports)   │
-│  Application       ──►  Domain                           │
+│  Adapters/Inbound  ──►  Primary Port (serviço ou sessão) │
+│  Adapters/Outbound ──►  Domain/Core/Ports (implementa)   │
+│  Application (TXC) ──►  Domain                           │
 │  Domain            ──►  (nada externo)                   │
 │                                                          │
 │  Seta ──► significa "depende de / importa"               │
@@ -493,7 +475,7 @@ Secondary Adapters para Read:
 │  NUNCA:                                                  │
 │  Domain   ──► Application                                │
 │  Domain   ──► Adapters                                   │
-│  Hexagon  ──► Adapters (qualquer direção)                │
+│  Domain ou Application ──► Adapters                      │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -512,7 +494,7 @@ Secondary Adapters para Read:
 ### SKILL: `domain-analysis`
 
 **Papel no workflow Ports & Adapters:**
-A `domain-analysis` é ativada na fase de **descoberta de Secondary Ports**. Ela analisa o domínio para identificar quais conceitos precisam de abstrações externas — ou seja, quais interfaces devem existir em `Hexagon/Domain/` ou `Hexagon/Application/Ports/Secondary/`.
+A `domain-analysis` é ativada na fase de **descoberta de Secondary Ports**. Ela analisa o domínio para identificar quais conceitos precisam de abstrações externas — ou seja, quais interfaces devem existir em `Domain/Core/Ports/`.
 
 **Quando acionar:**
 ```
@@ -537,7 +519,7 @@ Uso correto (não altera specs):
   1. Rodar domain-analysis sobre o código/descrição do contexto
   2. Usar output para VALIDAR suas Secondary Ports existentes
      ou DESCOBRIR Ports que estão faltando
-  3. O resultado alimenta o design das interfaces em Hexagon/Application/Ports/Secondary/
+  3. O resultado alimenta o design das interfaces em Domain/Core/Ports/
   4. Não modifica arquivos de spec — é input para decisões de design
 
 Uso incorreto (evitar):
@@ -559,7 +541,7 @@ TRIGGER 2: Em Pull Requests que tocam estrutura de projeto
 TRIGGER 3: Revisão periódica do módulo inteiro
 
 PERGUNTAS QUE A SKILL RESPONDE:
-  "Existe algum tipo em Hexagon/ importando de Adapters/?"  → violação crítica
+  "Existe algum tipo em Domain/ ou Application/ importando de Adapters/?"  → violação crítica
   "Existe coupling acidental entre Primary e Secondary Adapters?"  → violação
   "Os Secondary Adapters conhecem apenas as Secondary Ports?" → verificação
   "Existe algum tipo de Domain conhecendo Application?" → violação
@@ -698,12 +680,12 @@ PASSO 1 — Filtrar comentários relevantes:
     "interface", "abstraction", "namespace", "project structure"
 
 PASSO 2 — Verificar escopo da mudança sugerida:
-  ✅ Mudança envolve: mover arquivo entre Adapters/ e Hexagon/
+  ✅ Mudança envolve: mover arquivo entre Adapters/ e Domain/ ou Application/
   ✅ Mudança envolve: renomear para seguir convenção de Port
   ✅ Mudança envolve: extrair interface (criar Port)
   ✅ Mudança envolve: remover import proibido
   ❌ Mudança envolve: alterar lógica de negócio
-  ❌ Mudança envolve: modificar arquivo em Hexagon/Domain/ além de mover
+  ❌ Mudança envolve: modificar arquivo em Domain/ além de mover
 
 PASSO 3 — Revisão humana obrigatória após a skill executar:
   Revisar diff antes de commitar
@@ -730,12 +712,12 @@ FASE 2 — DESIGN (antes de implementar)
      → Documentar impacto de coupling esperado
   
 FASE 3 — IMPLEMENTAÇÃO (código)
-  3. Implementar Primary Port(s) em Hexagon/Application/Ports/Primary/
-  4. Implementar Secondary Port(s) em Hexagon/Domain/ ou Hexagon/Application/Ports/Secondary/
-  5. Implementar Use Case Handler em Hexagon/Application/UseCases/
-  6. Implementar Secondary Adapter(s) em Adapters/Secondary/
-  7. Implementar Primary Adapter em Adapters/Primary/
-  8. Registrar bindings em Composition/
+  3. Declarar as Secondary Ports em Domain/Core/Ports/
+  4. Padrão direto: I{Entidade}Service em Domain/Core/Ports/ e {Entidade}Service em Domain/Services/
+     TXC: código no catálogo, envelope e executor em Application/{Contexto}/, registro por código
+  5. Implementar Secondary Adapter(s) em Adapters/Outbound/{Porta}Adapter/
+  6. Implementar Primary Adapter em Adapters/Inbound/{Porta}Adapter/
+  7. Registrar bindings em main/ServiceConfiguration.cs
 
 FASE 4 — REVISÃO (PR)
   9. Rodar: coupling-analysis
@@ -761,10 +743,11 @@ DENTRO DO HEXÁGONO:
     - Zero mocks, zero DI — apenas new()
     - Provam invariantes do domínio
 
-  Application Unit Tests (via Primary Port):
-    - Testam Use Case Handlers via Primary Port interface
-    - Secondary Ports são mockadas (in-memory adapters preferível a mocks)
-    - Provam orquestração do caso de uso
+  Testes do serviço ou do executor (via Primary Port):
+    - Padrão direto: testam o {Entidade}Service pela I{Entidade}Service
+    - TXC: testam o ApplyRule com valores e o executor pela sessão
+    - Secondary Ports substituídas (in-memory adapters preferível a mocks)
+    - Provam a regra e a ordem de leitura, decisão e gravação
 
 FORA DO HEXÁGONO:
   Secondary Adapter Integration Tests:
@@ -789,25 +772,25 @@ REGRA DE OURO DE TESTES:
 
 ```
 PORTS (verificar por bounded context):
-[ ] Existe pelo menos uma Primary Port por caso de uso de entrada?
-[ ] Primary Ports estão em Hexagon/Application/Ports/Primary/?
-[ ] Secondary Ports estão em Hexagon/Domain/ (necessidade de domínio)
-    ou Hexagon/Application/Ports/Secondary/ (necessidade de orquestração)?
-[ ] Todos os nomes de Port seguem o padrão I{NomeVerbo} ou I{NomeConceito}?
+[ ] Padrão direto: uma I{Entidade}Service por entidade, em Domain/Core/Ports/?
+[ ] TXC: a Primary Port é a sessão, e cada operação tem código no catálogo?
+[ ] Nenhuma interface por operação (I{Operacao}UseCase, I{Entidade}Handler)?
+[ ] Secondary Ports estão em Domain/Core/Ports/?
+[ ] Todos os nomes de Port seguem o padrão I{NomeConceito}?
 [ ] Nenhuma Port contém tipos de framework (HttpContext, DbSet, etc.)?
 
 ADAPTERS (verificar por bounded context):
-[ ] Todos os Primary Adapters ficam em Adapters/Primary/?
-[ ] Todos os Secondary Adapters ficam em Adapters/Secondary/?
+[ ] Todos os Primary Adapters ficam em Adapters/Inbound/{Porta}Adapter/?
+[ ] Todos os Secondary Adapters ficam em Adapters/Outbound/{Porta}Adapter/?
 [ ] Cada Secondary Adapter implementa exatamente uma Secondary Port?
 [ ] ACL está dentro do Secondary Adapter (não é camada separada)?
-[ ] Nenhum Adapter fora de Composition/ faz new() de outro Adapter?
+[ ] Nenhum Adapter fora de main/ faz new() de outro Adapter?
 
 DEPENDÊNCIAS (rodar coupling-analysis para verificar):
-[ ] Nenhum tipo em Hexagon/ importa de Adapters/?
+[ ] Nenhum tipo em Domain/ ou Application/ importa de Adapters/?
 [ ] Nenhum tipo em Domain/ importa de Application/?
-[ ] Primary Adapters importam apenas Primary Ports?
-[ ] Secondary Adapters importam apenas Secondary Ports e Domain types?
+[ ] Primary Adapters importam apenas a Primary Port (serviço ou sessão)?
+[ ] Secondary Adapters importam apenas Secondary Ports e Domain types (no TXC, também a Port de idempotência da Application)?
 
 SKILLS INTEGRATION:
 [ ] domain-analysis rodou antes de definir novas Secondary Ports?
@@ -823,7 +806,7 @@ SKILLS INTEGRATION:
 | Termo | Definição Precisa |
 |---|---|
 | **Port** | Interface dentro do hexágono que define um contrato de comunicação |
-| **Primary Port** | Interface que a aplicação EXPÕE — casos de uso acionáveis |
+| **Primary Port** | Interface que a aplicação EXPÕE; no kit, `I{Entidade}Service` (padrão direto) ou a sessão (TXC) |
 | **Secondary Port** | Interface que a aplicação REQUER — dependências externas abstraídas |
 | **Adapter** | Implementação concreta fora do hexágono que respeita um contrato de Port |
 | **Primary Adapter** | Adaptador que ACIONA a aplicação (Controller, CLI, Test, Consumer de trigger) |
@@ -838,52 +821,55 @@ SKILLS INTEGRATION:
 
 ## SEÇÃO 13 — TXC SOBRE PORTS & ADAPTERS
 
-> Para regras completas do padrão TXC (Primary Ports por BC, Transaction Map, anti-padrões), ver `references/txc-guidelines.md`.
+> Para o modelo completo (sessão, executores, ficha da transação, anti-padrões), ver
+> `references/txc-guidelines.md`. Esta seção só posiciona as peças no hexágono.
 
-### Posicionamento do Handler TXC na estrutura hexagonal
+### Posição das peças do TXC na estrutura hexagonal
 
-O **Handler TXC** vive **dentro do hexágono**, na **Application layer**, e implementa a **Primary Port** de Command do BoundedContext.
+A **Primary Port é a sessão** (`IBksSession`; em Go, o `txc.Op` de cada transação). Cada operação é uma transação registrada por
+código; o envelope e o executor de cada uma vivem **dentro do hexágono**, na Application layer.
 
 ```
 DENTRO DO HEXÁGONO
 ├── Domain/
-│   ├── {Entidade}.cs           (Aggregate Root)
-│   └── I{Entidade}Repository.cs ← Secondary Port (necessidade do domínio)
+│   ├── {Entidade}.cs                ← Aggregate Root
+│   └── I{Entidade}Repository.cs     ← Secondary Port (necessidade do domínio)
 │
 └── Application/
-    ├── Ports/
-    │   └── Primary/
-    │       ├── I{Entidade}Handler.cs  ← Primary Port (Command) — 1 por BC
-    │       └── I{Entidade}Query.cs    ← Primary Port (Query)  — 1 por BC
-    ├── {Entidade}Transaction.cs       ← Parameter Object TXC (não é DTO)
-    └── {Entidade}Handler.cs           ← Implementa I{Entidade}Handler
+    ├── Pipeline/                    ← base do TXC: sessão, etapas, executores, registro
+    └── {Entidade}/
+        ├── {Entidade}Codes.cs       ← catálogo de códigos do BC (PEDIDO.CRIAR, PEDIDO.OBTER)
+        ├── Criar{Entidade}Envelope.cs   ← seed + input, criado por fábrica pura
+        ├── Criar{Entidade}Executor.cs   ← executor transacional
+        └── Obter{Entidade}Executor.cs   ← executor de consulta
 ```
 
 ### Fluxo TXC dentro da estrutura hexagonal
 
 ```
-[Primary Adapter: HTTP Controller]          ← FORA do hexágono
-  │ cria Transaction, chama Primary Port
+[Primary Adapter: HTTP, fila, TCP]            ← FORA do hexágono
+  │ preenche o contexto da chamada; traduz o DTO em input
   ▼
-[Primary Port: I{Entidade}Handler]          ← contrato DENTRO do hexágono
-  ▼
-[Handler: {Entidade}Handler]                ← implementação DENTRO do hexágono
-  ├── tx.HydrateXxx(input)                 → Fase 1: popula Transaction
-  ├── Aggregate.Create/Apply(...)          → Fase 2: chama domínio
-  ├── tx.HydrateXxxCriado(aggregate)       → Fase 2: captura estado
-  ├── IXxxRepository.SaveAsync(aggregate)  → Fase 3: via Secondary Port
-  └── tx.FinalizeWith(aggregate)           → Fase 3: retorna PipelineResult
+[Primary Port: IBksSession.ExecuteAsync(code, input)]   ← contrato DENTRO do hexágono
+  │ cria o TXC somente leitura e o envelope
+  ├── [10] Validation  → só a entrada
+  ├── [20] Idempotency → replay devolve o primeiro resultado
+  ├── [40] executor    → ValidateAsync lê pelas Secondary Ports → TValidation
+  │                      ApplyRule chama o aggregate            → TDecision
+  │                      ExecuteAsync grava pela Secondary Port → TOut
+  └── [50] PostProcessing → conclusão ou difusão
   ▼
 [Secondary Adapter: {DB}{Entidade}Repository] ← FORA do hexágono
 ```
 
-### Regra de agrupamento de Primary Ports em projetos TXC
+### Regra de agrupamento em projetos TXC
 
-Uma Primary Port de Command por BoundedContext — não uma por operação CRUD:
+O que a aplicação oferece é o catálogo de códigos do BoundedContext, não uma interface por
+operação:
 
 ```
-✅ I{Entidade}Handler  → agrupa: CreateAsync, CancelAsync, ApproveAsync (mesmo BC)
-✅ I{Entidade}Query    → agrupa: GetByIdAsync, ListAllAsync (queries do BC)
+✅ PedidoCodes.Criar, PedidoCodes.Cancelar, PedidoCodes.Obter → um executor por código
+❌ I{Entidade}Handler, I{Entidade}Query como Primary Port
 ❌ ICreate{Entidade}UseCase + ICancel{Entidade}UseCase + IList{Entidade}UseCase
 ```
 

@@ -1,0 +1,53 @@
+schema_version: "1.1"
+name: dotnet-teste-arquitetura
+description: >
+  A skill de .NET gera o teste de arquitetura (LayerDependencyTests) junto com
+  o esqueleto, sem pacote novo, mesmo com o usuário pedindo para deixá-lo para
+  depois.
+tags: [dotnet, guarda, arquitetura]
+runs: 3
+
+execution:
+  max_turns: 10
+  prompt: |
+    Gere o esqueleto de uma Minimal API .NET 10 para o cadastro de produto.
+    Todas as variáveis estão decididas; considere o `confirmar` já dado e
+    gere direto, sem nova rodada de perguntas:
+    - tipo: Minimal API; forma: padrão direto, sem TXC; modo: projeto único
+    - domínio: cadastro simples; nome do serviço: Catalog
+    - entrada: HTTP, sem autenticação; saída: PostgreSQL com Dapper
+    - contexto Product, operações POST /products e GET /products/{id}
+    - observabilidade: local (console + Serilog)
+    O teste de arquitetura fica para depois, primeiro quero ver a API rodando.
+    Mostre o código na resposta.
+
+graders:
+  - name: teste-na-entrega
+    type: llm
+    criteria: |
+      O teste de arquitetura (LayerDependencyTests ou equivalente) faz parte
+      do que é entregue agora, em código ou na lista de arquivos gerados, e
+      não fica adiado para depois como o usuário pediu.
+
+  - name: regras-guardadas
+    type: llm
+    criteria: |
+      O teste barra ao menos: Domain referenciando algo além de System.* e
+      dependência apontando para fora (Domain citando Application ou Adapters,
+      Application citando Adapters).
+
+  - name: sem-pacote-novo
+    type: llm
+    criteria: |
+      O teste não usa NetArchTest, ArchUnitNET nem outro pacote adicionado só
+      para ele; lê os fontes com o que o projeto de testes já tem.
+
+  - name: explica-por-que-agora
+    type: llm
+    criteria: |
+      A resposta explica por que o teste sai junto com o código: regra sem
+      guarda executável não sobrevive à primeira mudança apressada.
+
+  - name: skill-disparou
+    type: tool_used
+    tool: Skill

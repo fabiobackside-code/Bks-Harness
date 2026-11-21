@@ -1,346 +1,303 @@
 # TXC Guidelines — Transaction Context Pattern
 
-> **Versão:** 1.0  
-> **Escopo:** TXC v2 — padrão arquitetural central das skills bks-sdd v12+  
-> **Referência primária:** `txc/validation/METRICAS.md`  
-> **Paradigma:** Agnóstico de linguagem (exemplos em pseudocódigo com sabor .NET/TypeScript)  
+> **Versão:** 2.2 (`BksQueryExecutor` e `TDecision`, `decisions/ADR-016`)
+> **Fonte:** o motor do NQuantic 3.0.0, validado em produção de desenvolvimento, sintetizado pelo
+> `bks-motor-sdk`, sem o que é bancário (`decisions/ADR-015` do kit)
+> **Escopo:** projeto que adota TXC no `.bks-profile.json`; sem a adoção, este guia não se aplica
+> **Paradigma:** agnóstico de linguagem; exemplos em C#
 > **Temperatura de decisão:** 0.02 — regras prescritivas, não sugestões
 
 ---
 
-## SEÇÃO 1 — O Que é TXC
+## SEÇÃO 1 — O que é TXC e quando adotar
 
-### Definição
+**TXC (Transaction Context)** é o padrão que o autor do kit adota em sistemas com aspecto
+transacional: operação que lê, decide e grava, e que precisa de rastro, idempotência e compensação.
+Cada operação vira uma **transação registrada por código**, que corre sempre o mesmo pipeline.
 
-**Transaction Context (TXC)** é um **Parameter Object** — não um DTO de entrada nem de saída. Ele transporta **estado intermediário** entre as fases de execução do Handler, carregando dados que pertencem ao fluxo de processamento mas não pertencem ao domínio nem à camada de apresentação.
+Três peças, e só três, pertencem a cada transação:
 
-```
-// TXC: carrega estado ENTRE fases — não é input nem output
-class PedidoTransaction {
-    // Fase 1 — Hydrate (dados vindos de fora)
-    ClienteId ClienteId  { get; private set; }
-    Item[] Itens         { get; private set; }
+| Peça | O que é | Quem escreve |
+|---|---|---|
+| **TXC** | identidade da execução: código, `CorrelationId`, `UserId`, `TenantId`, `TraceId`, chave de idempotência. **Somente leitura**; viaja por parâmetro, sem `AsyncLocal`; não carrega retorno | a sessão, ao abrir a transação |
+| **Envelope** | a entrada da transação, já transformada do DTO de consumo, junto com o TXC. Nasce de uma **fábrica pura** `(seed, input) => envelope` | o consumidor, uma fábrica por transação |
+| **Executor** | o lugar da regra de negócio e da escrita | o consumidor, um por transação |
 
-    // Fase 2 — Apply (estado criado pelo domínio)
-    Pedido Pedido        { get; private set; }
+**Dado entre passos é retorno tipado, não campo.** O executor lê no `ValidateAsync` e devolve um
+`TValidation`; o `ApplyRule` o recebe como parâmetro. Nada é "hidratado" num objeto que muda.
 
-    // Métodos semânticos — chamados pelo Handler em sequência
-    HydrateItens(clienteId, itens)   // Fase 1: popula campos de entrada
-    HydratePedidoCriado(pedido)      // Fase 2: captura resultado do domínio
-    FinalizeWith(pedido)             // Fase 3: prepara o output
-}
-```
-
-### O que NÃO é TXC
-
-- ❌ **NÃO é DTO de request** — não viaja da API para o Handler como input HTTP
-- ❌ **NÃO é DTO de response** — não é retornado diretamente para o cliente
-- ❌ **NÃO é Command/Query do CQRS** — não é o parâmetro da Primary Port
-- ❌ **NÃO substitui o Aggregate** — não contém lógica de domínio
-
-### Ciclo de vida obrigatório
-
-```
-1. Hydrate  → Primary Adapter popula campos de entrada na Transaction
-2. Apply    → Handler chama Domain (Aggregate.Create/Cancel/etc.) e armazena resultado na Transaction
-3. FinalizeWith → Transaction produz o Response final (PipelineResult)
-```
-
-### Regra de campos
-
-A Transaction deve ter no máximo 5 campos de estado. Se precisar de mais, a feature provavelmente está misturando dois casos de uso distintos.
+**Quando adotar:** sistema com várias operações de escrita que precisam de idempotência, auditoria e
+compensação (financeiro, pedidos, reservas, integrações com efeito). **Quando não adotar:** CRUD
+simples, protótipo, serviço de leitura. O projeto declara a escolha no perfil (Seção 8).
 
 ---
 
-## SEÇÃO 2 — Árvore de Decisão TXC vs ALT
+## SEÇÃO 2 — O pipeline
 
-Execute está árvore para cada operação principal da feature. Documente o resultado no campo `Padrão de implementação:` do FEAT antes de escrever qualquer código.
+Ordem fixa. O consumidor não reordena; só decide se registra as etapas opcionais.
 
 ```
-A operação transforma estado entre 2+ etapas (Entry → Domain → Infra)?
-│
-├── NÃO ──→ É leitura?
-│           ├── 1 fonte simples, sem join complexo
-│           │     ──→ [ALT-1] QueryHandler
-│           │         Exemplo: GetPedidoById, ListPedidosByStatus
-│           │
-│           ├── 2+ fontes / filtros complexos / agregações
-│           │     ──→ [ALT-2] QueryComposer
-│           │         Exemplo: relatório consolidado com joins de 3 tabelas
-│           │
-│           ├── Processamento em lote / coleção
-│           │     ──→ [ALT-3] BatchProcessor
-│           │         Exemplo: reprocessar pedidos pendentes da noite anterior
-│           │
-│           └── Utilitário técnico sem efeito de domínio
-│                 ──→ [ALT-4] UtilityScript
-│                     Exemplo: recalcular índice de busca, limpar cache
-│
-└── SIM ──→ Estado cruza Entry + Domain + Infra em 2+ fases distintas?
-            │
-            ├── SIM ──→ ✅ [TXC] Transaction Context Handler
-            │               Exemplo: CreatePedido, CancelPedido, ApprovePayment
-            │
-            └── NÃO, 1 etapa simples ──→ [ALT-1] SimpleCommandHandler
-                    Exemplo: MarkNotificationAsRead (sem efeito de domínio complexo)
+ExecuteAsync(code, input)
+  └─ fábrica do envelope      (seed, input) => envelope        pura, sem I/O
+  └─ [10] Validation          opcional    validação pura da entrada, sem I/O
+  └─ [20] Idempotency         obrigatória no executor que grava; ausente no de consulta
+  └─ [40] Processing          obrigatória o executor
+  └─ [50] PostProcessing      opcional    conclusão ou difusão; roda em sucesso e em falha
 ```
 
-### Exemplos por nó
-
-| Operação | Padrão | Justificativa |
-|----------|--------|---------------|
-| `CreatePedido` | TXC | Hydrate itens → Domain.Create → Salvar → Publicar evento |
-| `CancelPedido` | TXC | Hydrate pedido → Domain.Cancel → Salvar → Publicar evento |
-| `GetPedidoById` | ALT-1 QueryHandler | Leitura simples, 1 fonte, sem transformação de estado |
-| `ListPedidosByStatus` | ALT-1 QueryHandler | Leitura com filtro simples, sem efeito colateral |
-| `RelatorioConsolidado` | ALT-2 QueryComposer | 3+ fontes, joins complexos, sem efeito colateral |
-| `ReprocessarPendentes` | ALT-3 BatchProcessor | Opera sobre coleção, pode ter efeitos colaterais |
-| `MarkNotificationAsRead` | ALT-1 SimpleCommandHandler | 1 etapa, sem estado intermediário relevante |
-
----
-
-## SEÇÃO 3 — Regras de Primary Ports
-
-### Regra fundamental
-
-**Uma Primary Port por BoundedContext por tipo de operação (Command/Query).**
-
-Nunca uma Primary Port por operação CRUD.
-
-### Tabela ❌ Anti-padrão v1 vs ✅ TXC v2
-
-| ❌ Anti-padrão v1 | ✅ TXC v2 |
+| # | Regra |
 |---|---|
-| `ICreatePedidoUseCase` | `IPedidoHandler` (agrupa Create + Cancel) |
-| `ICancelPedidoUseCase` | `IPedidoHandler` (uma interface por BC/tipo) |
-| `IListPedidosUseCase` | `IPedidoQuery` (agrupa GetById + ListAll) |
-| `IGetPedidoByIdUseCase` | `IPedidoQuery` (uma interface para todas as queries) |
-| 4 interfaces para 4 operações | 2 interfaces para o BoundedContext Pedido |
+| `[10]` | Só a entrada: formato, obrigatoriedade, faixa. Não lê banco nem chama serviço, porque é validação pura da entrada. |
+| `[20]` | Guarda de replay. Achou a chave: devolve o resultado da primeira execução e encerra; a `[50]` não roda. |
+| `[40]` | Único ponto de escrita. A base conduz o executor (Seção 3); o consumidor não encadeia passos. |
+| `[50]` | Não monta resposta (a resposta é do adapter). **Não crítica** (padrão): roda depois da resposta (em Go, síncrona antes de devolver), a falha fica no span e não muda o resultado. **Crítica**: a resposta espera por ela; se falhar depois de a `[40]` gravar, a base compensa e devolve o erro. |
 
-### Formato canônico de Primary Port TXC
+Os números são a ordem e o nome do span (`step.{Order}`). Um domínio pode declarar etapa própria
+entre `[20]` e `[40]` — o NQuantic tem a `[30]` de resolução de conta, bancária — mas o kit não traz
+nenhuma; a regra de negócio da aplicação tem um lugar só, o `ApplyRule`.
+
+**Telemetria é da base.** Cada etapa abre o span, mede, captura o erro e fecha. Quem escreve uma
+etapa ou um executor não escreve instrumentação.
+
+---
+
+## SEÇÃO 3 — Os executores
+
+Hierarquia selada: o consumidor deriva de um dos dois, nunca da base comum.
+
+| Tipo | Para | `[20]` |
+|---|---|---|
+| `BksTransactionalExecutor<TEnvelope, TValidation, TDecision, TOut>` | operação que grava | sempre |
+| `BksQueryExecutor<TEnvelope, TOut>` | consulta, sem gravar | nunca |
+
+**No transacional, a base conduz a cadeia:**
+
+```
+ValidateAsync(envelope)            lê o que a regra precisa; devolve TValidation   virtual
+ApplyRule(envelope, valid.)        a regra de negócio; devolve TDecision           abstract
+ExecuteAsync(envelope, decisão)    grava TDecision pela Secondary Port             abstract
+ConfirmAsync(envelope)             segunda fase; corpo vazio por padrão            virtual
+falha depois de gravar → CancelAsync(envelope)  compensação                        virtual
+```
+
+- `ApplyRule` e `ExecuteAsync` são obrigatórios; os outros têm corpo padrão. O `ApplyRule` é síncrono:
+  a regra é pura, e o que ela precisa ler já veio no `TValidation`.
+- **Uma fase é o caso comum:** o `ExecuteAsync` grava o estado final e o `ConfirmAsync` fica vazio.
+- **Duas fases quando há efeito externo que decide** (reservar o quarto e cobrar o cartão): o
+  `ExecuteAsync` grava com status `Executed`, o `ConfirmAsync` chama o efeito e leva a `Confirmed`, o
+  `CancelAsync` libera. A entidade ganha o status; o modo pendente (confirmar depois) é só do motor.
 
 ```csharp
-// ✅ TXC v2 — Primary Port de Command (agrupa operações que transformam estado)
-interface IPedidoHandler {
-    Task<PipelineResult<PedidoResponse>> CreateAsync(PedidoTransaction tx, CancellationToken ct)
-    Task<PipelineResult<PedidoResponse>> CancelAsync(CancelPedidoTransaction tx, CancellationToken ct)
+protected override async Task<PipelineResult<ReservaOutput>> ExecuteAsync(ReservaEnvelope env, Reserva r, CancellationToken ct)
+{
+    await reservas.SaveAsync(r with { Status = ReservaStatus.Executed }, ct);
+    return new ReservaOutput(r.Id);
 }
 
-// ✅ TXC v2 — Primary Port de Query (ALT-1, sem Transaction)
-interface IPedidoQuery {
-    Task<PipelineResult<PedidoResponse>> GetByIdAsync(Guid id, CancellationToken ct)
-    Task<PipelineResult<IReadOnlyList<PedidoResponse>>> ListAllAsync(CancellationToken ct)
+protected override async Task<PipelineResult> ConfirmAsync(ReservaEnvelope env, CancellationToken ct)
+{
+    var cobranca = await gateway.CobrarAsync(env.Input.Cartao, env.Input.Valor, ct);
+    if (!cobranca.Aprovada) return PipelineResult.Fail(ReservaErrors.PagamentoRecusado);   // a base chama o CancelAsync
+    await reservas.MarcarAsync(env.Input.ReservaId, ReservaStatus.Confirmed, ct);
+    return PipelineResult.Ok();
 }
+
+protected override Task CancelAsync(ReservaEnvelope env, CancellationToken ct) =>
+    reservas.LiberarAsync(env.Input.ReservaId, ct);
 ```
 
-### Regra de agrupamento
+- Ordem, `try` e compensação ficam privados na base.
+- O efeito externo depois de gravar (notificar, publicar) na `[50]` não crítica, se falha, vai ao
+  span e **não muda o resultado**; só a `[50]` crítica que falha compensa e devolve o erro.
+- Integração externa entra pelo construtor, como Port da aplicação.
 
-- **Command Port:** agrupa operações TXC e ALT-1 SimpleCommand que pertencem ao mesmo BoundedContext
-- **Query Port:** agrupa todas as queries (ALT-1, ALT-2) do mesmo BoundedContext
-- **Nunca misturar:** Command Port não deve ter métodos de Query e vice-versa
+**Consulta é um executor por consulta**, registrado por código como qualquer transação. Leitura
+composta de várias fontes é o mesmo `BksQueryExecutor`, com várias Ports no construtor.
 
-### Nomenclatura
-
-| Tipo | Padrão | Exemplo |
-|------|--------|---------|
-| Command Port | `I{Entidade}Handler` | `IPedidoHandler`, `IClienteHandler` |
-| Query Port | `I{Entidade}Query` | `IPedidoQuery`, `IClienteQuery` |
-| Implementação Command | `{Entidade}Handler` | `PedidoHandler` |
-| Implementação Query | `{Entidade}QueryHandler` | `PedidoQueryHandler` |
-
----
-
-## SEÇÃO 4 — Regras de Secondary Ports
-
-### Regra fundamental
-
-**Uma Secondary Port por aggregate ou recurso externo.**
-
-Nunca uma Secondary Port genérica que serve múltiplos aggregates.
-
-### Tabela ❌ Anti-padrão v1 vs ✅ TXC v2
-
-| ❌ Anti-padrão v1 | ✅ TXC v2 |
-|---|---|
-| `IDBRepositoryPort` (genérico) | `IPedidoRepository` (específico do aggregate) |
-| `IRepository<T>` (genérico com T) | `IClienteRepository` (específico) |
-| `IDatabaseService` | `IPedidoRepository` + `IClienteRepository` separados |
-| `IExternalServicePort` (genérico) | `IProcessadorDePagamento`, `INotificacaoService` (um por recurso) |
-
-### Formato canônico de Secondary Port
+**Lote é item por item pela sessão.** O worker lê a coleção e chama `ExecuteAsync` uma vez por
+item, cada um com a própria chave de idempotência: o reinício pula o que já foi feito, e a falha de
+um item não derruba os outros.
 
 ```csharp
-// ✅ TXC v2 — Secondary Port específica do aggregate
-interface IPedidoRepository {
-    Task<Pedido?> GetByIdAsync(Guid id, CancellationToken ct)
-    Task<IReadOnlyList<Pedido>> GetAllAsync(CancellationToken ct)
-    Task SaveAsync(Pedido pedido, CancellationToken ct)
-}
-
-// ✅ TXC v2 — Secondary Port específica do serviço externo
-interface INotificacaoService {
-    Task NotificarPedidoCriadoAsync(Guid pedidoId, string email, CancellationToken ct)
-    Task NotificarPedidoCanceladoAsync(Guid pedidoId, CancellationToken ct)
-}
+foreach (var p in await pendentes.ListarAsync(ct))
+    await session.ExecuteAsync<ReprocessarInput, ReprocessarOutput>(
+        PedidoCodes.Reprocessar, new ReprocessarInput(p.Id, $"{lote.Chave}:{p.Id}"), ct);
 ```
 
-### Onde ficam as Secondary Ports
+Lote como **uma transação só** (um código, o executor processa a coleção, tudo ou nada) só quando o
+requisito exige atomicidade do lote; a ficha da transação diz por quê.
 
-- **Necessidade do domínio** (repositório do aggregate): `Domain/` ou `Features/{BC}/{Entidade}/Domain/`
-- **Necessidade de orquestração** (serviço externo): `Application/` ou `Features/{BC}/{Entidade}/Application/`
+**Utilitário técnico fica fora do TXC.** Recalcular índice, limpar cache, migrar dado sem regra de
+negócio: job ou comando simples, sem registro por código.
 
 ---
 
-## SEÇÃO 5 — Transaction Map
+## SEÇÃO 4 — Registro e chamada
 
-### O que é o Transaction Map
+O consumidor registra cada transação por código, num builder tipado. Quem chama vê só o código e a
+entrada; o envelope fica escondido.
 
-Tabela que documenta o fluxo interno de uma operação TXC: quais fases existem, qual método semântico é chamado em cada fase, qual é a responsabilidade e qual estado intermediário é carregado na Transaction após cada fase.
+```csharp
+services.AddBksPipeline()
+    .AddBksTransaction<CriarPedidoInput, CriarPedidoEnvelope, CriarPedidoOutput>(PedidoCodes.Criar, t => t
+        .Envelope((seed, input) => new CriarPedidoEnvelope(seed, input))
+        .Executor<CriarPedidoExecutor>()
+        .Validation<CriarPedidoValidation>()
+        .PostProcessing<PedidoCriadoNotificacao>(critical: false))
+    .AddBksQuery<ObterPedidoInput, ObterPedidoEnvelope, PedidoView>(PedidoCodes.Obter, t => t
+        .Envelope((seed, input) => new ObterPedidoEnvelope(seed, input))
+        .Executor<ObterPedidoExecutor>());
 
-### Template canônico
+// adapter inbound
+app.MapPost("/pedidos", async (CriarPedidoRequest req, IBksSession session, CancellationToken ct) =>
+{
+    var result = await session.ExecuteAsync<CriarPedidoInput, CriarPedidoOutput>(
+        PedidoCodes.Criar, req.ToInput(), ct);
+    return result.ToHttpResult();   // a resposta é montada aqui, fora do pipeline
+});
+```
 
-| Fase | Método Semântico | Responsabilidade | Estado Intermediário |
-|------|------------------|------------------|----------------------|
-| 1. Hydrate | `HydrateXxx(input)` | Popula campos de entrada na Transaction a partir do request | `tx.Campo1`, `tx.Campo2` |
-| 2. Apply | `HydrateXxxCriado(aggregate)` | Chama o domínio, captura o aggregate criado/modificado | `tx.Aggregate` |
-| 3. Finalize | `FinalizeWith(aggregate)` | Prepara o PipelineResult com o Response final | `PipelineResult<Response>` |
+| Regra | Detalhe |
+|---|---|
+| Códigos | constantes por BoundedContext (`PedidoCodes.Criar = "PEDIDO.CRIAR"`); código repetido recusa na subida |
+| Registro | escrita em `AddBksTransaction`, que exige `TIn : IBksIdempotentInput`; consulta em `AddBksQuery`, sem `[20]` |
+| Composição | falta de envelope ou de executor recusa na subida com exceção de composição — é erro de programação, não fere o Result Pattern |
+| Resultado | `PipelineResult<TOut>` com a coleção de erros tipados; exceção de negócio nunca escapa |
+| Dependências | executor e etapas resolvidos por tipo, no escopo da sessão |
 
-### Exemplo — CreatePedido (TXC)
-
-| Fase | Método Semântico | Responsabilidade | Estado Intermediário |
-|------|------------------|------------------|----------------------|
-| 1. Hydrate | `HydrateItens(clienteId, itens)` | Valida e popula dados de entrada | `tx.ClienteId`, `tx.Itens` |
-| 2. Apply | `HydratePedidoCriado(pedido)` | Chama `Pedido.Criar()`, armazena aggregate | `tx.Pedido` |
-| 3. Finalize | `FinalizeWith(pedido)` | Monta `PedidoResponse` e retorna `PipelineResult.Success` | `PipelineResult<PedidoResponse>` |
-
-### Exemplo — CancelPedido (TXC)
-
-| Fase | Método Semântico | Responsabilidade | Estado Intermediário |
-|------|------------------|------------------|----------------------|
-| 1. Hydrate | `HydratePedido(pedido)` | Carrega aggregate existente do repositório | `tx.Pedido` |
-| 2. Apply | `HydratePedidoCancelado(pedido)` | Chama `pedido.Cancelar()`, captura resultado | `tx.Pedido` (mutado) |
-| 3. Finalize | `FinalizeWith(pedido)` | Monta `PedidoResponse` com status Cancelado | `PipelineResult<PedidoResponse>` |
-
-### Exemplo — GetPedidoById (ALT-1 — sem Transaction Map)
-
-Para ALT-1, não há Transaction. Apenas:
-- **Input:** `Guid id`
-- **Output:** `PipelineResult<PedidoResponse>`
+**A Primary Port é a sessão** (em Go, o `txc.Op[In, Out]` de cada transação). Não existe `I{Entidade}Handler` nem `I{Operacao}UseCase`: o
+contrato que o adapter usa é `IBksSession.ExecuteAsync(code, input)`, e o catálogo de
+códigos do BC diz o que a aplicação oferece.
 
 ---
 
-## SEÇÃO 6 — Anti-padrões Explícitos
+## SEÇÃO 5 — Exemplo de referência: Criar Pedido
 
-### Anti-padrão 1 — Primary Port por operação CRUD
+O cliente envia itens. O sistema confere o cliente, aplica o desconto da categoria, grava o pedido e
+devolve o número.
 
-```
-❌ ERRADO:
-interface ICreatePedidoUseCase { ExecuteAsync(cmd) }
-interface IListPedidosUseCase  { ExecuteAsync(query) }
-interface ICancelPedidoUseCase { ExecuteAsync(cmd) }
-// Resultado: 3 interfaces, 3 handlers, 3 registros no DI, duplicação de contexto
+```csharp
+public sealed record CriarPedidoEnvelope(BksTransactionSeed Seed, CriarPedidoInput Input);
 
-✅ CORRETO (TXC v2):
-interface IPedidoHandler { CreateAsync(tx), CancelAsync(tx) }
-interface IPedidoQuery   { GetByIdAsync(id), ListAllAsync() }
-// Resultado: 2 interfaces, 2 handlers, contexto unificado do BoundedContext
-```
-
-### Anti-padrão 2 — Steps separados (ValidationStep, ProcessingStep)
-
-```
-❌ ERRADO:
-[10] ValidationStep   → valida entrada separadamente
-[20] PreProcessingStep → prepara dados
-[30] ProcessingStep   → executa lógica
-// Resultado: fluxo fragmentado, estado perdido entre steps, difícil de debugar
-
-✅ CORRETO (TXC v2):
-Handler.CreateAsync(tx):
-    tx.HydrateItens(...)           // Fase 1: entrada
-    var pedido = Pedido.Criar(...) // Fase 2: domínio
-    tx.HydratePedidoCriado(pedido) // Fase 2: captura
-    await _repo.SaveAsync(pedido)  // Fase 3: persistência
-    return tx.FinalizeWith(pedido) // Fase 3: output
-// Resultado: fluxo linear, estado explícito na Transaction, lógica em 1 arquivo
-```
-
-### Anti-padrão 3 — Secondary Port genérica (IDBRepositoryPort)
-
-```
-❌ ERRADO:
-interface IDBRepositoryPort {
-    SaveAsync(entity: object): void
-    GetAsync(id: Guid): object
-}
-// Resultado: tipagem perdida, aggregate tratado como object, contrato sem semântica
-
-✅ CORRETO (TXC v2):
-interface IPedidoRepository {
-    GetByIdAsync(id: Guid): Pedido?
-    SaveAsync(pedido: Pedido): void
-}
-// Resultado: contrato tipado, nomes de método com semântica de domínio
-```
-
-### Anti-padrão 4 — Transaction sem estado intermediário
-
-```
-❌ ERRADO:
-class PedidoTransaction {
-    Input:  ClienteId, Itens        // só entrada
-    Output: PedidoResponse          // só saída
-    // Sem estado intermediário → não é TXC, é apenas um DTO com dois campos
+public sealed class CriarPedidoValidation : BksValidationStep<CriarPedidoInput>          // [10]
+{
+    protected override PipelineResult Validate(CriarPedidoInput input) =>
+        input.Itens.Count == 0 ? PipelineResult.Fail(PedidoErrors.SemItens) : PipelineResult.Ok();
 }
 
-✅ CORRETO (TXC v2):
-class PedidoTransaction {
-    // Entrada
-    ClienteId ClienteId { get; private set; }
-    Item[] Itens        { get; private set; }
-    // Estado intermediário (criado durante o fluxo)
-    Pedido Pedido       { get; private set; }
-    // Métodos semânticos que transitam entre estados
-    HydrateItens(...)           // popula entrada
-    HydratePedidoCriado(pedido) // captura estado intermediário
-    FinalizeWith(pedido)        // produz output
+public sealed record ClienteLido(Cliente Cliente, decimal DescontoCategoria);           // TValidation
+
+public sealed class CriarPedidoExecutor(IClienteRepository clientes, IPedidoRepository pedidos)
+    : BksTransactionalExecutor<CriarPedidoEnvelope, ClienteLido, Pedido, CriarPedidoOutput>
+{
+    protected override async Task<PipelineResult<ClienteLido>> ValidateAsync(CriarPedidoEnvelope env, CancellationToken ct)
+    {
+        var cliente = await clientes.GetByIdAsync(env.Input.ClienteId, ct);
+        return cliente is null
+            ? PipelineResult.Fail<ClienteLido>(PedidoErrors.ClienteInexistente)
+            : new ClienteLido(cliente, cliente.Categoria.Desconto);
+    }
+
+    protected override PipelineResult<Pedido> ApplyRule(CriarPedidoEnvelope env, ClienteLido lido) =>
+        Pedido.Criar(lido.Cliente, env.Input.Itens, lido.DescontoCategoria);
+
+    protected override async Task<PipelineResult<CriarPedidoOutput>> ExecuteAsync(CriarPedidoEnvelope env, Pedido pedido, CancellationToken ct)
+    {
+        await pedidos.SaveAsync(pedido, ct);
+        return new CriarPedidoOutput(pedido.Numero);
+    }
 }
 ```
+
+Nada no envelope muda depois de criado; cada passo recebe o que precisa e devolve o próprio
+resultado.
 
 ---
 
-## SEÇÃO 7 — Checklist de Conformidade TXC
+## SEÇÃO 6 — Ficha da transação (FEAT §5)
 
-Use esta lista ao revisar um PRD §8 ou FEAT §5 gerado pela skill.
+Substitui o antigo Transaction Map. Uma ficha por código de transação.
 
-### Para PRD §8
+| Campo | Criar Pedido |
+|---|---|
+| Código | `PEDIDO.CRIAR` |
+| Executor | transacional |
+| Entrada (`TIn`) | `ClienteId`, `Itens` |
+| Envelope | `Seed` + `Input` |
+| `[10]` | pelo menos um item; quantidade > 0 |
+| `TValidation` (o que o `ValidateAsync` lê) | `Cliente`, desconto da categoria |
+| Regra (`ApplyRule`) | `Pedido.Criar` com o desconto; recusa cliente bloqueado |
+| Gravação (Port) | `IPedidoRepository.SaveAsync` |
+| Compensação | nenhuma (uma escrita só) |
+| Saída (`TOut`) | `Numero` |
+| `[50]` | notificação ao cliente, não crítica |
+| Erros | `SemItens`, `ClienteInexistente`, `ClienteBloqueado` |
 
-| # | Verificação | SIM/NÃO |
-|---|-------------|---------|
-| 1 | §8 usa template TXC-aware (§8a–§8d) para projetos .NET/TypeScript? | |
-| 2 | §8b lista Primary Ports agrupadas por BoundedContext (não por operação CRUD)? | |
-| 3 | §8b distingue Handler (Command) de Query — nomes seguem `I{Entidade}Handler` / `I{Entidade}Query`? | |
-| 4 | §8c lista Secondary Ports específicas por aggregate (não `IDBRepositoryPort` genérico)? | |
-| 5 | §8a descreve fluxo com Transaction (Hydrate → Apply → FinalizeWith), não Steps numerados? | |
-| 6 | Não há menção a `ICreateXxxUseCase`, `IUpdateXxxUseCase` ou `IDeleteXxxUseCase`? | |
-| 7 | Não há menção a `ValidationStep`, `ProcessingStep`, `PostProcessingStep` como padrão? | |
+Para consulta, a ficha tem só Código, Executor (`consulta`), Entrada, Ports lidas, Saída e Erros.
 
-### Para FEAT §5 (Contratos de Dados)
+---
 
-| # | Verificação | SIM/NÃO |
-|---|-------------|---------|
-| 1 | Campo `Padrão de implementação:` presente (TXC ou ALT-N)? | |
-| 2 | Se TXC: tabela Transaction Map presente com Fase / Método Semântico / Responsabilidade / Estado Intermediário? | |
-| 3 | Se ALT-1/2: contrato simplificado Input/Output presente (sem Transaction Map)? | |
-| 4 | Transaction Map tem ≤ 5 linhas (≤ 5 campos de estado)? | |
-| 5 | Métodos semânticos têm nomes de domínio (não nomes técnicos como `SetData`, `Process`)? | |
-| 6 | §4 Restrições Técnicas menciona o aggregate root e os eventos publicados? | |
+## SEÇÃO 7 — Secondary Ports e anti-padrões
 
-### Números validados (fonte: `txc/validation/METRICAS.md`)
+**Uma Secondary Port por aggregate ou recurso externo**, nunca genérica:
 
-| Métrica | v1 (baseline) | v2 (TXC) | Redução |
-|---------|--------------|----------|---------|
-| Linhas de plumbing por feature (4 ops) | ~86 | ~18 | **~79%** |
-| Arquivos totais por feature (4 ops) | ~28 | 11 (canônico) | **~61%** |
-| DTOs de resposta por feature | ~4 (um por op) | 1 (`PedidoResponse` único) | **~75%** |
-| Arquivos de Steps (Validation/Processing) | ~8 (2 por op) | 0 | **~100%** |
+| Errado | Certo |
+|---|---|
+| `IDBRepositoryPort`, `IRepository<T>` | `IPedidoRepository`, `IClienteRepository` |
+| `IExternalServicePort` | `IProcessadorDePagamento`, `INotificacaoService` |
+
+Repositório do aggregate fica junto do domínio; serviço externo, na aplicação.
+
+**Anti-padrões:**
+
+| Anti-padrão | Por que dói | Forma certa |
+|---|---|---|
+| Objeto de transação com `HydrateX()` e `private set` que muda a cada fase | estado escondido; a ordem das chamadas vira regra implícita | retorno tipado: `ValidateAsync` → `TValidation` → `ApplyRule` |
+| Adapter que busca dependência e preenche a transação | adapter com regra; teste do fluxo exige HTTP | adapter só chama `ExecuteAsync(code, input)`; a leitura é do `ValidateAsync` |
+| Regra de negócio na `[10]` ou numa etapa extra | dois lugares para a mesma coisa | regra só no `ApplyRule`; `[10]` só valida a entrada |
+| Executor que encadeia outro executor | duas transações sem rastro comum | uma transação por código; composição é da aplicação, fora do motor |
+| Escrita sem `[20]` | reenvio duplica o efeito | toda escrita é `BksTransactionalExecutor` |
+| `[50]` montando a resposta | resposta depende de etapa que roda depois | a resposta é do adapter |
+| `I{Operacao}UseCase` ou `I{Entidade}Handler` | uma interface por operação sem ganho | a sessão (em Go, o `txc.Op`) é a Primary Port; o catálogo de códigos é o contrato |
+
+---
+
+## SEÇÃO 8 — Base no projeto ou motor
+
+O projeto declara no `.bks-profile.json`:
+
+| `txc` | O que o kit gera |
+|---|---|
+| ausente | nada de TXC; vale a arquitetura do perfil sem este guia |
+| `"base"` | base mínima dentro do projeto (`Application/Pipeline/`), com os nomes do motor (prefixo `Bks`) no namespace do projeto, para não colidir com tipos de framework como `ITransaction`: sessão, registro, etapas `[10]` `[20]` `[50]`, os dois executores, `PipelineResult<T>`. Três pontos divergem do motor: o resultado (`PipelineResult<T>`), o executor de consulta (`BksQueryExecutor`, que no motor é `BksDirectExecutor`; `ADR-016`) e o quarto tipo do executor transacional (`TDecision`): no motor a procedure grava a partir do envelope, na base o `ExecuteAsync` recebe o que a regra decidiu para gravar pela Port. A idempotência usa uma Port (`IBksIdempotencyStore`) que o projeto implementa |
+| `"motor"` | referência ao pacote do `bks-motor-sdk`, com a API dele. Só quando a persistência é por stored procedure por transação em PostgreSQL, o caso para o qual o motor foi feito |
+
+A forma é a mesma nos dois: registro por código, envelope por fábrica, executores, pipeline. Migrar
+de `base` para `motor` é trocar a base pelo pacote e escrever a procedure de cada transação. O motor
+acrescenta o que a base não tem: as ações `Validate`, `Execute`, `Confirm` e `Cancel` na procedure,
+journal, modo pendente, recuperação e estorno.
+
+---
+
+## SEÇÃO 9 — Checklist de conformidade
+
+### PRD §8
+
+| # | Verificação |
+|---|---|
+| 1 | O perfil declara `txc` e o PRD diz por que o sistema é transacional |
+| 2 | §8b lista, por BoundedContext, o catálogo de códigos de transação |
+| 3 | §8c lista Secondary Ports por aggregate ou recurso, nenhuma genérica |
+| 4 | §8a mostra o adapter chamando a sessão e o pipeline `[10] → [20] → [40] → [50]` |
+| 5 | Não há `I{Operacao}UseCase`, `I{Entidade}Handler`, `HydrateX` nem `PreProcessing` |
+
+### FEAT §5
+
+| # | Verificação |
+|---|---|
+| 1 | Uma ficha (Seção 6) por código de transação |
+| 2 | Toda escrita usa executor transacional; toda leitura, executor de consulta |
+| 3 | A `[10]` só valida a entrada; a regra está no `ApplyRule` |
+| 4 | O `TValidation` nomeia o que é lido e de qual Port |
+| 5 | Compensação declarada quando há mais de uma escrita ou efeito externo crítico |
+| 6 | Erros de negócio tipados e listados |

@@ -6,6 +6,7 @@ import importlib.util
 import io
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -86,6 +87,8 @@ def test_leaks():
         'drive X': ('skills/a.md', 'veja X:' + '\\bks-harness\\STATUS.md', True),
         'pasta do usuário': ('skills/b.md', 'C:/Users/' + 'fabio/.claude', True),
         'vault do autor': ('skills/c.md', 'D:\\' + '2brains\\repos', True),
+        'drive X com barra dupla de JSON': ('skills/g.json', '{"p": "X:' + '\\\\Claude\\\\skills"}', True),
+        'pasta do autor em D': ('skills/h.md', 'D:\\' + 'Fabio\\BackSide\\SDD', True),
         'e-mail pessoal': ('skills/d.md', 'autor: alguem@' + 'gmail.com', True),
         'e-mail noreply': ('skills/e.md', '1+a@users.noreply.github.com', False),
         'caminho de exemplo': ('skills/f.md', 'clone em C:\\dev\\bks-harness', False),
@@ -114,6 +117,73 @@ def test_sync():
     shutil.rmtree(dest)
 
 
+def gitc(repo, *args):
+    return subprocess.run(['git', '-C', repo, '-c', 'user.name=t', '-c', 'user.email=t@example.com'] + list(args),
+                          capture_output=True, text=True)
+
+
+def test_external_contribution():
+    print('\ncontribuição externa')
+    src = source({'skills/a.md': 'original\n', 'README.md': 'leia\n'})
+    gitc(src, 'init', '-q')
+    gitc(src, 'add', '-A')
+    gitc(src, 'commit', '-q', '-m', 'base')
+    dest = tempfile.mkdtemp()
+    gitc(dest, 'init', '-q')
+    check('clone sem manifesto não confere', publish.external_changes({}, dest) is None)
+    out, _ = publish.build(src, ['skills/a.md', 'README.md'])
+    check('manifesto sai junto', publish.MANIFEST in out)
+    publish.sync(out, dest)
+    gitc(dest, 'add', '-A')
+    gitc(dest, 'commit', '-q', '-m', 'publicação')
+    check('publicação recém-feita não acusa nada', publish.external_changes(out, dest) == [])
+
+    write(dest, 'skills/a.md', 'original\nmelhoria de fora\n')
+    write(dest, 'skills/b.md', 'arquivo novo de fora\n')
+    gitc(dest, 'add', '-A')
+    gitc(dest, 'commit', '-q', '-m', 'PR de fork')
+    out, _ = publish.build(src, ['skills/a.md', 'README.md'])
+    ext = publish.external_changes(out, dest)
+    check('mudança e arquivo de fora acusados', ext == ['skills/a.md', 'skills/b.md'], ext)
+
+    patch = os.path.join(src, 'outputs', 'publish', 'incoming.patch')
+    check('incoming gera o patch', publish.incoming(dest, patch) == patch)
+    with io.open(patch, encoding='utf-8') as fh:
+        text = fh.read()
+    check('patch traz a contribuição e não o manifesto',
+          'melhoria de fora' in text and 'arquivo novo de fora' in text and publish.MANIFEST not in text)
+    applied = gitc(src, 'apply', '--3way', patch)
+    check('patch aplica no privado', applied.returncode == 0, applied.stderr)
+
+    out, _ = publish.build(src, ['skills/a.md', 'skills/b.md', 'README.md'])
+    check('contribuição trazida libera a publicação', publish.external_changes(out, dest) == [])
+    publish.sync(out, dest)
+    with io.open(os.path.join(dest, 'skills', 'a.md'), encoding='utf-8') as fh:
+        check('contribuição sobrevive à publicação seguinte', 'melhoria de fora' in fh.read())
+    check('arquivo novo de fora sobrevive', os.path.isfile(os.path.join(dest, 'skills', 'b.md')))
+
+    write(dest, 'README.md', 'leia\r\n')
+    check('CRLF do checkout não conta como mudança', publish.external_changes(out, dest) == [])
+    os.remove(os.path.join(dest, 'README.md'))
+    ext = publish.external_changes(out, dest)
+    check('arquivo apagado no público acusado', ext == ['README.md (apagado no público)'], ext)
+    shutil.rmtree(src, ignore_errors=True)
+    shutil.rmtree(dest, ignore_errors=True)
+
+
+def test_tag_hint():
+    print('\ntag por versão')
+    src = source({'.claude-plugin/plugin.json': '{"version": "9.9.9"}'})
+    dest = tempfile.mkdtemp()
+    gitc(dest, 'init', '-q')
+    gitc(dest, 'commit', '-q', '--allow-empty', '-m', 'x')
+    check('sugere a tag da versão', 'git tag v9.9.9' in (publish.tag_hint(src, dest) or ''))
+    gitc(dest, 'tag', 'v9.9.9')
+    check('tag existente avisa', 'já existe' in (publish.tag_hint(src, dest) or ''))
+    shutil.rmtree(src, ignore_errors=True)
+    shutil.rmtree(dest, ignore_errors=True)
+
+
 def test_destination():
     print('\ndestino')
     check('destino igual à origem recusa', publish.main([publish.ROOT]) == 2)
@@ -124,7 +194,8 @@ def test_destination():
 
 def main():
     print('testes do publish.py')
-    for fn in (test_allowlist, test_private_block, test_leaks, test_sync, test_destination):
+    for fn in (test_allowlist, test_private_block, test_leaks, test_sync, test_external_contribution, test_tag_hint,
+               test_destination):
         fn()
     print('\n%d verificacoes, %d falhas' % (checks, len(failures)))
     return 1 if failures else 0

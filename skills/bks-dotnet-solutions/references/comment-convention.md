@@ -24,12 +24,12 @@ função dela. A guarda diz o que quebra; o porquê completo fica no `ARCHITECTU
 abertura para que serve, e o comentário não aponta para ele.
 
 ```csharp
-// ✅ B correto — o que quebra, 2 linhas
+// B correto — o que quebra, 2 linhas
 /// <summary>Configuração da capacidade de segredos.</summary>
 /// <remarks>Não é record — ToString() gerado exporia a ApiKey.</remarks>
-public sealed class NqSecretOptions
+public sealed class SecretOptions
 
-// ❌ C — o raciocínio inteiro dentro do arquivo
+// errado: C — o raciocínio inteiro dentro do arquivo
 /// <remarks>
 /// <b>Não é record.</b> record gera ToString() automático com todas as propriedades, e Value é
 /// string — escalar, portanto impressa por inteiro. O segredo vazaria em qualquer log de
@@ -71,7 +71,7 @@ dizer *o quê*.
 ## O guarda executável
 
 **Regra sem teste é intenção, e intenção não sobrevive à pressa.** Gerar junto com o código, em
-`tests/{Projeto}.Tests/Architecture/`.
+`src/{Projeto}.Tests/Architecture/`.
 
 ```csharp
 namespace {Projeto}.Tests.Architecture;
@@ -190,12 +190,12 @@ o diretório de trabalho muda entre `dotnet test` na raiz e execução pela IDE.
 
 Nunca o repo inteiro de uma vez — o diff fica inviável de revisar.
 
-1. **Por pasta**, na ordem da dependência: `Domain` → `Ports` → `Adapters` → `Infrastructure`
+1. **Por pasta**, na ordem da dependência: `Domain` → `Ports` → `Adapters` → `main`
 2. Escrever o `ARCHITECTURE.md` **antes** — é o destino do material que sai; sem ele o conteúdo se
    perde em vez de mudar de lugar
 3. Escrever o teste **antes** do retrofit: dá alvo objetivo, em vez de julgar arquivo a arquivo
 4. Revisar o diff a cada pasta
 
-> ⚠️ **Um teste de arquitetura pode depender de texto no comentário.** No `nq-sec-sdk`, dois testes
+> **Um teste de arquitetura pode depender de texto no comentário.** Num SDK de segurança construído com este método, dois testes
 > exigiam a marcação `PRESUMIDO`/`RK-E` no código do adaptador HSM — e o retrofit a apagou. Rodar a
 > suíte completa a cada pasta, não só no fim.

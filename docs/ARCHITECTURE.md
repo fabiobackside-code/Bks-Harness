@@ -49,7 +49,7 @@ devem ficar.
 
 ### O delta de linguagem mora em `bks-standards`, não na skill geradora
 
-As premissas (TXC, pipeline explícito, Result, calisthenics, pragmatismo token-aware) são método,
+As premissas (TXC quando o projeto o adota, Result, calisthenics, pragmatismo token-aware) são método,
 não linguagem, e vivem em `bks-standards/references/bks-premises.md`. As skills geradoras
 produzem estrutura e apontam para lá.
 
@@ -128,7 +128,7 @@ Os guardas em `hooks/` são a resposta. Três deles recusam a escrita, não avis
 
 - `no_dispatcher` recusa `MediatR` e equivalentes em `.cs`. Dispatcher esconde a ordem dos passos
   atras de uma convenção de tipo; não da para ler o fluxo sem procurar o handler.
-- `comment_budget` recusa bloco acima de cinco linhas e marca de severidade. O que denúncia ensaio
+- `comment_budget` recusa bloco acima de 5 linhas e marca de severidade. O que denúncia ensaio
   não e a proporção de comentario no arquivo, e o bloco longo — decisão e trade-off pertencem a
   este documento.
 - `dod_docs` recusa a declaração de tipo público enquanto `README.md` e `ARCHITECTURE.md` não
@@ -235,7 +235,8 @@ comando do método passa a existir só onde o plugin está instalado. A alternat
 com um script de sincronização — foi descartada: sincronizador é peça que alguém tem que lembrar
 de rodar, e a duplicação já tinha produzido defeito exatamente por ninguém lembrar.
 
-A medição de consumo saiu do corpo do `/bkhar:save` para `commands/references/medicao-consumo.md`, e o
+A medição de consumo saiu do corpo do `/bkhar:save` para `skills/bks-team/references/medicao-consumo.md`
+(em `commands/` o validador do plugin o lia como comando), e o
 `session_cost.py` resolve o `pricing.json` ao lado de si — validado rodando da cópia instalada
 depois de apagada a global.
 
@@ -344,6 +345,13 @@ Junto com a skill, o comentário de código perdeu o ponteiro para documento. A 
 regressão diz o que quebra se alguém mudar a linha; o `ARCHITECTURE.md` diz na abertura para que
 serve, e o comentário não precisa apontar para ele. O `doc-writer`, o `bks-dotnet-solutions`, o
 `bks-sdd` e a mensagem do `comment_budget` seguem essa regra.
+
+Além do contrato e da guarda, o código admite duas exceções, de até duas linhas cada: o gotcha não
+óbvio (workaround de bug externo, ordem de chamada imposta por biblioteca de terceiro) e a ausência
+deliberada de código, que diz o que não está ali e não pode entrar. Nenhum leitor infere do código
+o que não foi escrito, e o gotcha não cabe no `ARCHITECTURE.md` porque só vale naquela linha. A
+decisão é do Fabio, na auditoria `--deep` do atestado da 3.0.0 (2026-11-20): três guias já abriam
+exceções diferentes entre si, e a regra passou a nomear as duas em todos eles.
 
 ### A manutenibilidade é um comando próprio, separado do `/bkhar:review`
 
@@ -475,17 +483,43 @@ do estado do projeto.
 O script não faz commit nem push. A publicação chega numa branch `release` do público, e o merge
 para a `main`, que é a branch que o marketplace lê, é um pull request do Fabio.
 
-### O modo `autonomo` é concedido por script, não por pedido
+**A contribuição de fora volta ao privado antes da publicação seguinte.** O público aceita pull
+request, mas é espelho do privado. Sem guarda, a publicação seguinte apagaria a contribuição (D-3.0-4
+e D-3.0-44 no `00-plano.md`).
 
-A 1.0.0 deixa o projeto escolher como é conduzido (`decisions/ADR-003`). O `colaborativo` segue
-padrão; o `autonomo` só é concedido pelo `scripts/readiness.py`, que confere canônico, PRD, PLAN (plano macro) e
+A guarda funciona assim:
+
+- Cada publicação grava no clone o `.publish-manifest.json`, com o hash de cada arquivo publicado.
+  O hash lê CRLF como LF, para o `autocrlf` do checkout não contar como mudança.
+- Na publicação seguinte, o script compara o clone com o manifesto. Arquivo que mudou, apareceu
+  ou sumiu fora da publicação, e que a saída nova apagaria ou sobrescreveria, é contribuição
+  externa. A publicação é recusada, sem apagar nada.
+- O `--incoming` gera o patch do que o público recebeu desde o último commit do manifesto. O Fabio
+  aplica com `git apply --3way` no privado, revisa e commita. Na rodada seguinte o arquivo já é
+  igual ao que sai, e a guarda deixa passar.
+
+O caminho do contribuidor está no `CONTRIBUTING.md`, com o checklist de instrução suspeita: skill,
+agente, comando e hook são código que o agente executa.
+
+O CI que vai ao público é o mesmo `guards.yml` do privado. Ele roda com `permissions: contents:
+read` e no gatilho `pull_request`, que em PR de fork não recebe segredo. O
+`tests/test_public_ci.py` monta a árvore publicada e roda nela cada passo do workflow, como um PR
+de fork rodaria. O `build_artefatos --check` pula a fonte que não sai para o público.
+
+O público ganha tag por versão, para quem instala fixar a versão. O script lê a versão do
+`plugin.json` e imprime o comando de tag. Quem cria e envia a tag é o Fabio, depois do merge.
+
+### O modo `autonomous` é concedido por script, não por pedido
+
+A 1.0.0 deixa o projeto escolher como é conduzido (`decisions/ADR-003`). O `collaborative` segue
+padrão; o `autonomous` só é concedido pelo `scripts/readiness.py`, que confere canônico, PRD, PLAN (plano macro) e
 grafo aprovados, nenhuma questão em aberto e a stack no perfil. Agente sem entrada escrita inventa
 a entrada, e a prontidão é o portão que impede isso sem chamar modelo.
 
-Os contratos não entram na prontidão: no `autonomo` é a onda de desenho que os produz. Quem
+Os contratos não entram na prontidão: no `autonomous` é a onda de desenho que os produz. Quem
 impede a construção de começar sem contrato aprovado é o `consome` da task, conferido pelo
 `scripts/wave_graph.py`. FEAT e TEST também ficam de fora, porque o `refine` os escreve no modo
-`autonomo`. A pergunta que o agente faria vira linha em `decisions/SUPOSICOES.md`: revisável,
+`autonomous`. A pergunta que o agente faria vira linha em `decisions/SUPOSICOES.md`: revisável,
 nunca decisão. Dado pessoal, autorização e segredo não se presumem e param em `BLOQUEIO`.
 
 ### As ondas saem do grafo, e o estado tem um escritor só
@@ -500,6 +534,97 @@ O estado vive em `outputs/run/onda-N/T-NNN.json` e só o orquestrador o escreve,
 `scripts/run_state.py`, que recusa transição inválida: 5ª tentativa, task não liberada, execução
 pausada. O motor continua um só (decisão 10 do desenho): o `/bkhar:loop` ganhou o `--wave`, e não
 nasceu um `bkhar run`.
+
+### As tasks têm comando próprio, uma por peça, com o RED dentro do loop
+
+O `/bkhar:loop` lia `specs/tasks/TASK-[feature].md`, mas nenhum comando escrevia esse arquivo. A
+forma existia na fase 5.3 da skill `bks-sdd`, presa ao workspace dela: outro caminho
+(`spec/tasks/`), um arquivo por task e um par Teste e Implementação por peça. Seguido ao pé da
+letra, o par faria o loop escrever o RED duas vezes, porque o passo 0 dele já chama o `tester`.
+
+O `/bkhar:tasks` é a porta de entrada dessa forma dentro do repositório. Só roda com o ARCH, a
+FEAT e o TEST aprovados, e o `architect` escreve um arquivo por feature, com uma task por peça. Os
+IDs `T-NNN` continuam a numeração de `specs/tasks/` e do grafo do plano, porque o ID vira a branch
+`task/T-NNN` do `recovery.py`. Cada task carrega os cenários do TEST que o `tester` vai escrever.
+
+O portão precisava de um registro de aprovação que não existia: o `/bkhar:refine` e o
+`/bkhar:spec` passaram a gravar `**Status:** Aprovada` na FEAT e no TEST.
+
+Duas alternativas foram descartadas. Alinhar só a skill deixava a regra dependendo de alguém
+invocar a `bks-sdd` com o argumento certo, sem portão. Manter o par Teste e Implementação
+separava o RED da tentativa que o consome, e o `recovery.py` perderia o portão `red` da task.
+
+### A task se recupera por portão e foto, com trava e retomada humana
+
+Antes, o `developer` não commitava e o primeiro commit da task vinha no `/bkhar:save`. Uma
+tentativa ruim ou uma queda do Maestri sujava a árvore com os testes do RED já aprovados, e a task
+recomeçava do zero. O `scripts/recovery.py` resolve isso (D-3.0-34 a D-3.0-40 no `00-plano.md`).
+
+A fase é a da task: `spec → red → impl-K → review → integracao`. Cada task tem branch própria,
+`task/T-NNN`, aberta no passo 0. No `--wave` esse papel é da `wave/N/T-NNN`. A cadeia
+`prd → plan → arch → refine` não entra: cada comando dela já se recupera pelo arquivo aprovado e
+commitado.
+
+Portão e tentativa recebem tratamento diferente:
+
+- **Portão** (`spec`, `red`, `review`): é commit na branch da task e passa pelo pre-commit do
+  projeto.
+- **Tentativa:** é foto fora do histórico, em `refs/bkhar/T-NNN/impl-K`. A foto é um commit de
+  árvore montado num índice temporário, para levar também os arquivos novos sem tocar o índice do
+  usuário. O placar da tentativa fica no estado.
+
+O estado mora em `.git/bkhar/recovery/T-NNN.json`, fora da árvore, compartilhado entre as
+worktrees e intocado pelo reset.
+
+**Trava:** o contador de tentativas só sobe. Na 4ª falha, o `block` grava o
+`outputs/BLOQUEIO-T-NNN.md` com o diagnóstico, o placar, as opções de resolução e a seção
+`## Retomada`.
+
+**Retomada:** só o usuário destrava. Ele preenche o que mudou e escolhe de onde partir, depois roda
+`/bkhar:loop T-NNN --resume`. O ciclo novo zera o contador, e o Dev recebe o texto do usuário com o
+placar anterior. A retomada sem informação é recusada. O terceiro bloqueio é terminal e devolve a
+task ao `/bkhar:refine`: aí o defeito está na especificação.
+
+**Queda:** o mesmo `--resume` decide pelo estado. Ele volta ao último ponto seguro, e a tentativa
+interrompida não conta, porque o teto limita o Dev e não o ambiente. Duas quedas na mesma tentativa
+viram bloqueio.
+
+**Integração:** é `merge --no-ff`. A ordem `spec → red → review` fica no histórico como prova do
+método, e a task inteira se desfaz com um `revert -m 1`. O squash daria histórico limpo e perderia
+essa prova.
+
+O `reset --hard` só roda em `task/*` e `wave/*`, no script e no `secret_guard`. Voltar a um ponto
+na branch de trabalho levaria junto o que o usuário commitou nela.
+
+### A métrica recorta o transcript pelas fases da task
+
+A observabilidade da 3.0.0 é arquivo local (D-3.0-1). O `scripts/metrics.py` não pede marcação
+manual de fase. Ele junta duas fontes que já existem:
+
+- os eventos do `recovery.py`, cada um com a fase, o estado, o ciclo e a tentativa do momento;
+- o transcript da sessão, que tem a hora de cada mensagem.
+
+Cada trecho contínuo de uma fase vira uma janela de tempo. Cada mensagem, notificação de subagente
+e pergunta ao usuário entra na janela em que caiu.
+
+A janela tem duração, tokens, custo, tokens por papel, perguntas e resultado. O registro fino vai
+para o `outputs/run/metrics/metrics.jsonl`, uma linha por janela, no formato que uma exportação
+OpenTelemetry futura consome. A leitura vai para o `METRICAS.md`, com três tabelas:
+
+- **por fase:** responde qual fase gasta mais;
+- **por papel;**
+- **onde travou:** bloqueios, ciclos, quedas, fase mais longa e último placar.
+
+O tempo de bloqueio é a espera pelo usuário e entra como fase própria. Retomada de bloqueio conta
+como pergunta, ao lado das perguntas da sessão. Mensagem livre do usuário não conta, porque não
+distingue resposta de comentário.
+
+A unidade é a task. A sessão sem task já tem a medição do `/bkhar:save`, e misturar as duas
+confunde a leitura.
+
+Ficam fora os terminais do Maestri, que têm transcript próprio: medir o `tester` e o `developer`
+lá é da validação pós-3.0.0. Em onda, duas tasks podem rodar ao mesmo tempo. A mensagem da sessão
+principal nesse intervalo se divide em partes iguais entre as janelas que se sobrepõem.
 
 ### O painel escreve só na inbox
 
@@ -527,6 +652,19 @@ script, incremental e sem modelo; a consolidação por tema usa modelo e passa p
 bloqueio. Do `nquantic`, o índice guarda só tema e data, com a chave em hash para o nome do arquivo
 não vazar.
 
+O kit fica fora do `repos/` do vault, e até a 3.0.0 o harvest não o lia. O aviso de harvest pendente
+do kit sumia sem nenhuma decisão dele ter sido indexada. O índice agora inclui o próprio kit, na
+categoria `kit`, apontado como `kit/bks-harness/...`.
+
+A proposta promovida ao kit também parava em `para-eval`, sem caminho até a skill. O
+`learning.py apply` fecha o ciclo, com a skill escolhida pelo usuário no `/bkhar:retro`:
+
+- acrescenta a regra à seção `## Histórico de regras` do `SKILL.md`, com a proposta de origem e a
+  evidência;
+- arquiva a proposta como `aplicada`, com `eval: pendente`.
+
+A medida do delta continua exigida. Sem delta, a regra sai do guia e do histórico.
+
 ### Texto de terceiro entra como lente, não como skill
 
 Os 20 blocos da system-design-skills (MIT) vivem em `skills/bks-arch/third-party/`, como a
@@ -541,7 +679,7 @@ Até a 1.0.0, o `/bkhar:arch` documentava depois da spec, sem `status`, e nada o
 arquitetura passou a ser portão nos dois modos (`decisions/ADR-005`): `prd → plan → arch (aprovado)
 → refine/spec`. O índice `docs/library/architecture/ARCH-{projeto}.md` aponta para um modelo por
 arquivo em `models/`, porque cada modelo é aprovado, versionado e marcado como defasado sozinho. A
-aprovação é sempre do usuário; no `autonomo`, a prontidão ganhou o nível Arquitetura e toda task de
+aprovação é sempre do usuário; no `autonomous`, a prontidão ganhou o nível Arquitetura e toda task de
 `desenho` do grafo consome o ARCH, recusada pelo `wave_graph.py` quando não consome.
 
 A defasagem é calculada pelo `scripts/library.py stale`, sem modelo: um documento da arquitetura
@@ -667,6 +805,158 @@ terminal delegado volta como gate do `manager`. Outra: o contexto passa por arqu
 terminal delegado não viu a conversa. O handoff em `outputs/run/handoff/` leva as decisões da
 sessão, e o `save` delegado o lê como a conversa que não acompanhou. Enquanto o delegado escreve, o
 `manager` não toca no estado do projeto.
+
+### A guarda vale em três camadas, e cada uma só vê o que alcança
+
+Uma regra pode ser conferida em três momentos: antes da ação do agente (hook do Claude Code),
+antes do commit (pre-commit) e no remoto (CI). O hook vê comando, leitura e conteúdo escrito, mas
+só existe dentro do Claude Code. O pre-commit vale para qualquer editor ou agente, e só vê o que
+vai para o commit. O CI pega o que pulou o pre-commit, seja por `--no-verify`, seja por um clone
+sem o `core.hooksPath` ativo.
+
+As três chamam o mesmo código. O `scripts/precommit.py` monta, para cada arquivo, o payload que o
+hook receberia ao gravá-lo e roda o `secret_guard`, o `no_dispatcher`, o `comment_budget` e o
+`dotnet_project`. O CI é
+uma casca fina sobre ele, no GitHub Actions ou no GitLab Runner. O `dod_docs` e o `writing_guard`
+ficam fora: dependem da leva de trabalho e do estilo do texto, e são de sessão, não de commit.
+Não entrou o framework `pre-commit`, que seria um pacote a mais em cada projeto; basta um hook git
+de quatro linhas em `.githooks/`.
+
+No projeto, os guardas são uma cópia em `.bkhar/guards/`, com a versão do kit ao lado, instalada
+pelo `scripts/install_guards.py`. O runner não tem o plugin nem acesso à máquina do autor, e
+baixar do repositório público prenderia o CI à rede. Rodar o script de novo atualiza a cópia. Ele
+não sobrescreve hook, `core.hooksPath` nem `.gitlab-ci.yml` alheios: nesses casos, avisa.
+
+O `secret_guard` é deliberadamente simples. O Bash e o PowerShell são lidos por token: qualquer
+comando que mencione `.env`, chave ou certificado é recusado, seja qual for o verbo. A lista
+extra de raízes onde a escrita é permitida vem da variável `BKHAR_WRITE_ROOTS`, e não do
+`.bks-profile.json`: um arquivo dentro do projeto pode ser editado pelo agente que a regra vigia.
+O processo do hook herda o ambiente do Claude Code, não o do Bash do agente. Pelo mesmo motivo,
+na pasta de configuração do Claude só a memória fica liberada; `settings*.json` e `plugins/` se
+editam à mão.
+
+O limite é declarado, não escondido. Fora do Claude Code, a garantia é sobre o que entra no
+repositório; ler segredo e apagar em massa só se barram com o hook. A regra de escrita fora do
+projeto vigia o Write e o Edit, mas não o Bash, que escreve onde quiser. Ela protege contra
+acidente, não contra um agente decidido. Neste repositório, o agente pode editar o próprio
+guarda, porque o kit é o plugin. E a `.claude/settings.json` do projeto continua editável: ela
+aparece no diff, e bloqueá-la quebraria o uso legítimo.
+
+### O teste de arquitetura lê o código como texto, e cada esqueleto o gera junto
+
+A direção das camadas era conferida só por revisão de modelo. Os esqueletos das três stacks agora
+geram um teste de arquitetura junto com o código, cada um na referência
+`architecture-tests.md` da sua skill (D-3.0-41 e D-3.0-42 no `00-plano.md`):
+
+- **.NET:** o `LayerDependencyTests` confere o Domain só com `System.*`, a dependência para
+  dentro, o span só no pipeline e a ausência de `dynamic`.
+- **TypeScript:** o teste no `node --test` traduz as camadas para o layout dos templates (`types/`,
+  `modules/` e as pastas de entrada).
+- **Go:** o `architecture_test.go` barra contexto importando adapter, adapter importando outro
+  adapter e `Result[T]`.
+
+Nenhum dos três traz pacote novo. Leem o código como texto: o xUnit do projeto, o `typescript` que
+o projeto já tem e o `go/parser` da biblioteca padrão. `ArchUnitNET`, `dependency-cruiser` e
+`go-arch-lint` veriam o código compilado (IL, a linguagem intermediária do .NET) ou o grafo inteiro, mas cada projeto gerado ganharia uma dependência e
+um pedido de aprovação. O limite é declarado: dependência que só aparece por reflexão ou herança
+de outro assembly passa. O `using`, o import e o nome qualificado entre camadas, que são a
+violação comum, são barrados.
+
+A prova está no `tests/test_arch_sensors.py`. Ele extrai o código de cada referência para um
+projeto mínimo e roda o teste da stack. O projeto limpo tem de passar, e cada violação plantada tem
+de falhar. É lento e depende de .NET, Node e Go na máquina, por isso fica fora do CI e roda quando
+a referência muda.
+
+Na mesma lacuna entraram o guarda `dotnet_project` e a rubrica fixa:
+
+- **`dotnet_project`:** recusa `FluentAssertions`, solution nova em `.sln` e alteração de migration
+  que já está no `HEAD`. Novo e existente se medem contra o `HEAD`, então no `--all` do CI só a
+  regra do pacote vale.
+- **Rubrica:** o `architect` e o `quality` devolvem uma linha por regra que só o julgamento
+  confere, com veredito e arquivo:linha. Regra com sensor computacional não entra nela.
+
+### Toda regra tem registro, e o registro diz quem a confere
+
+As regras do kit estavam espalhadas pelas referências do `bks-standards`, pelas skills, pelos ADRs
+e pelo `CLAUDE.md` pessoal do autor. Os sensores estavam em `hooks/`, nos scripts e nos papéis de
+revisão. Nada ligava uma ponta à outra, e "quantas regras são só intenção?" não tinha resposta. O
+caso que motivou a pergunta: uma regra de entrega existiu por uma semana numa memória, e um SDK
+inteiro foi construído sem ela.
+
+O `rules.json` liga as duas pontas: uma entrada por enunciado verificável, com `alvo` (código,
+documentação, processo, kit), `fonte` e `secao`, e a lista de sensores com tipo, camadas e força.
+O texto completo da regra fica só na fonte; o registro guarda uma linha e o ponteiro, para não
+criar uma segunda cópia que divirja. A fonte precisa estar no kit e ir para o público. Por isso
+as regras do `CLAUDE.md` pessoal que o kit impõe foram trazidas para o `bks-standards`, e as de
+fluxo privado ficaram fora.
+
+O `scripts/rules_report.py` valida e gera o `docs/regras.md`, com `--check` na suíte e no CI.
+Recusa sensor fantasma (aponta para arquivo inexistente), seção que sumiu da fonte e guarda órfão
+(hook declarado que não verifica nenhuma regra). Só conta como sensor o que confere o artefato
+produzido. A checagem estrutural que confere se a regra está escrita na skill é integridade do
+guia, não sensor. A força separa o sensor direto do indireto (barra um sintoma da violação) e do
+de aviso (não recusa). A lista "sem sensor" do relatório é o insumo da lacuna 8.
+
+### A deriva se confere em duas camadas, e a contradição vira proposta
+
+Um guia pode contradizer outro, e o registro de regras não vê isso: ele confere ponteiros, não
+sentido. A deriva se confere em duas camadas. A computacional é o `scripts/audit.py`: no kit,
+registro de regras, parâmetros repetidos entre guia e sensor (campo `parametros` do `rules.json`)
+e o `docs/regras.md`; no projeto, a cópia dos guardas contra o kit, o CI do `git_host` e o
+`STATUS.md` contra o `JOURNAL.md` e o git. Roda na suíte e não gasta crédito.
+
+A inferencial é o `/bkhar:audit --deep`, sob demanda e antes de fechar versão. O `audit.py
+--dossier <tema>` junta os trechos de um dos oito temas, e o `quality` procura só contradição de
+sentido, com os dois `arquivo:linha`. Cada achado vira proposta `tipo: contradicao` pelo
+`learning.py`, e só o usuário a fecha: `resolve` quando o guia foi corrigido, `reject` com motivo.
+O `audit.py` acusa a que estiver aberta, então "sem contradição aberta" é verificável.
+
+Entre 2026-11-14 e 2026-11-17, o `--deep` achou 36 contradições nos oito temas, todas corrigidas.
+A maioria tinha a mesma causa: exemplo ou referência escrita antes de uma
+decisão e não revista depois dela. Por isso a rodada se repete depois de mudança grande de modelo,
+e não só uma vez.
+
+### O TXC é padrão opcional, e a skill .NET monta o projeto pelas portas
+
+O TXC do kit veio do empacotamento inicial e nunca rodou num motor: a transação mudava a cada fase
+(`HydrateX`, `ApplyY`) enquanto o `bks-premises` a dizia imutável. O kit passou a ensinar o modelo
+do motor do NQuantic, sem o bancário (`decisions/ADR-015`): TXC somente leitura criado pela sessão,
+envelope por fábrica pura, registro por código, pipeline `[10] → [20] → [40] → [50]` e dado entre
+passos como retorno tipado. O modelo está no `txc-guidelines.md` do `bks-sdd`, e os demais guias
+apontam para ele.
+
+O TXC é padrão do autor, opcional por projeto: o `.bks-profile.json` declara `txc: "base"`, e sem
+o campo os guias de TXC não se aplicam. O projeto escolhe uma forma só, sem mistura
+(`decisions/ADR-016`): o padrão direto (entrada → serviço → porta de saída) ou o TXC. As duas
+devolvem `PipelineResult<T>`, para a migração não trocar assinatura.
+
+Três pontos da base divergem do motor de propósito. O resultado é `PipelineResult<T>`. O executor
+de consulta é `BksQueryExecutor`, porque "direto" ficou para a forma sem TXC. O executor
+transacional tem um quarto tipo, `TDecision`: no motor a procedure grava a partir do envelope, e na
+base a gravação é por Port, então o `ExecuteAsync` recebe o que o `ApplyRule` decidiu.
+
+O harness é a fonte das skills, e o `prj-bks-kit` não recebe cópia por script
+(`decisions/ADR-017`). Sincronizar o kit exigiria levar as cinco skills tocadas pelo TXC, traduzir
+`/bkhar:` para `/bks:` e preservar o que só o kit tem; isso manteria dois produtos vivos em
+paralelo, e o `bks` não é tocado antes da Fase 7. O TXC novo chega ao kit à mão, numa sessão no
+repositório dele.
+
+Na `bks-dotnet-solutions` 3.0, a entrevista pergunta as portas de entrada e de saída, e cada porta
+declarada vira um `{Nome}Adapter/`; porta não declarada não gera pasta. Toda lista termina em
+"outro", que vira Port com o adapter a especificar, para a skill não escolher biblioteca. O Worker
+aceita várias entradas no mesmo processo, e a autenticação é perguntada por porta. O contrato da
+base fica em `references/txc-base.md`, e o de cada porta em `references/ports-catalog.md`. A
+`bks-typescript-solutions` 3.0 segue o mesmo modelo, só com `txc: "base"`, porque o motor é .NET.
+
+A `bks-go-solutions` 2.0 adota o mesmo modelo com duas diferenças, ambas por limite da linguagem.
+Não há registro por código: em Go ele obriga um mapa de `any` com asserção de tipo em tempo de
+execução, e isso troca erro de compilação por erro de execução. Cada transação vira um
+`txc.Op[In, Out]`, montado no `main.go` por `txc.NewTransaction` ou `txc.NewQuery`. O adapter
+conhece só a entrada e a saída, nunca os tipos intermediários do domínio. A ficha da transação é
+uma struct de funções (`txc.Steps`), porque o compilador não deduz os tipos intermediários a partir
+dos métodos de um tipo concreto. O erro segue o `error` idiomático, não `PipelineResult<T>`. O seed
+tem construtor não exportado, então o compilador impede o adapter de criar o TXC. A base fica em
+`references/go-txc.md`.
 
 ## Consumidores
 

@@ -1,6 +1,6 @@
 """Guarda: recusa MediatR e qualquer dispatcher em codigo C#.
 
-A orquestracao no padrao BKS e explicita, via PipelineOrchestrator. Um
+A orquestracao no padrao BKS e explicita: servico pela porta ou sessao TXC. Um
 dispatcher esconde a ordem dos passos atras de uma convencao de tipo, e o
 custo aparece depois: nao da para ler o fluxo sem procurar o handler.
 """
@@ -24,16 +24,14 @@ PATTERNS = [
 
 MESSAGE = (
     'Bloqueado: {found} em {path}.\n\n'
-    'O padrao BKS nao usa MediatR nem dispatcher — a orquestracao e explicita, '
-    'via PipelineOrchestrator.\n\n'
-    'Fluxo esperado:\n'
-    '  Adapter Inbound cria a Transaction\n'
-    '  UseCase.ExecuteAsync(transaction) — unico ponto de entrada publico\n'
-    '  PipelineOrchestrator: Validation [10] > PreProcessing [20] > '
-    'Processing [30] > PostProcessing [40]\n'
-    '  retorna PipelineResult<TResponse>\n\n'
-    'Reescreva chamando o use case direto pela porta em Ports/Application/, '
-    'ou passe os passos ao PipelineOrchestrator.'
+    'O padrao BKS nao usa MediatR nem dispatcher — a orquestracao e explicita.\n\n'
+    'Fluxo esperado, conforme a forma do projeto:\n'
+    '  padrao direto: o adapter chama o servico pela porta; o servico chama a porta de saida\n'
+    '  TXC: o adapter chama session.ExecuteAsync(code, input); a sessao conduz '
+    'Validation [10] > Idempotency [20] > Processing [40] > PostProcessing [50] '
+    'pelo registro por codigo\n'
+    '  as duas formas devolvem PipelineResult<T>\n\n'
+    'Reescreva chamando o servico pela porta, ou registre a transacao por codigo.'
 )
 
 

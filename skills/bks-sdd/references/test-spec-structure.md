@@ -1,6 +1,6 @@
 # Test Spec Structure — BKS-SDD Reference
 
-Este documento define o template canônico do `TEST-[nome].md` gerado pela Fase 6 da skill BKS-SDD.
+Este documento define o template canônico do `TEST-[nome].md` gerado pela Fase 5.2 da skill BKS-SDD.
 Cada feature aprovada pode ter exatamente um arquivo de test spec, criado **antes** das tasks de
 implementação. O TEST-[nome].md é o artefato que define o que deve ser verdadeiro para a feature
 ser considerada completa — ele precede e orienta a implementação.
@@ -168,7 +168,7 @@ FEAT-[nome].md (Fase 5)
     ↓ §2 Critérios de Aceite  → alimenta §2 Cenários Principais (1:1 mínimo)
     ↓ §3 Comportamentos de Borda → alimenta §3 Cenários de Borda
 
-TEST-[nome].md (Fase 6) ← este documento
+TEST-[nome].md (Fase 5.2) ← este documento
     ↓ aprovação → desbloqueia /bks-sdd --feature-task
     ↓ §2 e §3   → referenciados nos critérios de aceite das TASKs
 
@@ -190,8 +190,7 @@ TASK-[id]-[descrição].md (Fase 5, gerada após aprovação do TEST)
 
 3. **Bloqueio estrito do `--feature-task`:** O comando não gera tasks de implementação
    sem TEST aprovado. Não é configurável por projeto — é uma garantia estrutural do fluxo
-   BKS-SDD. Projetos que não querem testes simplesmente não executam a Fase 6 e usam
-   `--feature-task` diretamente a partir da Fase 5.
+   BKS-SDD.
 
 4. **Seção "Fora de Escopo" obrigatória:** Previne que o agente implemente testes de
    responsabilidade alheia, mantendo os limites da feature bem definidos e o acoplamento

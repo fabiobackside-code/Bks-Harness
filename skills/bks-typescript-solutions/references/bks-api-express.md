@@ -60,10 +60,12 @@ integração LLM com Anthropic SDK ou OpenRouter SDK (sem LangChain no backend p
 │   ├── config/
 │   │   └── config.ts                     # env vars + flags hasAnthropicKey() / hasOpenRouterKey()
 │   ├── types/
-│   │   └── {domain}.types.ts             # interfaces e tipos de domínio
+│   │   ├── {domain}.types.ts             # interfaces e tipos de domínio
+│   │   └── result.ts                     # PipelineResult<T> e PipelineError
 │   ├── modules/
 │   │   ├── {módulo}/
 │   │   │   ├── {módulo}.service.ts       # lógica de negócio do módulo
+│   │   │   ├── {módulo}.errors.ts        # erros do módulo e statusFor (código → status HTTP)
 │   │   │   ├── {módulo}.repository.ts    # acesso a dados (se banco configurado)
 │   │   │   └── {módulo}.validator.ts     # schemas Zod do módulo
 │   │   └── llm/                          # apenas se VC-2 != Nenhum
@@ -84,7 +86,8 @@ integração LLM com Anthropic SDK ou OpenRouter SDK (sem LangChain no backend p
 ### Padrão de Módulos
 
 Cada módulo de domínio (`VT-E1`) tem:
-- `{módulo}.service.ts` — lógica de negócio, orquestra repository + LLM se necessário
+- `{módulo}.service.ts` — lógica de negócio, orquestra repository + LLM se necessário; devolve
+  `PipelineResult<T>`, e regra violada é `PipelineResult.fail(...)`, nunca `throw`
 - `{módulo}.repository.ts` — queries SQL com `pg` diretamente (sem ORM) — apenas se `VC-3 != Nenhum`
 - `{módulo}.validator.ts` — schemas Zod para cada operação (`Create{E}Schema`, `Update{E}Schema`)
 - `{módulo}.routes.ts` — rotas Express, injeta service via parâmetro ou instância
@@ -97,6 +100,7 @@ import { Router, Request, Response } from 'express';
 import { z, ZodError } from 'zod';
 import { {Modulo}Service } from '@modules/{módulo}/{módulo}.service';
 import { Create{E}Schema } from '@modules/{módulo}/{módulo}.validator';
+import { statusFor } from '@modules/{módulo}/{módulo}.errors';
 
 const router = Router();
 const service = new {Modulo}Service();
@@ -108,7 +112,11 @@ router.post('/', async (req: Request, res: Response) => {
     return;
   }
   const result = await service.create(parsed.data);
-  res.status(201).json(result);
+  if (!result.isSuccess) {
+    res.status(statusFor(result.errors)).json({ errors: result.errors });
+    return;
+  }
+  res.status(201).json(result.value);
 });
 
 export default router;
@@ -137,21 +145,19 @@ app.use((err: Error & { status?: number }, _req: Request, res: Response, _next: 
     return;
   }
 
-  // Erros de negócio com status explícito (404, 409, etc.)
-  if (err.status && err.status >= 400 && err.status < 500) {
-    res.status(err.status).json({ error: err.message });
-    return;
-  }
-
   // Erros inesperados → 500 Internal Server Error (nunca expor stack em produção)
   console.error('[Error]', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Como lançar erros com status HTTP:
-// throw Object.assign(new Error('Recurso não encontrado.'), { status: 404 });
+// Só o middleware de autenticação lança com status:
 // throw Object.assign(new Error('Token inválido.'), { status: 401 });
 ```
+
+O error handler global trata só erro técnico e de autenticação. Erro de negócio não chega a ele:
+volta do service como `PipelineResult.fail`, e a rota traduz o código do erro em status pelo
+`statusFor` do módulo (`{módulo}.errors.ts`), que mapeia, por exemplo, `NOT_FOUND` para 404 e
+`CONFLICT` para 409, com 400 como padrão.
 
 ### Integração LLM (apenas se VC-2 != Nenhum)
 
@@ -394,7 +400,7 @@ volumes:
 
 5. `src/server.ts` — `import 'module-alias/register'` como primeiro import; bootstrap de DB e `app.listen()`
 6. `src/app.ts` — `express-async-errors`, CORS, JSON, rotas, error handler
-7. `db/schema.sql` — DDL idempotente (apenas se VC-3 != Nenhum)
+7. `db/schema.sql` — DDL idempotente (apenas se VC-3 != Nenhum); e `src/types/result.ts` — `PipelineResult<T>` e `PipelineError`
 
 ### PASSO 3 — Gerar módulo LLM (apenas se VC-2 != Nenhum)
 
@@ -405,7 +411,7 @@ volumes:
 
 10. `src/modules/{módulo}/{módulo}.validator.ts` — schemas Zod (apenas se VT-E3 = Sim)
 11. `src/modules/{módulo}/{módulo}.repository.ts` — queries SQL (apenas se VC-3 != Nenhum)
-12. `src/modules/{módulo}/{módulo}.service.ts` — lógica de negócio
+12. `src/modules/{módulo}/{módulo}.service.ts` — lógica de negócio, devolvendo `PipelineResult<T>`; junto, `{módulo}.errors.ts` com os erros do módulo e o `statusFor`
 13. `src/routes/{módulo}.routes.ts` — rotas Express
 
 ### PASSO 5 — Gerar autenticação (apenas se VT-E4 != Nenhuma)
@@ -417,7 +423,8 @@ volumes:
 - [ ] `module-alias/register` é o **primeiro** import de `server.ts`
 - [ ] Nenhum arquivo começa com fence markdown
 - [ ] Toda rota com body usa `safeParse` e retorna 400 em caso de falha
-- [ ] Error handler global em `app.ts`: `ZodError` → 422; erros 401/403 explícitos → passthrough; demais 4xx com `status` → passthrough; restante → 500
+- [ ] Error handler global em `app.ts` só para erro técnico: `ZodError` → 422; 401/403 do middleware de autenticação → passthrough; restante → 500
+- [ ] Nenhum service lança erro de negócio: regra violada volta como `PipelineResult.fail`, e a rota traduz pelo `statusFor`
 - [ ] `docker-compose.yml` gerado conforme VC-3 (PostgreSQL, SqlServer, MongoDB ou Redis)
 - [ ] `process.env` só é acessado em `config/config.ts`
 - [ ] `hasAnthropicKey()` / `hasOpenRouterKey()` exportados de `config.ts` (se VC-2 != Nenhum)

@@ -2,13 +2,16 @@
 """Publica no clone do repositório público só o que a lista permite.
 
 Uso:
-  python scripts/publish.py --check        valida o que sairia, sem copiar
-  python scripts/publish.py <destino>      valida e sincroniza o clone público em <destino>
+  python scripts/publish.py --check                valida o que sairia, sem copiar
+  python scripts/publish.py <destino>              valida e sincroniza o clone público em <destino>
+  python scripts/publish.py --incoming <destino>   patch do que o público recebeu desde a última publicação
 
 A lista do que pode sair e a regra de cada recusa estão em decisions/ADR-002.
-O script não faz commit nem push: isso fica no clone público, com o ok do Fabio.
+O script não faz commit, tag nem push: isso fica no clone público, com o ok do Fabio.
 """
+import hashlib
 import io
+import json
 import os
 import re
 import shutil
@@ -18,12 +21,14 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ALLOW = (
-    '.claude-plugin/', 'agents/', 'commands/', 'evals/', 'hooks/', 'profiles/', 'skills/',
+    '.claude-plugin/', '.githooks/', 'agents/', 'commands/', 'evals/', 'hooks/', 'profiles/', 'skills/',
     'templates/', 'tests/', 'scripts/', 'bin/', 'providers/', 'requirements.txt',
     'docs/artefatos/atlas/', 'docs/artefatos/apresentacao/', 'docs/artefatos/manual/',
-    'docs/artefatos/treinamento/', 'docs/artefatos/maestri/',
-    'docs/ARCHITECTURE.md', 'README.md', 'LICENSE', '.gitignore', '.gitattributes',
+    'docs/artefatos/treinamento/', 'docs/artefatos/maestri/', 'docs/artefatos/guia/',
+    'docs/ARCHITECTURE.md', 'docs/regras.md', 'rules.json', 'README.md', 'LICENSE', '.gitignore', '.gitattributes',
+    '.github/', 'CONTRIBUTING.md',
 )
+MANIFEST = '.publish-manifest.json'
 
 PRIVATE_START = '<!-- privado:inicio -->'
 PRIVATE_END = '<!-- privado:fim -->'
@@ -82,7 +87,79 @@ def build(root, files):
                         problems.append('%s:%d  [%s]  %s' % (rel, n, label, m.group(0)))
             data = text.encode('utf-8')
         output[rel] = data
+    output[MANIFEST] = manifest(root, output)
     return output, problems
+
+
+def digest(data):
+    """Hash do conteúdo com CRLF lido como LF: o autocrlf do clone não conta como mudança."""
+    return hashlib.sha256(data.replace(b'\r\n', b'\n')).hexdigest()
+
+
+def version(root):
+    try:
+        with io.open(os.path.join(root, '.claude-plugin', 'plugin.json'), encoding='utf-8') as fh:
+            return json.load(fh).get('version')
+    except (OSError, ValueError):
+        return None
+
+
+def manifest(root, output):
+    files = {rel: digest(data) for rel, data in sorted(output.items()) if rel != MANIFEST}
+    text = json.dumps({'version': version(root), 'files': files}, ensure_ascii=False, indent=1)
+    return (text + '\n').encode('utf-8')
+
+
+def dest_files(dest):
+    found = {}
+    for base, dirs, files in os.walk(dest):
+        dirs[:] = [d for d in dirs if d != '.git']
+        for f in files:
+            rel = os.path.relpath(os.path.join(base, f), dest).replace('\\', '/')
+            if rel != MANIFEST:
+                with open(os.path.join(dest, rel), 'rb') as fh:
+                    found[rel] = digest(fh.read())
+    return found
+
+
+def external_changes(output, dest):
+    """Arquivos do clone que a publicação anterior não deixou e que a atual apagaria ou sobrescreveria."""
+    path = os.path.join(dest, MANIFEST)
+    if not os.path.isfile(path):
+        return None
+    with io.open(path, encoding='utf-8') as fh:
+        previous = json.load(fh).get('files', {})
+    current = dest_files(dest)
+    coming = {rel: digest(data) for rel, data in output.items() if rel != MANIFEST}
+    changed = [rel for rel, h in current.items() if previous.get(rel) != h and coming.get(rel) != h]
+    deleted = [rel for rel, h in previous.items()
+               if rel not in current and coming.get(rel) == h]
+    return sorted(changed) + ['%s (apagado no público)' % rel for rel in sorted(deleted)]
+
+
+def incoming(dest, patch_path):
+    """Grava o patch das mudanças do público desde a última publicação; devolve o caminho ou None."""
+    last = subprocess.run(['git', '-C', dest, 'log', '-1', '--format=%H', '--', MANIFEST],
+                          capture_output=True, text=True).stdout.strip()
+    if not last:
+        return None
+    diff = subprocess.run(['git', '-C', dest, 'diff', '--binary', last, 'HEAD', '--', '.',
+                           ':(exclude)%s' % MANIFEST], capture_output=True).stdout
+    os.makedirs(os.path.dirname(patch_path), exist_ok=True)
+    with open(patch_path, 'wb') as fh:
+        fh.write(diff)
+    return patch_path if diff.strip() else None
+
+
+def tag_hint(root, dest):
+    v = version(root)
+    if not v:
+        return None
+    tags = subprocess.run(['git', '-C', dest, 'tag', '-l', 'v' + v], capture_output=True, text=True).stdout
+    if tags.strip():
+        return 'a tag v%s já existe no público: a versão do plugin.json não mudou desde a última' % v
+    return ('versão %s: depois do merge da release na main do público, rode no clone '
+            'git tag v%s && git push origin v%s' % (v, v, v))
 
 
 def sync(output, dest):
@@ -112,7 +189,8 @@ def sync(output, dest):
 
 
 def main(argv):
-    if len(argv) != 1:
+    incoming_mode = len(argv) == 2 and argv[0] == '--incoming'
+    if len(argv) != 1 and not incoming_mode:
         print(__doc__)
         return 2
     output, problems = build(ROOT, tracked_files(ROOT))
@@ -124,15 +202,35 @@ def main(argv):
     if argv[0] == '--check':
         print('ok: %d arquivo(s) sairiam para o público' % len(output))
         return 0
-    dest = os.path.abspath(argv[0])
+    dest = os.path.abspath(argv[-1])
     if os.path.normcase(dest) == os.path.normcase(ROOT):
         print('destino é o próprio repositório privado')
         return 2
     if not os.path.isdir(os.path.join(dest, '.git')):
         print('destino não é um clone git: %s' % dest)
         return 2
+    if incoming_mode:
+        patch = incoming(dest, os.path.join(ROOT, 'outputs', 'publish', 'incoming.patch'))
+        if not patch:
+            print('nada do público para trazer desde a última publicação')
+            return 0
+        print('patch gravado: %s' % os.path.relpath(patch, ROOT))
+        print('revise e aplique no privado: git apply --3way %s' % os.path.relpath(patch, ROOT).replace('\\', '/'))
+        return 0
+    external = external_changes(output, dest)
+    if external is None:
+        print('sem %s no clone: primeira publicação com manifesto, sem conferir contribuição' % MANIFEST)
+    elif external:
+        print('publicação recusada: o público tem mudança que não veio do privado e seria apagada:')
+        for rel in external:
+            print('  ' + rel)
+        print('traga-a antes: python scripts/publish.py --incoming %s' % argv[-1])
+        return 1
     written, removed = sync(output, dest)
     print('%d arquivo(s) publicados, %d gravado(s), %d removido(s)' % (len(output), len(written), len(removed)))
+    hint = tag_hint(ROOT, dest)
+    if hint:
+        print(hint)
     return 0
 
 

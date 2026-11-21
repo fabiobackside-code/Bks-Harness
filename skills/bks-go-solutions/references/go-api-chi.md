@@ -19,13 +19,18 @@ Regra: até ~10 rotas sem middleware por grupo, `ServeMux`. Acima disso, chi.
 ```
 cmd/{binário}/main.go
 internal/
-  {contexto}/                order.go, usecase.go, errors.go, port.go
+  {contexto}/                order.go, errors.go, port.go
+                             + service.go (padrão direto)
+                             + codes.go, create.go, get.go ... (TXC: uma transação por arquivo)
   adapter/
     http/                    handler.go, router.go, middleware/, problem.go
+                             + call.go (TXC: callFrom)
     postgres/                store.go, queries.sql
+                             + idempotency.go (TXC: o IdempotencyStore)
   platform/
     config/                  config.go
     observability/           logger.go, tracing.go
+    txc/                     só com TXC: a base de references/go-txc.md
 migrations/
 go.mod
 ```
@@ -33,6 +38,9 @@ go.mod
 Um diretório por contexto em `internal/`, com o tipo, a regra e a interface que ele consome no
 mesmo pacote. Não crie `internal/domain/`, `internal/application/` e `internal/ports/` — isso é o
 layout .NET traduzido, e espalha um contexto por três lugares.
+
+As duas formas da VC-6 diferem só no meio: no padrão direto, o handler chama o serviço do contexto;
+no TXC, chama o `txc.Op` de cada transação. Uma forma por projeto.
 
 ## Composition root
 
@@ -60,8 +68,8 @@ func run() error {
 	defer pool.Close()
 
 	store := postgres.NewOrderStore(pool)
-	useCase := order.NewCreateOrderUseCase(store)
-	handler := httpadapter.NewOrderHandler(useCase)
+	handler := httpadapter.NewOrderHandler(order.NewService(store)) // padrão direto
+	// TXC: httpadapter.NewOrderHandler(order.NewCreate(customers, store, idem), order.NewGet(store))
 
 	srv := &http.Server{
 		Addr:              cfg.Addr(),
@@ -129,7 +137,13 @@ nunca opt-in esquecido.
 
 ## Handler: fronteira, não lógica
 
+Padrão direto — o handler declara a interface que consome (seção 4 do `go-standards.md`):
+
 ```go
+type orderService interface {
+	Create(ctx context.Context, in order.CreateInput) (order.CreateResult, error)
+}
+
 func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -137,13 +151,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	txc, err := order.NewOrderContext(middleware.GetReqID(r.Context()), req.TenantID)
-	if err != nil {
-		writeProblem(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	result, err := h.useCase.Execute(r.Context(), txc, req.toInput())
+	result, err := h.orders.Create(r.Context(), req.toInput())
 	if err != nil {
 		writeError(w, err)
 		return
@@ -153,9 +161,35 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-O handler decodifica, monta o TXC, chama o use case e traduz. Nenhuma regra de negócio. DTO de
-request e response ficam no pacote do adapter, não no de domínio — o contrato HTTP não vaza para
-dentro.
+TXC — o handler recebe o `txc.Op` e só preenche o `txc.Call`:
+
+```go
+type OrderHandler struct {
+	create txc.Op[order.CreateInput, order.CreateResult]
+	get    txc.Op[order.GetInput, order.View]
+}
+
+func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var req createOrderRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeProblem(w, http.StatusBadRequest, "malformed body")
+		return
+	}
+
+	result, err := h.create(r.Context(), callFrom(r), req.toInput(r.Header.Get("Idempotency-Key")))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, toResponse(result))
+}
+```
+
+O handler decodifica, chama e traduz. Nenhuma regra de negócio, e no TXC nenhum seed: quem cria a
+identidade da execução é o `txc`. A chave de idempotência vem do cabeçalho `Idempotency-Key`; sem
+ela, `toInput` devolve entrada que o `Check` recusa. DTO de request e response ficam no pacote do
+adapter, não no de domínio — o contrato HTTP não vaza para dentro.
 
 ## Tradução de erro num lugar só
 
@@ -209,20 +243,18 @@ parametrizada, sem concatenação. Tabela em `snake_case`.
 
 ## Testes
 
-Handler com `httptest`, dublê como struct local:
+Handler com `httptest`. No padrão direto, o dublê é uma struct local que satisfaz `orderService`;
+no TXC, é uma função com a assinatura do `txc.Op`:
 
 ```go
-type stubUseCase struct {
-	result order.Result
-	err    error
-}
-
-func (s stubUseCase) Execute(context.Context, order.OrderContext, order.Input) (order.Result, error) {
-	return s.result, s.err
+func failingCreate(err error) txc.Op[order.CreateInput, order.CreateResult] {
+	return func(context.Context, txc.Call, order.CreateInput) (order.CreateResult, error) {
+		return order.CreateResult{}, err
+	}
 }
 
 func TestCreateReturns409WhenClosed(t *testing.T) {
-	h := NewOrderHandler(stubUseCase{err: order.ErrAlreadyClosed})
+	h := NewOrderHandler(failingCreate(order.ErrAlreadyClosed), nil)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"tenantId":"t1"}`))
 
