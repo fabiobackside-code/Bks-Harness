@@ -2,7 +2,7 @@
 
 Oct 18, 2026 · @Fabio Magalhaes
 
-Versão 2.0.1, revisada contra o `bkhar` 3.0.1. A 2.0.0 reescreve o Atlas sobre o que existe no repositório: guias e sensores, o plugin como arquitetura, a equipe em terminais do Maestri, o `/bkhar:tasks`, a recuperação da task, o registro de regras, a deriva, a medição e o caminho real das versões. O que não existe sai marcado como *proposto*. O histórico de versões está no Apêndice F.
+Versão 2.1.0, revisada contra o `bkhar` 3.1.0. A 2.1.0 acrescenta a segurança da aplicação gerada, com sensor. A 2.0.0 reescreve o Atlas sobre o que existe no repositório: guias e sensores, o plugin como arquitetura, a equipe em terminais do Maestri, o `/bkhar:tasks`, a recuperação da task, o registro de regras, a deriva, a medição e o caminho real das versões. O que não existe sai marcado como *proposto*. O histórico de versões está no Apêndice F.
 
 ## Prefácio
 
@@ -10,7 +10,7 @@ Este manual descreve o BKS (Backside) Harness: uma equipe de sete papéis, seis 
 
 O harness nasceu de dois projetos. O **2brains** (`${BKS_VAULT}`, template público em `bks-2brains`) é o vault: guarda o que atravessa projetos. Ali ficam quem você é (`workbench/`), o que você aprendeu (`knowledge/`) e os projetos em `repos/{backside|w3|private}/`, cada um com git e memória próprios. O **BKS kit** (`bks-sdd-kit`, plugin `bks` 0.7.0) era a ferramenta: 17 skills, 12 comandos `/bks:*`, quatro agentes, guardas em `hooks/` e 20 casos de eval.
 
-O harness é esse kit evoluído e rebatizado `bkhar`, sobre o mesmo vault. Na 3.0.1 ele tem 19 skills, 25 comandos `/bkhar:*`, seis agentes, oito guardas, 48 regras registradas e 28 casos de eval. Nenhum comando lê o vault para funcionar: cada projeto segue autossuficiente.
+O harness é esse kit evoluído e rebatizado `bkhar`, sobre o mesmo vault. Na 3.1.0 ele tem 19 skills, 25 comandos `/bkhar:*`, seis agentes, oito guardas, 51 regras registradas e 28 casos de eval. Nenhum comando lê o vault para funcionar: cada projeto segue autossuficiente.
 
 **Para quem é.** Para você, como arquiteto e dono do padrão. E, mais adiante, para a sua equipe de devs júnior e pleno, que podem trabalhar com os mesmos agentes e o mesmo padrão.
 
@@ -184,13 +184,19 @@ O que o harness garante hoje é computacional:
 - o `learning.py export`, o `harvest` e o `library export` recusam levar ao vault o que tiver dado pessoal ou segredo;
 - no modo `autonomous`, dado pessoal, autorização e segredo não se presumem: param em `BLOQUEIO`.
 
+Na aplicação que o harness gera, três regras de segurança têm sensor:
+
+- **SQL só com parâmetro (`SEC-01`):** um teste de arquitetura em cada stack (.NET, TypeScript e Go) recusa SQL interpolado, concatenado com valor ou formatado. SQL montado em mais de um comando (`sql += id`) escapa ao teste e fica com a revisão da Segurança;
+- **dependência sem vulnerabilidade conhecida (`SEC-02`):** o CI do template roda o OSV-Scanner sobre o lockfile, que as skills .NET e TypeScript passam a ligar;
+- **entrada externa revisada (`SEC-03`):** a Segurança revisa todo diff de adapter de entrada ou de saída de banco pelo ângulo da injeção, com ou sem manifesto, e o TEST de FEAT que recebe texto livre traz um caso com payload de injeção contra banco real.
+
 Projeto com área sensível ganha um manifesto em `{repo}/.claude/multiagente.md`, a partir do template `manifesto-projeto.md` do kit. O manifesto traz:
 - os comandos de verificação;
 - as zonas de contenção, que só a sessão principal edita;
 - as áreas sensíveis, que exigem `/bkhar:review`;
 - os invariantes do domínio.
 
-O `/bkhar:review` lê o manifesto para dimensionar o painel.
+O `/bkhar:review` lê o manifesto para dimensionar o painel. Sem manifesto, a Segurança ainda entra quando o diff toca adapter de entrada ou de banco.
 
 *Proposto:* um policy engine que troque o provedor por zona sensível. Ele não existe. Hoje, em contexto bancário sob BACEN (Banco Central do Brasil) e LGPD (Lei Geral de Proteção de Dados), a escolha do provedor é sua, feita pelo lançador antes da sessão.
 
@@ -243,7 +249,7 @@ Toda pergunta do terminal delegado volta como portão do Gerente: você decide n
 
 **Testes.** Pensa como quem quer quebrar o sistema. Questiona a FEAT no refinamento, escreve o TEST e, no passo 0 do `/bkhar:loop`, o RED em código, antes do Dev. Não revisa os próprios testes. Fontes: TEST, critérios de aceite e os casos do `LEARNINGS.md` da área da task.
 
-**Segurança.** Analisa cada FEAT e cada diff pelo ângulo de dado sensível, autorização, log, segredo e conformidade. Confere mascaramento e se a zona do manifesto foi respeitada. Fontes: manifesto, checklist de segurança, normas aplicáveis.
+**Segurança.** Analisa cada FEAT e cada diff pelo ângulo de dado sensível, autorização, log, segredo, injeção e conformidade. Revisa todo diff de adapter de entrada ou de banco, com ou sem manifesto. Confere mascaramento e se a zona do manifesto foi respeitada. Fontes: manifesto, checklist de segurança, normas aplicáveis.
 
 **Qualidade.** Revisa legibilidade, nomes, tamanho de função, comentários desnecessários e smells, sempre balanceando com custo real de performance. Pensa na sua equipe júnior e pleno como leitora do código. Julga também os testes que o Testes escreveu e os resultados da execução, e devolve o defeito resolvido como caso para o `LEARNINGS.md`. No `/bkhar:audit --deep`, procura contradição de sentido entre guias. Fontes: `bks-clean-code`, Object Calisthenics, catálogo de refactoring.
 
@@ -409,7 +415,7 @@ O projeto escolhe como é conduzido, em `axes.mode` do `.bks-profile.json`. O `c
 
 **Prontidão.** O `/bkhar:mode autonomous` só troca o modo quando o `scripts/readiness.py`, sem chamar modelo, concede: CONTEXT revisado ou aprovado, PRD e PLAN aprovados, grafo válido, ARCH e modelos aprovados e em dia, nenhuma questão em aberto e a stack no perfil. A recusa lista o que falta por nível e o comando que resolve. A troca grava ADR; sem ADR, não houve troca.
 
-**O que nenhum modo afrouxa:** os guardas de `hooks/`, build e testes verdes, o RED antes do código, o máximo de 4 tentativas, nada de push na `main` e a Segurança em área sensível. Dado pessoal, autorização e segredo não se presumem: param em `BLOQUEIO`. Em `rigor: producao`, os contratos da onda de desenho continuam com você.
+**O que nenhum modo afrouxa:** os guardas de `hooks/`, build e testes verdes, o RED antes do código, o máximo de 4 tentativas, nada de push na `main` e a Segurança em área sensível e em diff de adapter. Dado pessoal, autorização e segredo não se presumem: param em `BLOQUEIO`. Em `rigor: producao`, os contratos da onda de desenho continuam com você.
 
 ### 26. Ondas e painel
 
@@ -456,7 +462,7 @@ A integração é `merge --no-ff`: a ordem `spec → red → review` fica no his
 
 ### 28. Regras, deriva e medição
 
-**Toda regra tem registro.** O `rules.json` liga cada uma das 48 regras à fonte que a enuncia e ao sensor que a confere, computacional ou inferencial. O `scripts/rules_report.py` gera o `docs/regras.md` e recusa três defeitos:
+**Toda regra tem registro.** O `rules.json` liga cada uma das 51 regras à fonte que a enuncia e ao sensor que a confere, computacional ou inferencial. O `scripts/rules_report.py` gera o `docs/regras.md` e recusa três defeitos:
 - sensor fantasma, que aponta para arquivo inexistente;
 - seção que sumiu da fonte;
 - guarda órfão, que não verifica nenhuma regra.
@@ -494,7 +500,7 @@ Os comandos só existem no plugin, e o prefixo de um comando de plugin é o nome
 | `/bkhar:spec` | Repo | Entrevista → FEAT → TEST, sem rito |
 | `/bkhar:tasks` | Repo | FEAT e TEST aprovados → `specs/tasks/TASK-[feature].md`, uma task por peça |
 | `/bkhar:loop` | Repo | Passo 0 com o RED do Testes; LOOP-4 com o Dev na branch `task/T-NNN`; `--resume` retoma; `--wave` roda a onda do grafo |
-| `/bkhar:review` | Repo | Revisão em painel: Testes, Qualidade e, em área sensível, Segurança |
+| `/bkhar:review` | Repo | Revisão em painel: Testes, Qualidade e, em área sensível ou diff de adapter, Segurança |
 | `/bkhar:status` | Repo | Tabela da execução em ondas: liberado, em curso, bloqueado, suposições abertas |
 | `/bkhar:mode` | Repo | Troca entre `collaborative` e `autonomous` pela prontidão, com ADR |
 | `/bkhar:maintainability` | Repo | Parecer de manutenibilidade por aplicação |
@@ -586,6 +592,7 @@ A implantação partiu do kit que já funcionava e nunca parou os projetos em cu
 | 1.1.0 | lançador `bkhar` com Claude, DeepSeek e OpenRouter, chave cifrada, skill `bks-design-system` | feita |
 | 2.0.0 | aplicação com CLI e web | pausada: o Maestri a substituiu |
 | 3.0.1 | a equipe em terminais do Maestri, despacho por papel, comandos delegados, Bash limitado do Arquiteto; e as lacunas de Harness Engineering: recuperação da task, observabilidade, sensores de arquitetura, registro de regras, deriva, linha de base dos evals, `/bkhar:tasks`, guia para quem chega | feita: tag `v3.0.0` no privado; a `v3.0.1`, com o manifesto em 3.0.1, no privado e no público |
+| 3.1.0 | segurança da aplicação gerada com sensor: SQL só com parâmetro, OSV-Scanner no CI, a Segurança em todo diff de adapter e payload de injeção no TEST | feita na `feat/3.1.0` |
 | validação pós-3.0.0 | as provas do piloto, as execuções de referência e o contexto por papel | depois da tag `v3.0.0` |
 | 4.0.0 | portabilidade: o harness em outro executor além do Claude Code | *proposta* |
 
@@ -610,7 +617,7 @@ A 3.0.0 fecha por construção (`decisions/ADR-018`): o critério de saída é o
 │                                        learning, harvest, library, dashboard,
 │                                        bkhar, keyvault, maestri_config, precommit,
 │                                        install_guards, publish, build_artefatos
-├── rules.json                           o registro das 48 regras
+├── rules.json                           o registro das 51 regras
 ├── evals\ · tests\                      28 casos com a linha de base; suíte sem modelo
 ├── decisions\                           ADR-001 a ADR-018
 └── docs\                                ARCHITECTURE, regras.md, artefatos\, planejamento\
@@ -640,6 +647,7 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 - [x] Equipe em terminais do Maestri, com queda para subagente (3.0.1)
 - [x] Recuperação da task, métrica por fase, sensores de arquitetura, registro de regras e deriva (3.0.0)
 - [x] Linha de base dos evals: 28 casos, delta médio +0,19 (3.0.0)
+- [x] Segurança da aplicação gerada com sensor: injeção e dependência (3.1.0)
 - [ ] Fechar a 3.0.0: arrumação, atestado, merge, tag e publicação (Ações 013 a 015)
 - [ ] Validação pós-3.0.0 no `poc-treino-harness`: rito por terminal, comando delegado, Bash recusado no Arquiteto, Maestri fechado e reaberto
 - [ ] `--wave`, ramo `autonomous` e painel numa onda real
@@ -744,7 +752,7 @@ O formato real dos agentes do `bkhar`, aqui com a Segurança, resumida de `agent
 ```markdown
 ---
 name: security
-description: Segurança da equipe. Analisa FEAT e diff pelo ângulo de dado sensível, autorização, log e segredo. Só lê; todo achado com arquivo:linha.
+description: Segurança da equipe. Analisa FEAT e diff pelo ângulo de dado sensível, autorização, log, segredo e injeção. Só lê; todo achado com arquivo:linha.
 model: opus
 tools: Read, Grep, Glob
 ---
@@ -760,6 +768,7 @@ Direto, cético, nunca aprova por cortesia.
 ## Responsabilidades
 - No refinamento, até três perguntas pelo ângulo da segurança
 - Na revisão em painel, o diff que toca área sensível do manifesto
+- Todo diff de adapter de entrada ou de banco, pelo ângulo da injeção
 - Classificar cada achado: bloqueante, sugestão ou aprendizado
 
 ## Limites
@@ -775,6 +784,10 @@ Direto, cético, nunca aprova por cortesia.
 1. Que dado sensível passa por aqui?
 2. Quem pode ver este dado, e como isso é verificado?
 3. Algum log, mensagem de erro ou trace expõe o dado?
+4. Algum segredo aparece fora do cofre de credenciais?
+5. A resposta revela a existência de um recurso a quem não deveria?
+6. Alguma entrada externa chega a SQL, shell, caminho de arquivo ou URL
+   sem parâmetro nem validação?
 
 ## Skills que carrega
 `security-audit` e `bks-standards`.
@@ -910,7 +923,9 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 
 | Artefato | Versão | Data | O que mudou |
 | --- | --- | --- | --- |
+| Apresentação BKS Harness | 3.0.1 | 2026-11-27 | Contagens e versão referidas à 3.1.0: 51 regras; versões dos artefatos em dia |
 | Apresentação BKS Harness | 3.0.0 | 2026-11-20 | Revista contra o Atlas 2.0.0: quatro slides novos (guias e sensores, a equipe em terminais, travas e recuperação, regras e medição), arquitetura, componentes, modelo e provedor, comandos, caminho e versões reescritos; `/tasks` no fluxo; o que não existe sai como proposto; 34 slides |
+| Atlas do BKS Harness | 2.1.0 | 2026-11-27 | Segurança da aplicação gerada com sensor (`SEC-01` a `SEC-03`); a Segurança também em diff de adapter; 3.1.0 no roteiro de versões; 51 regras; Apêndice A com as seis perguntas da Segurança |
 | Atlas do BKS Harness | 2.0.1 | 2026-11-21 | 3.0.0 e 3.0.1 feitas no roteiro de versões; contagem da Visão geral referida à 3.0.1 |
 | Atlas do BKS Harness | 2.0.0 | 2026-11-20 | Revisão completa contra a 3.0: guias e sensores nos Fundamentos; a Arquitetura passa a ser o plugin real, com a Figura 3 refeita e sem o core hexagonal, o `routing.yaml` e o policy engine; equipe em terminais do Maestri; `/bkhar:tasks` no fluxo; seções novas de travas e recuperação e de regras, deriva e medição; tabela dos 25 comandos; case com RED e tasks; Implantação com o caminho real das versões; catálogo das 19 skills; Apêndice B com a definição de provedor; glossário com o vocabulário do guia. Seções do case em diante renumeradas de 28–42 para 30–44 |
 | Atlas do BKS Harness | 1.9.0 | 2026-11-04 | Modos de condução e prontidão (seção 25), ondas e painel (seção 26), modelo por papel, Parte V com o aprendizado candidato, `/bkhar:retro` e `/bkhar:harvest`; tabela de comandos com toda a 1.0.0; prefixo `/bkhar:` no texto do estado atual; Parte X com o manual 1.4.1 |

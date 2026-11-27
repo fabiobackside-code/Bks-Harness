@@ -57,6 +57,6 @@ Não commite. Mostre `git status --short`.
 - Não aprove documento para passar na prontidão. Mudar `status: rascunho` para `aprovado` é
   decisão do usuário, no comando que gerou o documento.
 - Nenhum modo afrouxa os guardas, o RED antes do código, as 4 tentativas, a proibição de push na
-  `main` e o `security` em área sensível.
+  `main` e o `security` em área sensível ou adapter.
 
 Responda em português do Brasil.

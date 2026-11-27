@@ -37,7 +37,7 @@ diga o que o usuário faz no canvas (seção "Montar o que falta") e pare.
    | `developer` | `developer` | `claude --agent bkhar:developer` | tentativas do LOOP-4 |
    | `tester` | `tester` | `claude --agent bkhar:tester` | TEST e RED |
    | `quality` | `quality` | `claude --agent bkhar:quality` | revisão |
-   | `security` | `security` | `claude --agent bkhar:security` | revisão em área sensível |
+   | `security` | `security` | `claude --agent bkhar:security` | revisão em área sensível ou adapter |
    | `scribe` | `scribe` | `claude --agent bkhar:scribe` | ADR de painel |
    | executor `ops` | `ops` | `claude --model opus` | roda os comandos delegados `canonize`, `save` e `maintainability` |
 

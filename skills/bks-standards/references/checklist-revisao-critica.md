@@ -9,6 +9,7 @@ projeto (`{repo}/.claude/multiagente.md`). Cada item exige `arquivo:linha`, não
 - Multi-tenant/inquilino: toda query filtra por `InquilinoId` — sem exceção, inclusive
   agregados/relatórios? Existe teste "tenant A não enxerga dado de B"?
 - Injeção: toda query usa parâmetro vinculado — zero concatenação de string?
+- Dependência: nenhum pacote com vulnerabilidade pública conhecida (CVE)?
 - Segredos: nenhum token/chave/senha commitado ou logado, nem em debug?
 - Resiliência: falha de terceiro nunca desfaz operação já confirmada; timeout explícito em toda
   chamada de saída; falha deixa rastro reprocessável (estado + motivo persistidos).

@@ -13,15 +13,16 @@ Uso:
 /bkhar:ingest raw/articles/nome.html      → ingere uma página web salva localmente
 /bkhar:ingest raw/videos/nome-transcrição.md   → ingere uma transcrição de vídeo
 /bkhar:ingest raw/notas-pessoais/nome.md  → arquiva uma nota pessoal (prospecção, linha de pensamento) — NÃO vira página wiki curada
+/bkhar:ingest raw/autorais/nome.docx      → registra um artigo autoral publicado como experiência (também .md ou .pdf)
 /bkhar:ingest https://exemplo.com/artigo  → busca o link, salva cópia em raw/, ingere
 /bkhar:ingest tools/batch-ingest.md       → processa a tabela de lote (várias fontes)
 /bkhar:ingest raw/_inbox/                 → classifica e processa TUDO que estiver na pasta
 /bkhar:ingest                             → sem argumento: assume raw/_inbox/
 ```
 
-## Duas naturezas de fonte — não confundir
+## Três naturezas de fonte — não confundir
 
-Esta base guarda dois tipos de material, com destino diferente:
+Esta base guarda três tipos de material, com destino diferente:
 
 1. **Fonte externa** (PDF de livro/paper/artigo, transcrição de vídeo, clipping web) — conhecimento
    de terceiro. Vai para `raw/{papers,articles,videos,clippings,links}/`, e o `/bkhar:ingest` CURA: lê,
@@ -37,6 +38,11 @@ Esta base guarda dois tipos de material, com destino diferente:
    estabelecido — é pensamento em aberto, marcado como tal. Quando a ideia amadurecer e virar
    guideline formal, o destino muda para `raw/notes/` (fonte curada), não fica em
    `notas-pessoais/`.
+3. **Artigo autoral publicado** (texto do autor já publicado, como um artigo do LinkedIn) —
+   experiência e posição do autor, não conhecimento de terceiro nem pensamento em aberto. Vai para
+   `raw/autorais/`, e o `/bkhar:ingest` registra a página em `wiki/experiencia/artigos/`, com as
+   teses na voz do autor e o link para o original. O rascunho e os ajustes ficam na oficina
+   (`${BKS_VAULT}/workbench/artigos/`) e não entram aqui.
 
 Se o tipo da fonte não for óbvio pela extensão/conteúdo, pergunte ao usuário antes de classificar
 — não adivinhe se é "conhecimento curado" ou "prospecção pessoal".
@@ -92,11 +98,28 @@ apenas adicione frontmatter, uma seção `## Contexto` (quando/por que foi escri
 reescrever a ideia em prosa de terceiro. Se o autor já indicou incerteza, preserve `> [!uncertain]`
 tal como está — não resolva a incerteza por conta própria.
 
+**Artigo autoral** (`raw/autorais/*.md`, `.pdf` ou `.docx`) — leia o texto; `.docx` pelo texto
+extraído (sem extração possível, PARE e diga isso). A data, o veículo e o link da publicação vêm do
+frontmatter ou do próprio texto; se faltarem, pergunte, não invente. Grave
+`wiki/experiencia/artigos/<slug>.md` com `type: "artigo-autoral"` no frontmatter padrão e estas
+seções:
+
+- `## Publicação` — data, veículo, link e, se for o caso, série e parte;
+- `## Teses` — cada afirmação central do artigo, na voz do autor, com o trecho que a sustenta
+  citado entre aspas;
+- `## Experiência que sustenta` — os casos, números e trajetória que o próprio texto traz;
+- `## Conecta com` — páginas da wiki que tratam do mesmo assunto;
+- `## Original` — o caminho em `raw/autorais/`.
+
+NÃO cure como fonte de terceiro: nada de `## Definition` nem `## Core principles`, e nenhuma tese
+que o texto não afirma. Artigo republicado ou editado atualiza a mesma página, e o `wiki/log.md`
+registra a versão nova.
+
 **Lote via tabela** (`tools/batch-ingest.md`) — leia a tabela
 (# | Type | Path or URL | Title | Priority). Processe uma fonte por vez, na
 ordem `high` → `medium` → `low`, cada uma seguindo a regra do seu tipo acima
 (`pdf`, `article` = markdown/html local, `video` = transcrição, `link` = URL,
-`nota` = nota pessoal). Ao final, imprima um resumo linha a linha no formato:
+`nota` = nota pessoal, `autoral` = artigo autoral publicado). Ao final, imprima um resumo linha a linha no formato:
 ```
 ✓ [prioridade] <arquivo/URL de origem> → <página(s) de wiki/ criada(s) ou atualizada(s)>
 ```
@@ -106,8 +129,8 @@ confirmando que `wiki/index.md` e `wiki/log.md` foram atualizados.
 
 **Pasta drop-zone** (`raw/_inbox/`, padrão sem argumento, ou outra pasta indicada) — liste
 todos os arquivos. Para cada um: identifique o tipo pela extensão/conteúdo E pela natureza
-(fonte externa curada vs nota pessoal — pergunte se não for óbvio): `.pdf` → `papers/`,
+(fonte externa curada, nota pessoal ou artigo autoral publicado — pergunte se não for óbvio): `.pdf` → `papers/`,
 `.md`/`.html` de artigo → `articles/`, transcrição de vídeo → `videos/`, lista de URLs →
-`links/`, nota pessoal/prospecção → `notas-pessoais/`. MOVA para a subpasta correta dentro de
+`links/`, nota pessoal/prospecção → `notas-pessoais/`, artigo próprio já publicado → `autorais/`. MOVA para a subpasta correta dentro de
 `raw/` (nunca deixe duplicado na `_inbox`), e então ingira cada um normalmente pela regra do seu
 tipo. Ao final, resuma quantos arquivos de cada tipo foram processados e para onde foram.

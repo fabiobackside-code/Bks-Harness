@@ -16,6 +16,14 @@ O layout dos templates não tem pastas com o nome das camadas; a direção se tr
 
 Import relativo e por alias (`@/modules/...`) entram na conta. Arquivo de teste fica fora.
 
+## SQL só com parâmetro (`SEC-01`)
+
+O mesmo arquivo barra SQL montado com texto em qualquer pasta de `src/`: template com `${...}` e
+string com SQL somada a um valor (`'... = ' + id`). Passam o placeholder com array de valores
+(`$1`, `?`) e o template com tag (`` sql`...` ``), que o driver parametriza. A leitura é pela árvore
+do `typescript`, então comentário não conta. O limite é o do texto: a consulta montada em mais de
+um comando (`q += id`) passa e fica com o `security` (`SEC-03`).
+
 ## O teste
 
 ```ts
@@ -27,6 +35,7 @@ import ts from 'typescript';
 
 const SRC = resolve(process.cwd(), 'src');
 const ENTRY = ['routes', 'plugins', 'handlers', 'consumers', 'workers', 'processors', 'graph'];
+const SQL = /\bselect\b[\s\S]+\bfrom\b|\binsert\s+into\b|\bupdate\s+[\w."[\]]+\s+set\b|\bdelete\s+from\b|\bwhere\s+\w+\s*(?:=|<>|<|>|\blike\b|\bin\b)/i;
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -47,6 +56,36 @@ function imports(file: string): { spec: string; target: string | null }[] {
     if (spec.startsWith('@/')) return { spec, target: resolve(SRC, spec.slice(2)) };
     return { spec, target: null };
   });
+}
+
+function constantText(node: ts.Node): string | null {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  if (ts.isParenthesizedExpression(node)) return constantText(node.expression);
+  if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+    const left = constantText(node.left);
+    const right = constantText(node.right);
+    return left !== null && right !== null ? left + right : null;
+  }
+  return null;
+}
+
+function sqlBuiltFromText(file: string): number[] {
+  const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+  const lines: number[] = [];
+  const visit = (node: ts.Node): void => {
+    const templated = ts.isTemplateExpression(node) && !ts.isTaggedTemplateExpression(node.parent)
+      && SQL.test(node.getText(source));
+    let concatenated = false;
+    if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+      const left = constantText(node.left);
+      const right = constantText(node.right);
+      concatenated = (left === null) !== (right === null) && SQL.test(left ?? right ?? '');
+    }
+    if (templated || concatenated) lines.push(source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1);
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return lines;
 }
 
 test('domínio em types/ não importa outra camada nem pacote de fora', () => {
@@ -73,6 +112,12 @@ test('a entrada não importa repository direto', () => {
     .flatMap((file) => imports(file)
       .filter(({ target }) => target !== null && /\.repository(\.ts)?$/.test(target))
       .map(({ spec }) => `${relative(SRC, file)} importa ${spec}`));
+  assert.deepEqual(offenders, []);
+});
+
+test('SQL só com parâmetro, sem texto montado', () => {
+  const offenders = sourceFiles(SRC).flatMap((file) =>
+    sqlBuiltFromText(file).map((line) => `${relative(SRC, file)}:${line} monta SQL com texto`));
   assert.deepEqual(offenders, []);
 });
 ```

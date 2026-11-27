@@ -427,6 +427,102 @@
       ]
     },
     {
+      "id": "SEC-01",
+      "regra": "SQL só com parâmetro, sem concatenação nem interpolação de texto",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/checklist-revisao-critica.md",
+      "secao": "Núcleo (qualquer domínio)",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-dotnet-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        },
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-typescript-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        },
+        {
+          "tipo": "computacional",
+          "onde": "skills/bks-go-solutions/references/architecture-tests.md",
+          "teste": "tests/test_arch_sensors.py",
+          "camadas": [
+            "suite"
+          ],
+          "forca": "direto"
+        },
+        {
+          "tipo": "inferencial",
+          "onde": "agents/security.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "SEC-02",
+      "regra": "Dependência sem CVE conhecido",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/checklist-revisao-critica.md",
+      "secao": "Núcleo (qualquer domínio)",
+      "sensores": [
+        {
+          "tipo": "computacional",
+          "onde": "templates/ci/github-guards.yml",
+          "teste": "tests/test_install_guards.py",
+          "camadas": [
+            "ci"
+          ],
+          "forca": "direto"
+        },
+        {
+          "tipo": "computacional",
+          "onde": "templates/ci/gitlab-guards.yml",
+          "teste": "tests/test_install_guards.py",
+          "camadas": [
+            "ci"
+          ],
+          "forca": "direto"
+        },
+        {
+          "tipo": "inferencial",
+          "onde": "agents/security.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
+      "id": "SEC-03",
+      "regra": "Entrada externa que chega a SQL, shell, caminho ou URL é revisada pelo security",
+      "alvo": "codigo",
+      "fonte": "skills/bks-standards/references/checklist-revisao-critica.md",
+      "secao": "Núcleo (qualquer domínio)",
+      "sensores": [
+        {
+          "tipo": "inferencial",
+          "onde": "agents/security.md",
+          "camadas": [
+            "revisao"
+          ],
+          "forca": "direto"
+        }
+      ]
+    },
+    {
       "id": "DOC-01",
       "regra": "Task que cria tipo público atualiza README.md e ARCHITECTURE.md",
       "alvo": "documentacao",

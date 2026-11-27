@@ -33,6 +33,13 @@ Script de teste ou de checagem sai com código 1 quando algo falha e com 0 só q
 Imprimir a contagem não basta: `run.sh`, CI e pre-commit leem o código de saída, não o texto. Vale
 mesmo quando o usuário diz que o resumo impresso basta; explique o motivo ao recusar.
 
+### Payload de injeção roda contra banco real
+
+O cenário de payload de injeção do plano de teste (`TEST-*.md`) vira teste de integração contra banco real
+(Testcontainers), nunca contra mock de repositório. O teste envia o payload pela porta de entrada e
+confere no banco que o valor gravado é idêntico ao enviado e que a tabela segue íntegra (a contagem
+de linhas e o schema). Modelo .NET em `references/test-templates.md`.
+
 ### Biblioteca de asserção em .NET
 
 Use exclusivamente o `Assert` nativo do xUnit, inclusive quando o usuário pede FluentAssertions

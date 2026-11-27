@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guia do bks-harness — O harness explicado para quem chega · v0.1.0</title>
+<title>Guia do bks-harness — O harness explicado para quem chega · v0.2.0</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,7 +39,7 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">BKS HARNESS · GUIA</div>
 <div><h1>Guia do bks-harness</h1><p class="sub">O harness explicado para quem chega: o que orienta o agente, o que confere o trabalho, o que é proibido, o que fica guardado e como se mede.</p></div>
-<div class="meta">Versão 0.1.0 · para quem chega</div></section>
+<div class="meta">Versão 0.2.0 · para quem chega</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#para-que-serve-este-guia">Para que serve este guia</a></li><li><a href="#0-como-comeco">0. Como começo?</a></li><li><a href="#1-o-que-e-um-harness">1. O que é um harness?</a></li><li><a href="#2-guias-o-que-orienta-o-agente-antes-de-agir">2. Guias: o que orienta o agente antes de agir?</a></li><li><a href="#3-sensores-o-que-confere-o-que-o-agente-fez">3. Sensores: o que confere o que o agente fez?</a></li><li><a href="#4-a-equipe-quem-faz-o-que">4. A equipe: quem faz o quê?</a></li><li><a href="#5-travas-o-que-o-agente-nao-pode-fazer">5. Travas: o que o agente não pode fazer?</a></li><li><a href="#6-memoria-como-o-trabalho-sobrevive-ao-fim-da-sessao">6. Memória: como o trabalho sobrevive ao fim da sessão?</a></li><li><a href="#7-medicao-como-se-sabe-que-funciona">7. Medição: como se sabe que funciona?</a></li><li><a href="#10-glossario">10. Glossário</a></li></ol></nav>
 <h2 id="para-que-serve-este-guia">Para que serve este guia</h2>
 <p>Este guia explica o que o BKS (Backside) Harness faz e por que cada peça existe. Cada capítulo
@@ -277,6 +277,11 @@ Alguns exemplos:</p>
 <td>inferencial</td>
 </tr>
 <tr>
+<td>SEC-01 · SQL só com parâmetro</td>
+<td>teste de arquitetura de cada stack</td>
+<td>computacional</td>
+</tr>
+<tr>
 <td>COD-06 · exceção de negócio não escapa</td>
 <td><code>agents/quality.md</code></td>
 <td>inferencial</td>
@@ -288,7 +293,7 @@ Alguns exemplos:</p>
 </tr>
 </tbody>
 </table>
-<p>São 48 regras, e 5 não têm sensor. O <code>docs/regras.md</code>, gerado pelo <code>scripts/rules_report.py</code>, lista
+<p>São 51 regras, e 5 não têm sensor. O <code>docs/regras.md</code>, gerado pelo <code>scripts/rules_report.py</code>, lista
 quais são. Regra sem sensor é intenção declarada, não garantia.</p>
 <p>O mesmo guarda vale em três momentos: antes da ação do agente (hook do Claude Code), antes do commit
 (pre-commit) e no servidor de integração contínua (CI). As três camadas chamam o mesmo código.</p>
@@ -326,7 +331,7 @@ especifica não implementa.</p>
 </tr>
 <tr>
 <td><code>security</code></td>
-<td>lê FEAT e diff pelo ângulo de dado sensível e segredo</td>
+<td>lê FEAT e diff pelo ângulo de dado sensível, segredo e injeção</td>
 <td>não escreve</td>
 </tr>
 <tr>

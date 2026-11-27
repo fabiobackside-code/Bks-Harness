@@ -290,6 +290,11 @@ def test_invariants():
     check('bks-sdd mapeia as fases 0 a 7', expected <= phases,
           'encontradas: %s' % ', '.join(sorted(phases)))
 
+    ingest = read('commands', 'ingest.md')
+    check('ingest registra artigo autoral em experiencia/artigos',
+          'raw/autorais/' in ingest and 'wiki/experiencia/artigos/' in ingest
+          and 'artigo-autoral' in ingest)
+
     guard = read('hooks', 'scripts', 'no_dispatcher.py')
     check('o guarda de dispatcher cobre MediatR e IMediator',
           'MediatR' in guard and 'IMediator' in guard)
@@ -512,10 +517,10 @@ def test_team():
                 '## Perguntas obrigatórias', '## Skills que carrega', '## Aprendizado')
     profiles = {
         'architect': ('nunca escreve código de produção', 'adr'),
-        'tester': ('red confirmado', 'learnings.md', 'não revisa os próprios testes'),
+        'tester': ('red confirmado', 'learnings.md', 'não revisa os próprios testes', 'payload de injeção'),
         'scribe': ('nunca afirma', 'evidência'),
         'developer': ('zona de contenção', 'nunca commita', 'nunca revisa o próprio código', 'red'),
-        'security': ('arquivo:linha', 'crítica bloqueia', 'só lê'),
+        'security': ('arquivo:linha', 'crítica bloqueia', 'só lê', 'injeção', 'shell, caminho de arquivo ou url'),
         'quality': ('learnings.md', 'só lê', 'arquivos de teste', 'linter'),
     }
     for role, musts in sorted(profiles.items()):
@@ -533,7 +538,8 @@ def test_team():
     commands = {
         'loop': ('passo 0', 'red confirmado', '`tester`', '`developer`', 'bloqueio-'),
         'review': ('`tester`', '`security`', '`quality`', 'não revisa os próprios testes',
-                   'proposta de task'),
+                   'proposta de task', 'adapter de entrada', 'adapter de saída de banco',
+                   'mesmo sem manifesto'),
         'spec': ('`architect`', '`tester`', 'refinamento: não (exceção)', '/bkhar:tasks'),
         'tasks': ('`architect`', 'specs/tasks/task-[feature].md', 'uma task por peça',
                   'status:** aprovada', '/bkhar:loop', 'suposicoes.md'),
@@ -543,6 +549,14 @@ def test_team():
         'refine': ('`architect`', '`tester`', '`security`', 'até três perguntas',
                    'refinamento: sim'),
     }
+    test_spec = read('skills', 'bks-sdd', 'references', 'test-spec-structure.md').lower()
+    check('formato do TEST pede payload de injeção para texto livre',
+          'payload de injeção' in test_spec and 'texto livre' in test_spec and 'testcontainers' in test_spec)
+    bks_tests = read('skills', 'bks-tests', 'SKILL.md').lower()
+    check('bks-tests: payload de injeção roda contra banco real',
+          'payload de injeção' in bks_tests and 'testcontainers' in bks_tests)
+    check('bks-tests: modelo de integração com o caso de injeção',
+          'ComPayloadDeInjecao' in read('skills', 'bks-tests', 'references', 'test-templates.md'))
     loop_text = read('commands', 'loop.md')
     check('/bkhar:loop lê o arquivo que o /bkhar:tasks escreve',
           'specs/tasks/TASK-[feature].md' in loop_text and '/bkhar:tasks' in loop_text)

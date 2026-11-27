@@ -337,6 +337,18 @@ src/
 > `dotnet new sln` sob o SDK 10 já gera `.slnx`. O `.sln` clássico fica para ferramenta sem
 > suporte ao formato novo.
 
+> **Lockfile de dependência:** o `Directory.Build.props` na raiz liga o lockfile em todos os
+> projetos, e o `packages.lock.json` de cada um é commitado. É o arquivo que a varredura de
+> dependência do CI lê (`SEC-02`); sem ele, o .NET passa sem ser varrido.
+>
+> ```xml
+> <Project>
+>   <PropertyGroup>
+>     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+>   </PropertyGroup>
+> </Project>
+> ```
+
 > **Biblioteca de asserção:** nunca FluentAssertions. A v8 passou a licença comercial paga (Xceed)
 > e a v7.x é a última sob Apache 2.0. Use o `Assert` nativo do xUnit.
 
@@ -661,6 +673,7 @@ Antes de entregar a solução, confirme:
 - [ ] Cada adapter tem `Extensions/` com `Add{Nome}Adapter` e a sua seção em `appsettings.json`
 - [ ] `Program.cs` e `ServiceConfiguration.cs` em `main/` (único) ou no `{ServiceName}.Host` (multi)
 - [ ] Solution `.slnx`
+- [ ] `Directory.Build.props` com `RestorePackagesWithLockFile` e o `packages.lock.json` de cada projeto no repositório
 
 ### Forma
 - [ ] A forma da fase 2 está no `.bks-profile.json` e vale para o projeto inteiro

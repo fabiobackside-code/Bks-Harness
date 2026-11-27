@@ -1,6 +1,6 @@
 # Guia do bks-harness — O harness explicado para quem chega
 
-Versão 0.1.0, escrito sobre o plugin `bkhar` 3.0.1.
+Versão 0.2.0, escrito sobre o plugin `bkhar` 3.1.0.
 
 ## Para que serve este guia
 
@@ -146,10 +146,11 @@ Alguns exemplos:
 | COD-09 · sem FluentAssertions; `Assert` nativo do xUnit | `hooks/scripts/dotnet_project.py` | computacional |
 | DOC-05 · frase até 40 palavras, sigla definida, sem emoji | `hooks/scripts/writing_guard.py` | computacional |
 | COD-17 · dado sensível não vai para log | `agents/security.md` | inferencial |
+| SEC-01 · SQL só com parâmetro | teste de arquitetura de cada stack | computacional |
 | COD-06 · exceção de negócio não escapa | `agents/quality.md` | inferencial |
 | PRC-06 · só o usuário promove aprendizado | nenhum | — |
 
-São 48 regras, e 5 não têm sensor. O `docs/regras.md`, gerado pelo `scripts/rules_report.py`, lista
+São 51 regras, e 5 não têm sensor. O `docs/regras.md`, gerado pelo `scripts/rules_report.py`, lista
 quais são. Regra sem sensor é intenção declarada, não garantia.
 
 O mesmo guarda vale em três momentos: antes da ação do agente (hook do Claude Code), antes do commit
@@ -166,7 +167,7 @@ especifica não implementa.
 | `architect` | escreve FEAT, TASK e ADR (registro de decisão) | não escreve código de produção |
 | `tester` | escreve o TEST e o RED (o teste que falha antes do código) | não revisa os próprios testes |
 | `developer` | implementa uma tentativa por vez | não commita nem revisa o próprio código |
-| `security` | lê FEAT e diff pelo ângulo de dado sensível e segredo | não escreve |
+| `security` | lê FEAT e diff pelo ângulo de dado sensível, segredo e injeção | não escreve |
 | `quality` | revisa legibilidade, testes e resultados | não escreve |
 | `scribe` | grava ADR e documentação do que foi verificado | não afirma teste sem evidência |
 
