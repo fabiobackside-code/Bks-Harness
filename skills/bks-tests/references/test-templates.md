@@ -197,6 +197,26 @@ public class [Feature]IntegrationTests : IClassFixture<CustomWebApplicationFacto
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Post_[Endpoint]_ComPayloadDeInjecao_GravaTextoLiteral()
+    {
+        // Arrange
+        const string payload = "'; DROP TABLE [tabela]; --";
+        var requestData = new RequestDto { Campo1 = payload, Campo2 = 123 };
+        var before = (await _client.GetFromJsonAsync<List<ItemDto>>("/api/[endpoint]"))!.Count;
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/[endpoint]", requestData);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<ResponseDto>();
+        var stored = await _client.GetFromJsonAsync<ItemDto>($"/api/[endpoint]/{result!.Id}");
+        Assert.Equal(payload, stored!.Campo1);
+        var after = await _client.GetFromJsonAsync<List<ItemDto>>("/api/[endpoint]");
+        Assert.Equal(before + 1, after!.Count);
+    }
 }
 ```
 

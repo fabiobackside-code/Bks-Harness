@@ -192,6 +192,10 @@ pacote de fora, `modules/` não importa a entrada, e a entrada não importa `*.r
 modelo e a tradução das camadas para o layout dos templates estão em
 `references/architecture-tests.md`.
 
+O `package-lock.json` que o `npm install` gera vai para o repositório, e o CI instala com
+`npm ci`. É o arquivo que a varredura de dependência do CI lê (`SEC-02`); sem ele, o projeto passa
+sem ser varrido.
+
 Regras de navegação:
 - Avanço automático ao completar todos os campos obrigatórios da fase
 - O desenvolvedor pode fornecer múltiplas variáveis em uma única mensagem

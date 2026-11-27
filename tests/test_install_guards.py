@@ -9,6 +9,7 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(ROOT, 'scripts', 'install_guards.py')
 VERSION = json.load(open(os.path.join(ROOT, '.claude-plugin', 'plugin.json'), encoding='utf-8'))['version']
+OSV_SHA = 'fb7dab19a8bd9bbe5c3189f09d4b7ee1820c9553a23bac202648a56efd2f6ee8'
 GUARD_FILES = ('precommit.py', 'secret_guard.py', 'no_dispatcher.py', 'comment_budget.py', 'dotnet_project.py', '_common.py')
 results = []
 
@@ -51,6 +52,12 @@ check('github: os cinco guardas copiados', all(exists(repo, '.bkhar', 'guards', 
 check('github: VERSION igual ao plugin.json', read(repo, '.bkhar', 'guards', 'VERSION').strip() == VERSION)
 check('github: hook escrito', 'bkhar-guards' in read(repo, '.githooks', 'pre-commit'))
 check('github: workflow escrito', exists(repo, '.github', 'workflows', 'bkhar-guards.yml'))
+workflow = read(repo, '.github', 'workflows', 'bkhar-guards.yml')
+check('github: job de dependência com OSV-Scanner fixado', 'osv-scanner/releases/download/v2.7.1/' in workflow
+      and 'scan source -r .' in workflow, workflow)
+check('github: binário conferido por checksum', OSV_SHA in workflow and 'sha256sum -c -' in workflow)
+check('github: vulnerabilidade falha e repositório sem lockfile passa',
+      'exit "$code"' in workflow and '"$code" -eq 128' in workflow)
 check('github: sem arquivo do GitLab', not exists(repo, '.gitlab-ci.yml'))
 check('github: core.hooksPath ativo', git(repo, 'config', 'core.hooksPath').stdout.strip() == '.githooks')
 mode = git(repo, 'ls-files', '-s', '.githooks/pre-commit').stdout
@@ -77,6 +84,11 @@ code, out = install(repo, '--host', 'gitlab')
 check('gitlab: saída 0', code == 0, out)
 check('gitlab: job em .bkhar/guards', exists(repo, '.bkhar', 'guards', 'gitlab-ci.yml'))
 check('gitlab: .gitlab-ci.yml inclui o job', '.bkhar/guards/gitlab-ci.yml' in read(repo, '.gitlab-ci.yml'))
+job = read(repo, '.bkhar', 'guards', 'gitlab-ci.yml')
+check('gitlab: job bkhar-deps com OSV-Scanner fixado e checksum', 'bkhar-deps:' in job and OSV_SHA in job
+      and 'osv-scanner/releases/download/v2.7.1/' in job, job)
+check('gitlab: vulnerabilidade falha e repositório sem lockfile passa',
+      'exit "$code"' in job and '"$code" -eq 128' in job)
 check('gitlab: sem workflow do GitHub', not exists(repo, '.github'))
 shutil.rmtree(repo, ignore_errors=True)
 

@@ -12,14 +12,17 @@
 | `Layers_depend_inward` | `COD-05` | Domain citando Application ou Adapters; Application citando Adapters; adapter de entrada citando o de saída e vice-versa. Vale para `using` e para nome qualificado no código |
 | `Spans_come_from_the_pipeline` | `COD-07` | `new Activity(` ou `.StartActivity(` fora de `Application/Pipeline/` e do adapter de observabilidade |
 | `No_dynamic` | `COD-13` | o tipo `dynamic` em qualquer camada |
+| `Sql_takes_only_parameters` | `SEC-01` | SQL em string interpolada (`$"... WHERE id = {id}"`), concatenada com valor (`"... = '" + id`) ou passada ao `string.Format`. Passam o `@param` do Dapper e o `FromSql`/`ExecuteSql` do EF Core, que parametrizam a interpolação |
 
 A camada de cada arquivo sai da pasta (`Domain/`, `Application/`, `Adapters/Inbound/`,
 `Adapters/Outbound/`, `main/`) ou do projeto (`.Domain`, `.Application`, `.Adapters.Inbound`,
 `.Adapters.Outbound`, `.Host`). Por isso o teste vale nas formas de projeto único e de vários
-projetos. Comentário e string são retirados antes da busca.
+projetos. Comentário e string são retirados antes da busca; o teste de SQL tira só o comentário,
+porque o que ele procura está dentro da string.
 
 O limite é o do texto: dependência que só aparece no IL (reflexão, tipo herdado de outro assembly)
-passa. A violação comum, que é o `using` ou o nome qualificado entre camadas, é barrada.
+passa. A violação comum, que é o `using` ou o nome qualificado entre camadas, é barrada. No SQL, a
+consulta montada em mais de um comando (`sql += id;`) também passa e fica com o `security` (`SEC-03`).
 
 ## O teste
 
@@ -46,6 +49,20 @@ public sealed class LayerDependencyTests
     private static readonly Regex QualifiedName = new(@"\b[A-Za-z_]\w*(?:\.\w+)+");
     private static readonly Regex HandmadeSpan = new(@"new\s+(?:[\w.]+\.)?Activity\s*\(|\.StartActivity\s*\(");
     private static readonly Regex DynamicType = new(@"\bdynamic\b");
+
+    private static readonly Regex Token = new(
+        @"(?<comment>//[^\n]*|/\*.*?\*/)|(?<text>\$*"""""".*?""""""|(?:\$@|@\$|@)""(?:""""|[^""])*""|\$?""(?:\\.|[^""\\\n])*""|'(?:\\.|[^'\\\n])+')",
+        RegexOptions.Singleline);
+
+    private static readonly Regex SqlText = new(
+        @"\bselect\b.+\bfrom\b|\binsert\s+into\b|\bupdate\s+[\w.\[\]]+\s+set\b|\bdelete\s+from\b|\bwhere\s+\w+\s*(?:=|<>|<|>|\blike\b|\bin\b)",
+        RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+    private static readonly Regex Hole = new(@"\{[^{}""]+\}");
+    private static readonly Regex Concatenated = new(@"\G\s*\+\s*(?![@$]*"")");
+    private static readonly Regex FormatCall = new(@"\bFormat\s*\(\s*$");
+    private static readonly Regex ParameterizedCall = new(
+        @"\b(?:FromSql|FromSqlInterpolated|ExecuteSql|ExecuteSqlAsync|ExecuteSqlInterpolated|ExecuteSqlInterpolatedAsync|SqlQuery)\s*\(\s*$");
 
     private static readonly Dictionary<Layer, Layer[]> Forbidden = new()
     {
@@ -113,7 +130,34 @@ public sealed class LayerDependencyTests
         Assert.True(offenders.Count == 0, "dynamic sem tipagem forte:" + Lines(offenders));
     }
 
-    private static IEnumerable<(string Path, Layer Layer, string Code)> Sources()
+    [Fact]
+    public void Sql_takes_only_parameters()
+    {
+        var offenders = new List<string>();
+
+        foreach (var source in Sources())
+        {
+            foreach (Match token in Token.Matches(source.Raw))
+            {
+                var text = token.Groups["text"];
+                if (!text.Success || !SqlText.IsMatch(text.Value)) continue;
+
+                var before = source.Raw[Math.Max(0, text.Index - 80)..text.Index];
+                var interpolated = text.Value.StartsWith('$') && Hole.IsMatch(text.Value)
+                    && !ParameterizedCall.IsMatch(before);
+                var concatenated = Concatenated.IsMatch(source.Raw, text.Index + text.Length);
+
+                if (interpolated || concatenated || FormatCall.IsMatch(before))
+                {
+                    offenders.Add($"{source.Path}:{source.Raw[..text.Index].Count(c => c == '\n') + 1}");
+                }
+            }
+        }
+
+        Assert.True(offenders.Count == 0, "SQL montado com texto; passe o valor como parâmetro:" + Lines(offenders));
+    }
+
+    private static IEnumerable<(string Path, Layer Layer, string Code, string Raw)> Sources()
     {
         var root = Path.Combine(SolutionRoot(), "src");
 
@@ -121,7 +165,8 @@ public sealed class LayerDependencyTests
             .Select(file => Path.GetRelativePath(root, file).Replace('\\', '/'))
             .Where(path => !path.Contains("/bin/") && !path.Contains("/obj/")
                 && !path.Split('/')[0].EndsWith(".Tests", StringComparison.Ordinal))
-            .Select(path => (path, FileLayer(path), Noise.Replace(File.ReadAllText(Path.Combine(root, path)), " ")));
+            .Select(path => (Path: path, Text: File.ReadAllText(Path.Combine(root, path))))
+            .Select(item => (item.Path, FileLayer(item.Path), Noise.Replace(item.Text, " "), item.Text));
     }
 
     private static Layer FileLayer(string path)

@@ -20,7 +20,8 @@ cenário que ninguém escreveu porque parecia óbvio.
 ## Responsabilidades
 
 - No refinamento, fazer até três perguntas pelo ângulo do teste, antes da FEAT (especificação da feature).
-- Escrever o `TEST-*.md` depois da FEAT aprovada.
+- Escrever o `TEST-*.md` depois da FEAT aprovada. FEAT que recebe texto livre leva um caso de
+  payload de injeção, rodado contra banco real (Testcontainers).
 - No passo 0 do `/bkhar:loop`, escrever o RED (teste escrito antes do código, ainda falhando): os
   testes dos cenários do `TEST-*.md`, em código. Rodar e confirmar que compilam e falham pelo motivo
   certo. O portão "RED confirmado" só abre com essa saída colada.
@@ -49,6 +50,8 @@ cenário que ninguém escreveu porque parecia óbvio.
 2. Qual é o caso de borda: vazio, limite, duplicado, concorrente?
 3. O que a resposta de erro revela a quem não deveria saber?
 4. Qual defeito do `LEARNINGS.md` já aconteceu nesta área?
+5. Algum campo de texto livre chega a SQL, shell ou caminho de arquivo? Qual payload prova que ele
+   vai como parâmetro?
 
 ## Skills que carrega
 

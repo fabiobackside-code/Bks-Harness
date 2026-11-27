@@ -188,8 +188,8 @@ débito visível por uma sessão que não fecha. Projeto sem `docs/canonical/CON
 alerta nenhum: nem todo projeto usa o fluxo canônico, e alertar sobre ausência de um arquivo
 opcional treina o leitor a ignorar o aviso.
 
-A revisão foi considerada como lugar da detecção e descartada. O `/bkhar:review` dispensa mudança que
-não toca área sensível — documentação, justamente — e o agente de revisão é read-only, em
+A revisão foi considerada como lugar da detecção e descartada. O `security` do `/bkhar:review` não roda em mudança que
+não toca área sensível nem adapter — documentação, justamente — e o agente de revisão é read-only, em
 invocação separada, sem o estado da sessão que aprovou a FEAT. Divergência de canônico também não
 é achado de segurança em `arquivo:linha`, e diluir o contrato do agente enfraquece o que ele já
 faz bem.
@@ -358,7 +358,7 @@ exceções diferentes entre si, e a regra passou a nomear as duas em todos eles.
 O `/bkhar:maintainability` avalia cada aplicação de `app/` e gera o documento de fundamentação do
 projeto, pela skill `bks-maintainability-review`. Ele não entrou no `/bkhar:review` por três
 diferenças. O agente `security` só lê, e o parecer grava HTML. A revisão olha o diff de uma entrega
-que toca área sensível, e a manutenibilidade olha o `app/` inteiro. Achado crítico da revisão
+que toca área sensível ou adapter, e a manutenibilidade olha o `app/` inteiro. Achado crítico da revisão
 bloqueia a entrega, e a nota de manutenibilidade orienta a evolução sem bloquear nada.
 
 A saída fica em `outputs/maintainability/` e `outputs/references/`, na raiz do projeto. A skill de
@@ -915,6 +915,42 @@ Entre 2026-11-14 e 2026-11-17, o `--deep` achou 36 contradições nos oito temas
 A maioria tinha a mesma causa: exemplo ou referência escrita antes de uma
 decisão e não revista depois dela. Por isso a rodada se repete depois de mudança grande de modelo,
 e não só uma vez.
+
+### A segurança da aplicação gerada tem sensor, e o `security` olha todo adapter
+
+Até a 3.0.1, o kit não cobria injeção nem dependência vulnerável na aplicação que gera. O
+`security` só rodava com manifesto e diff em "Área sensível", e nenhum sensor barrava SQL montado
+por concatenação. Um adapter de banco com consulta concatenada passava no build, nos testes e na
+revisão sem que ninguém olhasse. A 3.1.0 fecha isso em três regras, cada uma com sensor:
+
+- **`SEC-01`, SQL só com parâmetro:** o teste de arquitetura de cada stack ganhou uma checagem.
+  São o `Sql_takes_only_parameters` no .NET, o `SQL só com parâmetro` no TypeScript e o
+  `TestSqlTakesOnlyParameters` no Go. Recusam SQL interpolado, concatenado com valor ou formatado
+  (`string.Format`, `fmt.Sprintf`). Passam o placeholder com parâmetro, o template com tag e o
+  `FromSql` do EF Core.
+- **`SEC-02`, dependência sem vulnerabilidade conhecida:** os dois templates de CI rodam o
+  OSV-Scanner v2.7.1, baixado com checksum conferido. Uma ferramenta lê o lockfile das três
+  stacks e falha pelo código de saída. As skills .NET e TypeScript passam a gerar e commitar o
+  lockfile; sem lockfile, o job passa com aviso.
+- **`SEC-03`, entrada externa revisada:** o `security` ganhou a sexta pergunta, sobre injeção. Ele
+  roda em todo diff de adapter de entrada ou de saída de banco, com ou sem manifesto. O
+  `commands/review.md` diz como reconhecer o adapter em cada stack, pelas pastas dos testes de
+  arquitetura.
+
+O TEST de FEAT que recebe texto livre leva um caso `Segurança` com payload de injeção no destino
+do texto. O caso roda contra banco real, por Testcontainers, porque mock de repositório não prova que o
+valor chegou ao banco como parâmetro.
+
+O limite do sensor é declarado. SQL montado em mais de um comando (`sql += id`) escapa ao teste,
+que lê uma expressão por vez, e fica com a revisão da `SEC-03`. Adapter de saída HTTP, fila ou
+arquivo só leva o `security` pela "Área sensível". O preço é mais Opus por revisão: o `security`
+roda em todo diff de adapter, não só na área declarada.
+
+A varredura nativa de cada stack (`dotnet list package --vulnerable`, `npm audit`, `govulncheck`)
+foi descartada. Pedia detectar a stack, manter três imagens e ler a saída do `dotnet`, que não
+falha pelo código de saída. A ação reutilizável do GitHub também ficou fora, porque pede enviar o
+relatório para a aba de segurança. Teste contra a aplicação no ar (DAST) e fuzzing ficam para
+depois.
 
 ### O TXC é padrão opcional, e a skill .NET monta o projeto pelas portas
 

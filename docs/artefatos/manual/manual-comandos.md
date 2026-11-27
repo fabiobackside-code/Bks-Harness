@@ -1,7 +1,7 @@
 ---
 tipo: manual
-versao: 1.7.0
-atualizado: 2026-11-20
+versao: 1.8.0
+atualizado: 2026-11-27
 ---
 
 # Manual de comandos do `bkhar`
@@ -163,7 +163,7 @@ A ordem típica, do projeto novo ao fechamento de sessão. O PRD (Product Requir
 | 6 | `/bkhar:arch` | repo | o PLAN aprovado vira o índice ARCH e os modelos de arquitetura, para você aprovar; é portão da especificação |
 | 7 | `/bkhar:refine` | repo | a equipe pergunta antes, apoiada nos modelos aprovados; o `architect` escreve a `FEAT` e o `tester`, o `TEST` |
 | 8 | `/bkhar:loop` | repo | o `tester` escreve o teste que falha, o `developer` implementa; no máximo 4 tentativas |
-| 9 | `/bkhar:review` | repo | revisão em painel: `tester`, `quality` e, em área sensível, `security` |
+| 9 | `/bkhar:review` | repo | revisão em painel: `tester`, `quality` e, em área sensível ou diff de adapter, `security` |
 | 10 | `/bkhar:maintainability` | repo | parecer por aplicação de `app/` e a fundamentação do projeto |
 | 11 | `/bkhar:save` | repo | roteia decisões e specs, reescreve o `STATUS.md`, acrescenta ao `JOURNAL.md`, regera a biblioteca |
 | 12 | `/bkhar:library` | repo | catálogo e dashboard da biblioteca; com `export`, leva a biblioteca para `knowledge/` do vault |
@@ -322,7 +322,7 @@ cd ${BKS_VAULT}
 
 **Onde rodar.** De qualquer pasta. O comando opera sempre sobre `${BKS_VAULT}/knowledge/`, e os caminhos do argumento são relativos a ela.
 
-**Quando usar.** Quando um artigo, livro, paper ou vídeo merece virar página permanente da wiki. Também para arquivar uma nota pessoal de prospecção.
+**Quando usar.** Quando um artigo, livro, paper ou vídeo merece virar página permanente da wiki. Também para arquivar uma nota pessoal de prospecção e para registrar um artigo seu já publicado como experiência.
 
 **Pré-requisito.** A fonte salva em `raw/`, um link, a tabela de lote ou arquivos em `raw/_inbox/`.
 
@@ -335,23 +335,25 @@ cd ${BKS_VAULT}
 | `/bkhar:ingest raw/articles/nome.html` | ingere uma página web salva localmente |
 | `/bkhar:ingest raw/videos/nome-transcrição.md` | ingere a transcrição de um vídeo |
 | `/bkhar:ingest raw/notas-pessoais/nome.md` | arquiva uma nota pessoal, sem curar |
+| `/bkhar:ingest raw/autorais/nome.docx` | registra um artigo autoral publicado (também `.md` ou `.pdf`) |
 | `/bkhar:ingest https://exemplo.com/artigo` | busca o link, salva cópia em `raw/` e ingere |
 | `/bkhar:ingest tools/batch-ingest.md` | processa a tabela de lote |
 | `/bkhar:ingest raw/_inbox/` | classifica e processa tudo da pasta |
 
 **O que ele faz, passo a passo.**
 
-1. Classifica a natureza da fonte: externa (de terceiro, vai ser curada) ou nota pessoal (preservada como está). Na dúvida, pergunta.
+1. Classifica a natureza da fonte: externa (de terceiro, vai ser curada), nota pessoal (preservada como está) ou artigo autoral publicado (registrado como experiência). Na dúvida, pergunta.
 2. Fonte externa: lê, resume, extrai conceitos e cria ou atualiza a página certa em `wiki/`.
 3. Link ainda não salvo: grava antes uma cópia em `raw/articles/<slug>.md`, com a URL no frontmatter.
 4. Nota pessoal: copia para `wiki/prospecções/<slug>.md` com `type: "prospecção"` ou `"reflexao"`, sem reescrever a ideia.
-5. Lote: processa uma fonte por vez, da prioridade `high` para a `low`, e imprime uma linha por fonte.
-6. Pasta de entrada: move cada arquivo para a subpasta certa de `raw/` e ingere pela regra do tipo.
-7. Atualiza `wiki/index.md` e `wiki/log.md` ao fim de cada fonte.
+5. Artigo autoral: grava `wiki/experiencia/artigos/<slug>.md` com `type: "artigo-autoral"` e as seções Publicação, Teses (na voz do autor, com trecho citado), Experiência que sustenta, Conecta com e Original. Data e link da publicação faltando: pergunta.
+6. Lote: processa uma fonte por vez, da prioridade `high` para a `low`, e imprime uma linha por fonte.
+7. Pasta de entrada: move cada arquivo para a subpasta certa de `raw/` e ingere pela regra do tipo.
+8. Atualiza `wiki/index.md` e `wiki/log.md` ao fim de cada fonte.
 
 **O que produz.**
 
-- páginas em `${BKS_VAULT}/knowledge/wiki/`, ou em `wiki/prospecções/` para nota pessoal
+- páginas em `${BKS_VAULT}/knowledge/wiki/`, em `wiki/prospecções/` para nota pessoal ou em `wiki/experiencia/artigos/` para artigo autoral
 - cópia da fonte em `raw/` quando veio de link ou da `_inbox`
 - registro em `wiki/index.md` e `wiki/log.md`
 
@@ -935,18 +937,18 @@ Caso de bloqueio:
 |---|---|---|
 | `tester` | sempre que há diff de código | se cada cenário do TEST está coberto no código |
 | `quality` | sempre que há diff de código | legibilidade, os arquivos de teste, os resultados da execução |
-| `security` | quando o diff toca área sensível do manifesto | dado sensível, autorização, log, segredo, zona de contenção |
+| `security` | quando o diff toca área sensível do manifesto, um adapter de entrada ou um adapter de saída de banco | dado sensível, autorização, log, segredo, zona de contenção, injeção |
 | `architect` | quando o diff cruza fronteira de contexto ou premissa | fronteira, contrato, padrão |
 
 O `tester` não revisa os próprios testes. A força das asserções e a fragilidade são do `quality`.
 
-**Pré-requisito.** O manifesto em `{repo}/.claude/multiagente.md`. Sem ele, `tester` e `quality` rodam, o `security` não, e o comando orienta a criar o manifesto a partir do template `manifesto-projeto.md`.
+**Pré-requisito.** O manifesto em `{repo}/.claude/multiagente.md`. Sem ele, `tester` e `quality` rodam, o `security` só roda se o diff tocar adapter, e o comando orienta a criar o manifesto a partir do template `manifesto-projeto.md`.
 
 **Argumentos.** O repo a revisar, `${BKS_VAULT}/repos/{categoria}/{projeto}`. Sem argumento, o comando pergunta. Ele nunca adivinha o projeto ativo.
 
 **O que ele faz, passo a passo.**
 
-1. Confere o manifesto e se a mudança toca área sensível. Isso decide se o `security` roda.
+1. Confere se o diff toca adapter de entrada ou de saída de banco e, pelo manifesto, se toca área sensível. Qualquer um dos dois faz o `security` rodar; pelo adapter, ele revisa a injeção mesmo sem manifesto.
 2. Monta o contexto de cada agente: o diff da entrega, o TEST, as invariantes e áreas sensíveis do manifesto, `decisions/`.
 3. Chama os agentes em invocações separadas e paralelas.
 4. Junta os achados, cada um com `arquivo:linha`, e classifica:
@@ -1276,7 +1278,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 **Cuidados.**
 
 - O comando nunca aprova documento para passar na prontidão; aprovar é decisão sua.
-- Nenhum modo afrouxa os guardas, o RED antes do código, as 4 tentativas e o `security` em área sensível.
+- Nenhum modo afrouxa os guardas, o RED antes do código, as 4 tentativas e o `security` em área sensível e em diff de adapter.
 
 ---
 

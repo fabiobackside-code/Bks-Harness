@@ -29,7 +29,7 @@ orquestrador, implementador ou validador).
 | `architect` | Arquiteto | consultivo | opus | fronteira de contexto, contrato, FEAT, TASK, ADR |
 | `tester` | Testes | validador | sonnet | cenários do TEST, o RED em código, cobertura dos cenários |
 | `developer` | Dev | implementador | sonnet | implementar contra o RED, uma tentativa do loop por vez |
-| `security` | Segurança | validador | opus | área sensível do manifesto, dado pessoal, autenticação |
+| `security` | Segurança | validador | opus | área sensível do manifesto, adapter de entrada ou de saída de banco, dado pessoal, autenticação |
 | `quality` | Qualidade | validador | sonnet | arquivos de teste, resultados, manutenibilidade, aprendizado |
 | `scribe` | Documentador | consultivo | haiku | ADR de painel e documentação do que já foi verificado |
 

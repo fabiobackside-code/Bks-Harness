@@ -10,9 +10,13 @@
 | `TestContextsDoNotImportAdapters` | `COD-05` | pacote de contexto em `internal/{contexto}` importando `internal/adapter/...` |
 | `TestAdaptersDoNotImportEachOther` | `COD-05` | um adapter importando outro (`adapter/http` citando `adapter/postgres`): a entrada fala com o contexto, nunca com a saída |
 | `TestNoGenericResult` | `COD-19` | tipo `Result[T]` declarado ou usado; erro é `error` no segundo retorno |
+| `TestSqlTakesOnlyParameters` | `SEC-01` | SQL no formato do `fmt.Sprintf` ou somado a um valor (`"... = '" + id`); passa o placeholder (`$1`, `?`) com os valores em `args` |
 
 A camada vem do caminho: `internal/adapter/<nome>` é adapter, `internal/platform/...` é
 infraestrutura compartilhada, e o resto de `internal/` é contexto. Arquivo `_test.go` fica fora.
+
+O limite do teste de SQL é o do texto: a consulta montada em mais de um comando (`q += id`) passa e
+fica com o `security` (`SEC-03`).
 
 ## O teste
 
@@ -25,6 +29,8 @@ import (
 	"go/token"
 	"io/fs"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -32,7 +38,10 @@ import (
 type goFile struct {
 	rel  string
 	file *ast.File
+	fset *token.FileSet
 }
+
+var sqlText = regexp.MustCompile(`(?is)\bselect\b.+\bfrom\b|\binsert\s+into\b|\bupdate\s+[\w."\[\]]+\s+set\b|\bdelete\s+from\b|\bwhere\s+\w+\s*(?:=|<>|<|>|\blike\b|\bin\b)`)
 
 func sources(t *testing.T) []goFile {
 	t.Helper()
@@ -46,7 +55,7 @@ func sources(t *testing.T) []goFile {
 		if perr != nil {
 			return perr
 		}
-		out = append(out, goFile{rel: filepath.ToSlash(path), file: f})
+		out = append(out, goFile{rel: filepath.ToSlash(path), file: f, fset: fset})
 		return nil
 	})
 	if err != nil {
@@ -121,6 +130,52 @@ func TestNoGenericResult(t *testing.T) {
 			if name == "Result" {
 				t.Errorf("%s usa Result[T]: em Go o erro é error no segundo retorno", src.rel)
 				return false
+			}
+			return true
+		})
+	}
+}
+
+func constantText(e ast.Expr) (string, bool) {
+	switch node := e.(type) {
+	case *ast.BasicLit:
+		if node.Kind == token.STRING {
+			text, err := strconv.Unquote(node.Value)
+			return text, err == nil
+		}
+	case *ast.ParenExpr:
+		return constantText(node.X)
+	case *ast.BinaryExpr:
+		if node.Op == token.ADD {
+			left, lok := constantText(node.X)
+			right, rok := constantText(node.Y)
+			if lok && rok {
+				return left + right, true
+			}
+		}
+	}
+	return "", false
+}
+
+func TestSqlTakesOnlyParameters(t *testing.T) {
+	for _, src := range sources(t) {
+		ast.Inspect(src.file, func(n ast.Node) bool {
+			built := false
+			switch node := n.(type) {
+			case *ast.BinaryExpr:
+				if node.Op == token.ADD {
+					left, lok := constantText(node.X)
+					right, rok := constantText(node.Y)
+					built = lok != rok && sqlText.MatchString(left+right)
+				}
+			case *ast.CallExpr:
+				if sel, ok := node.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == "Sprintf" && len(node.Args) > 1 {
+					format, ok := constantText(node.Args[0])
+					built = ok && sqlText.MatchString(format)
+				}
+			}
+			if built {
+				t.Errorf("%s:%d monta SQL com texto; passe o valor como parâmetro", src.rel, src.fset.Position(n.Pos()).Line)
 			}
 			return true
 		})

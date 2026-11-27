@@ -2,13 +2,13 @@
 
 > Gerado por `scripts/rules_report.py` a partir do `rules.json`. Não editar à mão.
 
-Regras: 48 · com sensor computacional: 34 (2 indireto, 4 de aviso) · só inferencial: 9 · sem sensor: 5
+Regras: 51 · com sensor computacional: 36 (2 indireto, 4 de aviso) · só inferencial: 10 · sem sensor: 5
 
 ## Por alvo
 
 | Alvo | Regras | Computacional | Só inferencial | Sem sensor |
 |---|---|---|---|---|
-| codigo | 20 | 12 | 8 | 0 |
+| codigo | 23 | 14 | 9 | 0 |
 | documentacao | 6 | 5 | 1 | 0 |
 | processo | 14 | 11 | 0 | 3 |
 | kit | 8 | 6 | 0 | 2 |
@@ -56,6 +56,9 @@ Valor repetido entre guia e sensor; mudar num lugar só quebra o `--check`.
 | COD-18 | Credencial com valor real não entra em código nem configuração | `docs/ARCHITECTURE.md` · A guarda vale em três camadas, e cada uma só vê o que alcança | C `hooks/scripts/secret_guard.py` (hook, pre-commit, ci) |
 | COD-19 | Go: erro idiomático, sem Result[T] | `skills/bks-standards/references/go-standards.md` · 2. Erro de negócio: `error` idiomático, não `Result[T]` | C `skills/bks-go-solutions/references/architecture-tests.md` (suite) |
 | COD-20 | Go: interface declarada no consumidor | `skills/bks-standards/references/go-standards.md` · 4. Ports: a interface se declara no consumidor | I `agents/architect.md` (revisao) |
+| SEC-01 | SQL só com parâmetro, sem concatenação nem interpolação de texto | `skills/bks-standards/references/checklist-revisao-critica.md` · Núcleo (qualquer domínio) | C `skills/bks-dotnet-solutions/references/architecture-tests.md` (suite)<br>C `skills/bks-typescript-solutions/references/architecture-tests.md` (suite)<br>C `skills/bks-go-solutions/references/architecture-tests.md` (suite)<br>I `agents/security.md` (revisao) |
+| SEC-02 | Dependência sem CVE conhecido | `skills/bks-standards/references/checklist-revisao-critica.md` · Núcleo (qualquer domínio) | C `templates/ci/github-guards.yml` (ci)<br>C `templates/ci/gitlab-guards.yml` (ci)<br>I `agents/security.md` (revisao) |
+| SEC-03 | Entrada externa que chega a SQL, shell, caminho ou URL é revisada pelo security | `skills/bks-standards/references/checklist-revisao-critica.md` · Núcleo (qualquer domínio) | I `agents/security.md` (revisao) |
 | DOC-01 | Task que cria tipo público atualiza README.md e ARCHITECTURE.md | `skills/bks-standards/references/documentacao.md` · Quando gerar/atualizar | C `hooks/scripts/dod_docs.py` (hook) |
 | DOC-02 | Decisão e trade-off vão para o ARCHITECTURE.md, não para comentário | `skills/bks-standards/references/documentacao.md` · Comentário no código | C `hooks/scripts/comment_budget.py` (hook, pre-commit, ci, indireto) |
 | DOC-03 | Sem ponteiro para documento em comentário | `skills/bks-standards/references/documentacao.md` · Comentário no código | C `hooks/scripts/comment_budget.py` (hook, pre-commit, ci) |

@@ -109,7 +109,15 @@ ENDPOINT = ('using Shop.Domain.Services;\n\nnamespace Shop.Adapters.Inbound.Http
             'public sealed class OrderEndpoint(OrderService service)\n{\n'
             '    public string Post(string id) => service.Create(id).Id;\n}\n')
 REPOSITORY = ('using Npgsql;\nusing Shop.Domain.Core.Models;\n\nnamespace Shop.Adapters.Outbound.PostgresAdapter;\n\n'
-              'public sealed class OrderRepository\n{\n    public void Save(Order order) { }\n}\n')
+              'public sealed class OrderRepository\n{\n'
+              '    private const string Insert = "INSERT INTO orders (id) VALUES (@id)";\n'
+              '    private const string Find = "SELECT id " +\n        "FROM orders WHERE id = @id";\n'
+              '    private const string Raw = \"\"\"\n        SELECT id FROM orders WHERE id = @id\n        \"\"\";\n\n'
+              '    // SELECT id FROM orders WHERE id = \' + id\n'
+              '    public void Save(Order order) { }\n\n'
+              '    public int Delete(OrderContext db, string id) =>\n'
+              '        db.Database.ExecuteSqlInterpolated($"DELETE FROM orders WHERE id = {id}");\n\n'
+              '    public string Log(string id) => $"order {id} saved";\n}\n')
 STEP = ('using System.Diagnostics;\n\nnamespace Shop.Application.Pipeline;\n\npublic abstract class BksStep\n{\n'
         '    private static readonly ActivitySource Source = new("Shop");\n\n'
         '    protected Activity? Start(string name) => Source.StartActivity(name);\n}\n')
@@ -147,6 +155,21 @@ def test_dotnet():
         'COD-13 dynamic': ('src/Shop/Domain/Services/OrderService.cs',
                            SERVICE.replace('public Order Create', 'public dynamic Any() => 1;\n    public Order Create'),
                            'No_dynamic'),
+        'SEC-01 SQL interpolado': (
+            'src/Shop/Adapters/Outbound/PostgresAdapter/OrderRepository.cs',
+            REPOSITORY.replace('public void Save', 'public string ById(string id) =>\n'
+                               '        $"SELECT id FROM orders WHERE id = \'{id}\'";\n\n    public void Save'),
+            'Sql_takes_only_parameters'),
+        'SEC-01 SQL concatenado': (
+            'src/Shop/Adapters/Outbound/PostgresAdapter/OrderRepository.cs',
+            REPOSITORY.replace('public void Save', 'public string ById(string id) =>\n'
+                               '        "SELECT id FROM orders WHERE id = \'" + id + "\'";\n\n    public void Save'),
+            'Sql_takes_only_parameters'),
+        'SEC-01 SQL no string.Format': (
+            'src/Shop/Adapters/Outbound/PostgresAdapter/OrderRepository.cs',
+            REPOSITORY.replace('public void Save', 'public string ById(string id) =>\n'
+                               '        string.Format("DELETE FROM orders WHERE id = \'{0}\'", id);\n\n    public void Save'),
+            'Sql_takes_only_parameters'),
     }
     prove('dotnet', files, ['dotnet', 'test', project, '--no-build', '--nologo'], violations,
           first_cmd=['dotnet', 'test', project, '--nologo'])
@@ -159,6 +182,12 @@ TS_FILES = {
                                            "import { save } from './order.repository.ts';\n"
                                            "export const create = (id: string): Order => save({ id });\n"),
     'src/modules/order/order.repository.ts': ("import pg from 'pg';\n"
+                                              "const sql = (s: TemplateStringsArray, ...v: unknown[]) => ({ s, v });\n"
+                                              "export const insert = 'INSERT INTO orders (id) VALUES ($1)';\n"
+                                              "export const find = (id: string) => ['SELECT id ' + 'FROM orders WHERE id = $1', [id]];\n"
+                                              "export const byTag = (id: string) => sql`SELECT id FROM orders WHERE id = ${id}`;\n"
+                                              "// SELECT id FROM orders WHERE id = ' + id\n"
+                                              "export const log = (id: string) => `order ${id} saved`;\n"
                                               "export const save = <T>(o: T): T => o;\n"),
     'src/routes/order.routes.ts': "import { create } from '../modules/order/order.service.ts';\nexport const r = create;\n",
 }
@@ -192,6 +221,14 @@ def test_ts():
         'entrada importando repository': ('src/routes/order.routes.ts',
                                           "import { save } from '../modules/order/order.repository.ts';\n"
                                           + TS_FILES['src/routes/order.routes.ts'], 'order.repository'),
+        'SEC-01 SQL em template': ('src/modules/order/order.repository.ts',
+                                   TS_FILES['src/modules/order/order.repository.ts']
+                                   + "export const byId = (id: string) => `SELECT id FROM orders WHERE id = '${id}'`;\n",
+                                   'monta SQL com texto'),
+        'SEC-01 SQL concatenado': ('src/modules/order/order.repository.ts',
+                                   TS_FILES['src/modules/order/order.repository.ts']
+                                   + "export const byId = (id: string) => 'SELECT id ' + 'FROM orders WHERE id = ' + id;\n",
+                                   'monta SQL com texto'),
     }
     cmd = ['node', '--test', 'tests/architecture.test.ts']
     fixture = tempfile.mkdtemp(prefix='bkhar-arch-ts-')
@@ -216,7 +253,11 @@ GO_FILES = {
     'internal/order/order.go': 'package order\n\ntype Order struct{ ID string }\n',
     'internal/order/port.go': 'package order\n\ntype Store interface{ Save(Order) error }\n',
     'internal/adapter/http/handler.go': 'package http\n\nimport _ "example.com/shop/internal/order"\n',
-    'internal/adapter/postgres/store.go': 'package postgres\n\nimport _ "example.com/shop/internal/order"\n',
+    'internal/adapter/postgres/store.go': ('package postgres\n\nimport _ "example.com/shop/internal/order"\n\n'
+                                           'const insert = "INSERT INTO orders (id) VALUES ($1)"\n\n'
+                                           'const find = "SELECT id " + "FROM orders WHERE id = $1"\n\n'
+                                           '// SELECT id FROM orders WHERE id = \' + id\n'
+                                           'func label(id string) string { return "order " + id }\n'),
     'internal/platform/config/config.go': 'package config\n',
 }
 
@@ -239,6 +280,15 @@ def test_go():
             'TestAdaptersDoNotImportEachOther'),
         'COD-19 Result[T]': ('internal/order/result.go', 'package order\n\ntype Result[T any] struct{ V T }\n',
                              'TestNoGenericResult'),
+        'SEC-01 SQL no Sprintf': (
+            'internal/adapter/postgres/query.go',
+            'package postgres\n\nimport "fmt"\n\n'
+            'func byID(id string) string { return fmt.Sprintf("SELECT id FROM orders WHERE id = \'%s\'", id) }\n',
+            'TestSqlTakesOnlyParameters'),
+        'SEC-01 SQL concatenado': (
+            'internal/adapter/postgres/query.go',
+            'package postgres\n\nfunc byID(id string) string { return "SELECT id FROM orders WHERE id = \'" + id + "\'" }\n',
+            'TestSqlTakesOnlyParameters'),
     }
     prove('go', files, ['go', 'test', './internal/'], violations)
 

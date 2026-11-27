@@ -8,20 +8,20 @@ Documentação e apresentações de apoio, por onde começar:
 
 | Documento | Versão | Para que |
 |---|---|---|
-| `docs/artefatos/guia/guia-bks-harness.html` | 0.1.0 | Guia para quem chega: o que orienta o agente, o que confere, o que proíbe, o que fica guardado e como se mede |
-| `docs/artefatos/treinamento/treinamento-bks-harness.html` | 1.5.0 | Treinamento: instalar, criar o primeiro projeto e rodar o ciclo |
-| `docs/artefatos/apresentacao/apresentacao-bks-harness.html` | 3.0.0 | Apresentação: a visão geral em 34 slides |
-| `docs/artefatos/atlas/atlas-bks-harness.html` | 2.0.0 | Atlas: a referência completa, com o manual de comandos como Parte X |
-| `docs/artefatos/manual/manual-comandos.md` | 1.7.0 | Manual de comandos: cada `/bkhar:*` com passo a passo e exemplo |
+| `docs/artefatos/guia/guia-bks-harness.html` | 0.2.0 | Guia para quem chega: o que orienta o agente, o que confere, o que proíbe, o que fica guardado e como se mede |
+| `docs/artefatos/treinamento/treinamento-bks-harness.html` | 1.6.0 | Treinamento: instalar, criar o primeiro projeto e rodar o ciclo |
+| `docs/artefatos/apresentacao/apresentacao-bks-harness.html` | 3.0.1 | Apresentação: a visão geral em 34 slides |
+| `docs/artefatos/atlas/atlas-bks-harness.html` | 2.1.0 | Atlas: a referência completa, com o manual de comandos como Parte X |
+| `docs/artefatos/manual/manual-comandos.md` | 1.8.0 | Manual de comandos: cada `/bkhar:*` com passo a passo e exemplo |
 | `docs/artefatos/maestri/guia-maestri.html` | 1.1.0 | Guia do Maestri: a equipe em terminais de agente |
 | `docs/ARCHITECTURE.md` | — | As decisões estruturais do kit e o porquê de cada uma |
-| `docs/regras.md` | gerado | As 48 regras e o sensor que confere cada uma |
+| `docs/regras.md` | gerado | As 51 regras e o sensor que confere cada uma |
 | `evals/BASELINE.md` | 2026-11-19 | A linha de base dos evals: o delta de cada skill |
 | `CONTRIBUTING.md` | — | Como contribuir com skill, agente, comando ou guarda |
 
 Comandos em inglês, prefixo `bkhar`. Documentação em português do Brasil.
 
-## O kit (base 0.7.0, agora `bkhar` 3.0.1)
+## O kit (base 0.7.0, agora `bkhar` 3.1.0)
 
 Plugin do Claude Code com o kit BKS de **Spec-Driven Development** — o processo que leva uma ideia
 de produto até código implementado, passando por PRD, planos, especificações de feature, cenários
@@ -30,6 +30,10 @@ de teste e tasks executáveis.
 Não e um framework de código. É o processo de trabalho: skills que conduzem o ciclo, comandos que
 operam o workbench e agentes com papéis separados.
 
+> **3.1.0.** Segurança da aplicação gerada com sensor: SQL só com parâmetro, barrado por teste de
+> arquitetura nas três stacks; dependência sem vulnerabilidade conhecida, pelo OSV-Scanner no CI;
+> o `security` em todo diff de adapter; e, no TEST, o caso de payload de injeção contra banco real.
+>
 > **3.0.1.** Versão final da 3.0: guias e sensores de Harness Engineering, linha de base dos evals,
 > o `/bkhar:tasks` e o guia para quem chega (`docs/artefatos/guia/`). A integração com o Maestri
 > segue em prova e evolui na 4.0.0. Sem o bloco `maestri` no perfil do projeto, o harness funciona
@@ -100,7 +104,7 @@ campo, as skills geram o padrão direto (entrada → serviço → porta de saíd
 | `/bkhar:brain` | Retoma a sessão: quem você e, onde parou, próximo passo |
 | `/bkhar:new-project` | Cria projeto novo com a estrutura canônica — único ponto de entrada |
 | `/bkhar:note` | Escreve nota viva em `docs/input/notas/` do projeto |
-| `/bkhar:ingest` | Ingere conhecimento para a base transversal em `knowledge/` do vault |
+| `/bkhar:ingest` | Ingere conhecimento para a base transversal em `knowledge/` do vault, inclusive os seus artigos publicados, registrados como experiência em `knowledge/wiki/experiencia/artigos/` |
 | `/bkhar:canonize` | Consolida pesquisa e design num contexto canônico único |
 | `/bkhar:prd` | Gera o PRD a partir do contexto canônico |
 | `/bkhar:plan` | Gera o plano macro `outputs/PLAN-{projeto}.md` a partir do PRD — obrigatório no perfil `fullstack` |
@@ -110,7 +114,7 @@ campo, as skills geram o padrão direto (entrada → serviço → porta de saíd
 | `/bkhar:refine` | Refinamento: a equipe pergunta antes; o `architect` escreve a especificação e o `tester`, os cenários |
 | `/bkhar:tasks` | Com FEAT e TEST aprovados, o `architect` decompõe a feature em `specs/tasks/TASK-[feature].md`, uma task por peça, no formato do `/bkhar:loop` |
 | `/bkhar:loop` | LOOP-4: o `tester` escreve o teste que falha, o `developer` implementa; máximo 4 tentativas. Com `--wave N`, no modo `autonomous`, roda a onda do grafo com até 4 tasks em paralelo, cada uma em worktree |
-| `/bkhar:review` | Revisão em painel: `tester`, `quality` e, em área sensível, `security`, cada um em invocação separada |
+| `/bkhar:review` | Revisão em painel: `tester`, `quality` e, em área sensível ou diff de adapter de entrada ou de banco, `security`, cada um em invocação separada |
 | `/bkhar:maintainability` | Inventaria `app/`, gera um parecer de manutenibilidade por aplicação em `outputs/maintainability/` e a fundamentação do projeto em `outputs/references/` |
 | `/bkhar:ask` | Pergunta direta a um agente da equipe, com resposta que cita a fonte |
 | `/bkhar:panel` | Painel: 2 ou 3 agentes respondem sem ver os outros; você escolhe e o `scribe` registra a decisão |
@@ -140,7 +144,7 @@ onda tem até 4 tasks em paralelo, cada uma na sua worktree, e uma task só come
 consome está aprovado.
 
 Nenhum modo afrouxa os guardas, o teste escrito antes do código, as 4 tentativas, a proibição de
-push na `main` e o `security` em área sensível.
+push na `main` e o `security` em área sensível e em diff de adapter.
 
 O painel acompanha a execução e conversa com ela:
 

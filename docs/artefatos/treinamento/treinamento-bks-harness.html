@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Treinamento do bks-harness — Instalação e uso · v1.5.0</title>
+<title>Treinamento do bks-harness — Instalação e uso · v1.6.0</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,7 +39,7 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">BKS HARNESS · TREINAMENTO</div>
 <div><h1>Treinamento do bks-harness</h1><p class="sub">Instalação e uso: do zero à primeira sessão produtiva e a um ciclo completo com a equipe de agentes.</p></div>
-<div class="meta">Versão 1.5.0 · para quem instala pelo repositório público</div></section>
+<div class="meta">Versão 1.6.0 · para quem instala pelo repositório público</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#antes-de-comecar">Antes de começar</a></li><li><a href="#parte-1-instalacao">Parte 1 — Instalação</a></li><li><a href="#parte-2-uso">Parte 2 — Uso</a></li><li><a href="#historico-de-versoes">Histórico de versões</a></li></ol></nav>
 <h2 id="antes-de-comecar">Antes de começar</h2>
 <p>Este manual leva você do zero até a primeira sessão produtiva e, depois, a um ciclo completo com a
@@ -148,7 +148,7 @@ plugin é lido direto da pasta: o que estiver no disco vale na próxima sessão.
 
 <p><strong>Confira.</strong> <code>claude plugin list</code> mostra:</p>
 <pre><code>❯ bkhar@bks-harness
-  Version: 3.0.1
+  Version: 3.1.0
   Scope: user
   Status: ✔ enabled
 </code></pre>
@@ -469,7 +469,8 @@ afirmação cita a fonte, e o que vier sem fonte aparece marcado como <strong>op
 <p>Quem escreve o teste não é quem o faz passar. É essa separação que impede o teste de ser escrito
 para caber no código.</p>
 <p>Depois, o <code>/bkhar:review</code> revisa em painel: o <code>tester</code> confere a cobertura dos cenários, o
-<code>quality</code> julga o código e os testes e, em área sensível, o <code>security</code> entra. Cada achado sai como
+<code>quality</code> julga o código e os testes e, em área sensível ou diff de adapter de entrada ou de
+banco, o <code>security</code> entra. Cada achado sai como
 bloqueante, sugestão ou aprendizado.</p>
 <div markdown="0"><figure><svg viewBox='0 0 760 310' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='LOOP-4 com passo 0' font-family='IBM Plex Sans, Arial, sans-serif'><defs><marker id='t6' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='var(--axis)'/></marker></defs><g fill='none' stroke='var(--axis)' stroke-width='1.25'><path d='M152 132H178' marker-end='url(#t6)'/><path d='M312 132H338' marker-end='url(#t6)'/><path d='M472 132H498' marker-end='url(#t6)'/><path d='M568 92V72H408V100' marker-end='url(#t6)'/><path d='M632 132H676V220' marker-end='url(#t6)'/><path d='M568 172V250H518' marker-end='url(#t6)'/></g><text x='24' y='28' font-size='15' font-weight='600' fill='var(--ink)' text-anchor='start'>O tester escreve o teste que falha; o developer tem até quatro tentativas</text><rect x='24' y='106' width='128' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='88' y='128' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>tester: RED</text><text x='88' y='145' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>passo 0</text><rect x='184' y='106' width='128' height='52' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='248' y='136.5' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle'>RED confirmado</text><rect x='344' y='106' width='128' height='52' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='408' y='128' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle'>developer</text><text x='408' y='145' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>uma tentativa</text><polygon points='504,132 568,92 632,132 568,172' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='568' y='136.5' font-size='13' fill='var(--ink)' text-anchor='middle'>goals passam?</text><rect x='616' y='226' width='120' height='48' rx='8' fill='none' stroke='var(--axis)' stroke-width='1.25'/><text x='676' y='254.5' font-size='13' font-weight='400' fill='var(--ink)' text-anchor='middle' font-family='JetBrains Mono, Courier New, monospace'>/bkhar:review</text><rect x='344' y='226' width='168' height='48' rx='8' fill='var(--accent)' fill-opacity='0.12' stroke='var(--accent)' stroke-width='2'/><text x='428' y='254.5' font-size='13' font-weight='600' fill='var(--ink)' text-anchor='middle'>BLOQUEIO · você decide</text><text x='488' y='64' font-size='11.5' fill='var(--quiet)' text-anchor='middle'>falhou: o erro real volta como contexto</text><text x='684' y='180' font-size='11.5' fill='var(--quiet)' text-anchor='start'>sim</text><text x='576' y='204' font-size='11.5' fill='var(--quiet)' text-anchor='start'>4ª falha</text></svg><figcaption><b>Figura 6</b> · LOOP-4 com passo 0</figcaption></figure></div>
 
@@ -526,7 +527,7 @@ a sessão principal integra, roda a suíte inteira e revisa a onda.</p>
 modelo e agente. Por ele você responde a um bloqueio, pausa a onda ou troca o modelo de um papel; o
 pedido é aplicado entre tentativas. O <code>/bkhar:status</code> mostra a mesma tabela no terminal.</p>
 <p>Nenhum modo afrouxa os guardas, o RED antes do código, as quatro tentativas e a revisão de
-segurança em área sensível. A volta para o <code>collaborative</code> é sempre permitida.</p>
+segurança em área sensível e em diff de adapter. A volta para o <code>collaborative</code> é sempre permitida.</p>
 <p><strong>O que você ensina.</strong> Cada correção sua vira proposta candidata em <code>inbox/proposals/</code>. O
 <code>/bkhar:retro</code> mostra as candidatas, e você promove cada uma a regra do projeto, do vault ou do kit,
 ou a rejeita com motivo. É assim que o <code>collaborative</code> treina o <code>autonomous</code>.</p>
@@ -718,6 +719,11 @@ conectados</code>.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.6.0</td>
+<td>2026-11-27</td>
+<td>Alinhado à 3.1.0: o <code>security</code> também em diff de adapter de entrada ou de banco</td>
+</tr>
 <tr>
 <td>1.5.0</td>
 <td>2026-11-20</td>

@@ -50,6 +50,7 @@ Dois agentes só ao mesmo tempo se cada um ficar inteiramente dentro de:
 - Isolamento entre tenants/inquilinos (`TenantId` no TXC, quando o projeto o adota)
 - Dado pessoal/regulado (LGPD)
 - Assinatura/validação de webhook, integração TCP externa
+- Adapters de entrada e de saída de banco (injeção: `SEC-01`, `SEC-03`)
 
 ## Invariantes do domínio (o `security` verifica explicitamente)
 - Zero `float`/`double` em campo monetário — sempre `decimal`

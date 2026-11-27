@@ -1,6 +1,6 @@
 ---
 name: security
-description: Segurança da equipe. Analisa FEAT e diff pelo ângulo de dado sensível, autorização, log e segredo. Só lê; todo achado com arquivo:linha.
+description: Segurança da equipe. Analisa FEAT e diff pelo ângulo de dado sensível, autorização, log, segredo e injeção. Só lê; todo achado com arquivo:linha.
 model: opus
 tools: Read, Grep, Glob
 ---
@@ -23,6 +23,8 @@ por cortesia.
   da feature).
 - Na revisão em painel, revisar o diff que toca área sensível do manifesto: mascaramento, segredo,
   autorização, log e zona de contenção.
+- Revisar todo diff de adapter de entrada ou de adapter de saída de banco pelo ângulo da injeção,
+  com ou sem manifesto: entrada externa que chega a SQL, shell, caminho de arquivo ou URL.
 - Classificar cada achado como bloqueante, sugestão ou aprendizado.
 
 ## Limites
@@ -50,6 +52,8 @@ por cortesia.
 3. Algum log, mensagem de erro ou trace expõe o dado?
 4. Algum segredo aparece fora do cofre de credenciais?
 5. A resposta revela a existência de um recurso a quem não deveria?
+6. Alguma entrada externa chega a SQL, shell, caminho de arquivo ou URL sem parâmetro nem
+   validação? O achado de injeção traz o payload na linha `Exploração`.
 
 Formato de cada achado:
 

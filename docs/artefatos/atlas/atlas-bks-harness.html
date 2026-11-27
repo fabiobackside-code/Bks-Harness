@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atlas do BKS Harness — Manual da Equipe de Agentes · v2.0.1</title>
+<title>Atlas do BKS Harness — Manual da Equipe de Agentes · v2.1.0</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root{color-scheme:light dark;--bg:#FBF9F4;--paper:#FFFFFF;--ink:#1C2733;--soft:#3E4A57;--quiet:#6B7480;--line:#DDD6C8;--accent:#A84E18;--accent2:#D9682B;--codebg:#F2EEE5;--axis:#8A8F94;--grid:#CFCAC0;--tint:#F1ECE2}
@@ -39,12 +39,12 @@ ul li::marker,ol li::marker{color:var(--accent)}
 </style></head><body><main>
 <section class="cover"><div class="eyebrow">FABIO · BKS · BKS HARNESS</div>
 <div><h1>Atlas do BKS Harness</h1><p class="sub">Manual da Equipe de Agentes: conceitos, arquitetura, equipe, ritos, aprendizado, comandos com manual de uso, skills e um case de ponta a ponta.</p></div>
-<div class="meta">Versão 2.0.1 · Claude primeiro, plugável a DeepSeek, Ollama e outros</div></section>
+<div class="meta">Versão 2.1.0 · Claude primeiro, plugável a DeepSeek, Ollama e outros</div></section>
 <nav class="toc"><div class="eyebrow">SUMÁRIO</div><ol><li><a href="#prefacio">Prefácio</a></li><li><a href="#parte-i-fundamentos">Parte I — Fundamentos</a></li><li><a href="#parte-ii-arquitetura">Parte II — Arquitetura</a></li><li><a href="#parte-iii-a-equipe">Parte III — A Equipe</a></li><li><a href="#parte-iv-ritos-e-dialogo">Parte IV — Ritos e diálogo</a></li><li><a href="#parte-v-o-ciclo-de-aprendizado">Parte V — O ciclo de aprendizado</a></li><li><a href="#parte-vi-fluxo-e-comandos">Parte VI — Fluxo e comandos</a></li><li><a href="#parte-vii-case-comprovante-pix">Parte VII — Case: comprovante PIX</a></li><li><a href="#parte-viii-implantacao">Parte VIII — Implantação</a></li><li><a href="#parte-ix-evolucao-skills-plugaveis">Parte IX — Evolução: skills plugáveis</a></li><li><a href="#parte-x-manual-de-comandos">Parte X — Manual de comandos</a></li><li><a href="#apendices">Apêndices</a></li></ol></nav>
 <h2 id="prefacio">Prefácio</h2>
 <p>Este manual descreve o BKS (Backside) Harness: uma equipe de sete papéis, seis agentes e o Gerente, que trabalha com você, conversa com você e faz o seu padrão de desenvolvimento crescer a cada projeto. Ele não é uma ferramenta de vibe coding. O código é consequência de conversas, decisões registradas e verificações executadas.</p>
 <p>O harness nasceu de dois projetos. O <strong>2brains</strong> (<code>${BKS_VAULT}</code>, template público em <code>bks-2brains</code>) é o vault: guarda o que atravessa projetos. Ali ficam quem você é (<code>workbench/</code>), o que você aprendeu (<code>knowledge/</code>) e os projetos em <code>repos/{backside|w3|private}/</code>, cada um com git e memória próprios. O <strong>BKS kit</strong> (<code>bks-sdd-kit</code>, plugin <code>bks</code> 0.7.0) era a ferramenta: 17 skills, 12 comandos <code>/bks:*</code>, quatro agentes, guardas em <code>hooks/</code> e 20 casos de eval.</p>
-<p>O harness é esse kit evoluído e rebatizado <code>bkhar</code>, sobre o mesmo vault. Na 3.0.1 ele tem 19 skills, 25 comandos <code>/bkhar:*</code>, seis agentes, oito guardas, 48 regras registradas e 28 casos de eval. Nenhum comando lê o vault para funcionar: cada projeto segue autossuficiente.</p>
+<p>O harness é esse kit evoluído e rebatizado <code>bkhar</code>, sobre o mesmo vault. Na 3.1.0 ele tem 19 skills, 25 comandos <code>/bkhar:*</code>, seis agentes, oito guardas, 51 regras registradas e 28 casos de eval. Nenhum comando lê o vault para funcionar: cada projeto segue autossuficiente.</p>
 <p><strong>Para quem é.</strong> Para você, como arquiteto e dono do padrão. E, mais adiante, para a sua equipe de devs júnior e pleno, que podem trabalhar com os mesmos agentes e o mesmo padrão.</p>
 <p><strong>Como ler.</strong> Fundamentos e Arquitetura explicam o porquê e a estrutura. Equipe, Ritos e Aprendizado são o coração: quem trabalha, como dialoga e como aprende. Fluxo e comandos é a referência. O case mostra tudo funcionando. Implantação conta o caminho até aqui e o que vem depois. Evolução mostra como o harness cresce com skills novas. O Manual de comandos detalha cada comando. Os apêndices trazem templates e o histórico de versões.</p>
 <p>Três documentos completam este: o guia para quem chega (<code>docs/artefatos/guia/</code>), que explica o desenho por pergunta; o treinamento (<code>docs/artefatos/treinamento/</code>), que ensina a instalar e usar; e o <code>docs/ARCHITECTURE.md</code>, com o porquê de cada decisão.</p>
@@ -341,12 +341,18 @@ ul li::marker,ol li::marker{color:var(--accent)}
 <li>o <code>learning.py export</code>, o <code>harvest</code> e o <code>library export</code> recusam levar ao vault o que tiver dado pessoal ou segredo;</li>
 <li>no modo <code>autonomous</code>, dado pessoal, autorização e segredo não se presumem: param em <code>BLOQUEIO</code>.</li>
 </ul>
+<p>Na aplicação que o harness gera, três regras de segurança têm sensor:</p>
+<ul>
+<li><strong>SQL só com parâmetro (<code>SEC-01</code>):</strong> um teste de arquitetura em cada stack (.NET, TypeScript e Go) recusa SQL interpolado, concatenado com valor ou formatado. SQL montado em mais de um comando (<code>sql += id</code>) escapa ao teste e fica com a revisão da Segurança;</li>
+<li><strong>dependência sem vulnerabilidade conhecida (<code>SEC-02</code>):</strong> o CI do template roda o OSV-Scanner sobre o lockfile, que as skills .NET e TypeScript passam a ligar;</li>
+<li><strong>entrada externa revisada (<code>SEC-03</code>):</strong> a Segurança revisa todo diff de adapter de entrada ou de saída de banco pelo ângulo da injeção, com ou sem manifesto, e o TEST de FEAT que recebe texto livre traz um caso com payload de injeção contra banco real.</li>
+</ul>
 <p>Projeto com área sensível ganha um manifesto em <code>{repo}/.claude/multiagente.md</code>, a partir do template <code>manifesto-projeto.md</code> do kit. O manifesto traz:
 - os comandos de verificação;
 - as zonas de contenção, que só a sessão principal edita;
 - as áreas sensíveis, que exigem <code>/bkhar:review</code>;
 - os invariantes do domínio.</p>
-<p>O <code>/bkhar:review</code> lê o manifesto para dimensionar o painel.</p>
+<p>O <code>/bkhar:review</code> lê o manifesto para dimensionar o painel. Sem manifesto, a Segurança ainda entra quando o diff toca adapter de entrada ou de banco.</p>
 <p><em>Proposto:</em> um policy engine que troque o provedor por zona sensível. Ele não existe. Hoje, em contexto bancário sob BACEN (Banco Central do Brasil) e LGPD (Lei Geral de Proteção de Dados), a escolha do provedor é sua, feita pelo lançador antes da sessão.</p>
 <h2 id="parte-iii-a-equipe">Parte III — A Equipe</h2>
 <p>A equipe tem sete papéis, seis agentes e o Gerente, e cada um tem uma função, um limite e um conjunto de perguntas que sempre faz. Nenhum agente decide por você: eles aconselham, questionam e executam, mas a decisão é sua e fica registrada.</p>
@@ -443,7 +449,7 @@ ul li::marker,ol li::marker{color:var(--accent)}
 <p><strong>Arquiteto.</strong> Guarda o seu padrão: Hexagonal, DDD (desenho guiado pelo domínio) tático, TXC (Transaction Context) quando o projeto o adota e Result Pattern. Toda recomendação cita a regra ou a página da wiki que a sustenta. Quando uma decisão contradiz o padrão, ele exige um ADR. Escreve FEAT, TASK e ADR, e roda o <code>arch</code> e o <code>plan</code>. Fontes: skill <code>bks-standards</code>, <code>brain/engineering/</code> do projeto, <code>knowledge/wiki/architecture/</code>, os ADRs do projeto e as skills de stack e de arquitetura.</p>
 <p><strong>Dev.</strong> Implementa uma tentativa do LOOP-4 por vez, contra os testes que falham. Diferente de um vibe coder, ele explica: qual abordagem escolheu, qual descartou e por quê. Quando a spec é ambígua, ele para e pergunta antes de codificar. Fontes: FEAT, TEST, a task e as skills de stack.</p>
 <p><strong>Testes.</strong> Pensa como quem quer quebrar o sistema. Questiona a FEAT no refinamento, escreve o TEST e, no passo 0 do <code>/bkhar:loop</code>, o RED em código, antes do Dev. Não revisa os próprios testes. Fontes: TEST, critérios de aceite e os casos do <code>LEARNINGS.md</code> da área da task.</p>
-<p><strong>Segurança.</strong> Analisa cada FEAT e cada diff pelo ângulo de dado sensível, autorização, log, segredo e conformidade. Confere mascaramento e se a zona do manifesto foi respeitada. Fontes: manifesto, checklist de segurança, normas aplicáveis.</p>
+<p><strong>Segurança.</strong> Analisa cada FEAT e cada diff pelo ângulo de dado sensível, autorização, log, segredo, injeção e conformidade. Revisa todo diff de adapter de entrada ou de banco, com ou sem manifesto. Confere mascaramento e se a zona do manifesto foi respeitada. Fontes: manifesto, checklist de segurança, normas aplicáveis.</p>
 <p><strong>Qualidade.</strong> Revisa legibilidade, nomes, tamanho de função, comentários desnecessários e smells, sempre balanceando com custo real de performance. Pensa na sua equipe júnior e pleno como leitora do código. Julga também os testes que o Testes escreveu e os resultados da execução, e devolve o defeito resolvido como caso para o <code>LEARNINGS.md</code>. No <code>/bkhar:audit --deep</code>, procura contradição de sentido entre guias. Fontes: <code>bks-clean-code</code>, Object Calisthenics, catálogo de refactoring.</p>
 <p><strong>Documentador.</strong> Grava o ADR de cada painel logo depois da sua escolha e sincroniza a documentação do que já foi verificado. Fontes: tudo o que foi decidido e conferido na sessão.</p>
 <h3>13. Regras de convivência</h3>
@@ -766,7 +772,7 @@ evidencia: ADR-007; CPF completo em log de Debug
 </tbody>
 </table>
 <p><strong>Prontidão.</strong> O <code>/bkhar:mode autonomous</code> só troca o modo quando o <code>scripts/readiness.py</code>, sem chamar modelo, concede: CONTEXT revisado ou aprovado, PRD e PLAN aprovados, grafo válido, ARCH e modelos aprovados e em dia, nenhuma questão em aberto e a stack no perfil. A recusa lista o que falta por nível e o comando que resolve. A troca grava ADR; sem ADR, não houve troca.</p>
-<p><strong>O que nenhum modo afrouxa:</strong> os guardas de <code>hooks/</code>, build e testes verdes, o RED antes do código, o máximo de 4 tentativas, nada de push na <code>main</code> e a Segurança em área sensível. Dado pessoal, autorização e segredo não se presumem: param em <code>BLOQUEIO</code>. Em <code>rigor: producao</code>, os contratos da onda de desenho continuam com você.</p>
+<p><strong>O que nenhum modo afrouxa:</strong> os guardas de <code>hooks/</code>, build e testes verdes, o RED antes do código, o máximo de 4 tentativas, nada de push na <code>main</code> e a Segurança em área sensível e em diff de adapter. Dado pessoal, autorização e segredo não se presumem: param em <code>BLOQUEIO</code>. Em <code>rigor: producao</code>, os contratos da onda de desenho continuam com você.</p>
 <h3>26. Ondas e painel</h3>
 <p>O <code>/bkhar:plan</code> grava o grafo <code>outputs/GRAPH-{projeto}.json</code>. Cada task declara o que <code>consome</code>, o que <code>produz</code> e os <code>arquivos</code> que escreve. As ondas são calculadas, não declaradas: a task vem depois de quem produz o que ela consome, e só começa quando tudo o que consome existe com <code>status: aprovado</code>.</p>
 <table>
@@ -821,7 +827,7 @@ evidencia: ADR-007; CPF completo em log de Debug
 <p>Na quarta falha, o <code>outputs/BLOQUEIO-T-NNN.md</code> traz o diagnóstico, o placar, as opções e a seção <code>## Retomada</code>. Você preenche o que mudou e roda <code>/bkhar:loop T-NNN --resume</code>; a retomada sem informação é recusada. Se a sessão cai, o mesmo <code>--resume</code> volta ao último ponto seguro, e a tentativa interrompida não conta. Duas quedas na mesma tentativa viram bloqueio.</p>
 <p>A integração é <code>merge --no-ff</code>: a ordem <code>spec → red → review</code> fica no histórico como prova do método, e a task inteira se desfaz com um <code>revert -m 1</code>.</p>
 <h3>28. Regras, deriva e medição</h3>
-<p><strong>Toda regra tem registro.</strong> O <code>rules.json</code> liga cada uma das 48 regras à fonte que a enuncia e ao sensor que a confere, computacional ou inferencial. O <code>scripts/rules_report.py</code> gera o <code>docs/regras.md</code> e recusa três defeitos:
+<p><strong>Toda regra tem registro.</strong> O <code>rules.json</code> liga cada uma das 51 regras à fonte que a enuncia e ao sensor que a confere, computacional ou inferencial. O <code>scripts/rules_report.py</code> gera o <code>docs/regras.md</code> e recusa três defeitos:
 - sensor fantasma, que aponta para arquivo inexistente;
 - seção que sumiu da fonte;
 - guarda órfão, que não verifica nenhuma regra.</p>
@@ -934,7 +940,7 @@ evidencia: ADR-007; CPF completo em log de Debug
 <tr>
 <td><code>/bkhar:review</code></td>
 <td>Repo</td>
-<td>Revisão em painel: Testes, Qualidade e, em área sensível, Segurança</td>
+<td>Revisão em painel: Testes, Qualidade e, em área sensível ou diff de adapter, Segurança</td>
 </tr>
 <tr>
 <td><code>/bkhar:status</code></td>
@@ -1108,6 +1114,11 @@ evidencia: ADR-007; CPF completo em log de Debug
 <td>feita: tag <code>v3.0.0</code> no privado; a <code>v3.0.1</code>, com o manifesto em 3.0.1, no privado e no público</td>
 </tr>
 <tr>
+<td>3.1.0</td>
+<td>segurança da aplicação gerada com sensor: SQL só com parâmetro, OSV-Scanner no CI, a Segurança em todo diff de adapter e payload de injeção no TEST</td>
+<td>feita na <code>feat/3.1.0</code></td>
+</tr>
+<tr>
 <td>validação pós-3.0.0</td>
 <td>as provas do piloto, as execuções de referência e o contexto por papel</td>
 <td>depois da tag <code>v3.0.0</code></td>
@@ -1136,7 +1147,7 @@ evidencia: ADR-007; CPF completo em log de Debug
 │                                        learning, harvest, library, dashboard,
 │                                        bkhar, keyvault, maestri_config, precommit,
 │                                        install_guards, publish, build_artefatos
-├── rules.json                           o registro das 48 regras
+├── rules.json                           o registro das 51 regras
 ├── evals\ · tests\                      28 casos com a linha de base; suíte sem modelo
 ├── decisions\                           ADR-001 a ADR-018
 └── docs\                                ARCHITECTURE, regras.md, artefatos\, planejamento\
@@ -1165,6 +1176,7 @@ ${BKS_VAULT}\                              o vault, só conteúdo
 <li>[x] Equipe em terminais do Maestri, com queda para subagente (3.0.1)</li>
 <li>[x] Recuperação da task, métrica por fase, sensores de arquitetura, registro de regras e deriva (3.0.0)</li>
 <li>[x] Linha de base dos evals: 28 casos, delta médio +0,19 (3.0.0)</li>
+<li>[x] Segurança da aplicação gerada com sensor: injeção e dependência (3.1.0)</li>
 <li>[ ] Fechar a 3.0.0: arrumação, atestado, merge, tag e publicação (Ações 013 a 015)</li>
 <li>[ ] Validação pós-3.0.0 no <code>poc-treino-harness</code>: rito por terminal, comando delegado, Bash recusado no Arquiteto, Maestri fechado e reaberto</li>
 <li>[ ] <code>--wave</code>, ramo <code>autonomous</code> e painel numa onda real</li>
@@ -1648,7 +1660,7 @@ bkhar -- &lt;args do claude&gt;
 <td>9</td>
 <td><code>/bkhar:review</code></td>
 <td>repo</td>
-<td>revisão em painel: <code>tester</code>, <code>quality</code> e, em área sensível, <code>security</code></td>
+<td>revisão em painel: <code>tester</code>, <code>quality</code> e, em área sensível ou diff de adapter, <code>security</code></td>
 </tr>
 <tr>
 <td>10</td>
@@ -1858,7 +1870,7 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 <h4><code>/bkhar:ingest</code></h4>
 <p><strong>Para que serve.</strong> Leva conhecimento para a base transversal do vault, em <code>${BKS_VAULT}/knowledge/</code>. Aceita uma fonte, um lote ou uma pasta de entrada.</p>
 <p><strong>Onde rodar.</strong> De qualquer pasta. O comando opera sempre sobre <code>${BKS_VAULT}/knowledge/</code>, e os caminhos do argumento são relativos a ela.</p>
-<p><strong>Quando usar.</strong> Quando um artigo, livro, paper ou vídeo merece virar página permanente da wiki. Também para arquivar uma nota pessoal de prospecção.</p>
+<p><strong>Quando usar.</strong> Quando um artigo, livro, paper ou vídeo merece virar página permanente da wiki. Também para arquivar uma nota pessoal de prospecção e para registrar um artigo seu já publicado como experiência.</p>
 <p><strong>Pré-requisito.</strong> A fonte salva em <code>raw/</code>, um link, a tabela de lote ou arquivos em <code>raw/_inbox/</code>.</p>
 <p><strong>Argumentos.</strong> O caminho ou a URL da fonte. Sem argumento, assume <code>raw/_inbox/</code>.</p>
 <table>
@@ -1890,6 +1902,10 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 <td>arquiva uma nota pessoal, sem curar</td>
 </tr>
 <tr>
+<td><code>/bkhar:ingest raw/autorais/nome.docx</code></td>
+<td>registra um artigo autoral publicado (também <code>.md</code> ou <code>.pdf</code>)</td>
+</tr>
+<tr>
 <td><code>/bkhar:ingest https://exemplo.com/artigo</code></td>
 <td>busca o link, salva cópia em <code>raw/</code> e ingere</td>
 </tr>
@@ -1905,17 +1921,18 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 </table>
 <p><strong>O que ele faz, passo a passo.</strong></p>
 <ol>
-<li>Classifica a natureza da fonte: externa (de terceiro, vai ser curada) ou nota pessoal (preservada como está). Na dúvida, pergunta.</li>
+<li>Classifica a natureza da fonte: externa (de terceiro, vai ser curada), nota pessoal (preservada como está) ou artigo autoral publicado (registrado como experiência). Na dúvida, pergunta.</li>
 <li>Fonte externa: lê, resume, extrai conceitos e cria ou atualiza a página certa em <code>wiki/</code>.</li>
 <li>Link ainda não salvo: grava antes uma cópia em <code>raw/articles/&lt;slug&gt;.md</code>, com a URL no frontmatter.</li>
 <li>Nota pessoal: copia para <code>wiki/prospecções/&lt;slug&gt;.md</code> com <code>type: "prospecção"</code> ou <code>"reflexao"</code>, sem reescrever a ideia.</li>
+<li>Artigo autoral: grava <code>wiki/experiencia/artigos/&lt;slug&gt;.md</code> com <code>type: "artigo-autoral"</code> e as seções Publicação, Teses (na voz do autor, com trecho citado), Experiência que sustenta, Conecta com e Original. Data e link da publicação faltando: pergunta.</li>
 <li>Lote: processa uma fonte por vez, da prioridade <code>high</code> para a <code>low</code>, e imprime uma linha por fonte.</li>
 <li>Pasta de entrada: move cada arquivo para a subpasta certa de <code>raw/</code> e ingere pela regra do tipo.</li>
 <li>Atualiza <code>wiki/index.md</code> e <code>wiki/log.md</code> ao fim de cada fonte.</li>
 </ol>
 <p><strong>O que produz.</strong></p>
 <ul>
-<li>páginas em <code>${BKS_VAULT}/knowledge/wiki/</code>, ou em <code>wiki/prospecções/</code> para nota pessoal</li>
+<li>páginas em <code>${BKS_VAULT}/knowledge/wiki/</code>, em <code>wiki/prospecções/</code> para nota pessoal ou em <code>wiki/experiencia/artigos/</code> para artigo autoral</li>
 <li>cópia da fonte em <code>raw/</code> quando veio de link ou da <code>_inbox</code></li>
 <li>registro em <code>wiki/index.md</code> e <code>wiki/log.md</code></li>
 </ul>
@@ -2462,8 +2479,8 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 </tr>
 <tr>
 <td><code>security</code></td>
-<td>quando o diff toca área sensível do manifesto</td>
-<td>dado sensível, autorização, log, segredo, zona de contenção</td>
+<td>quando o diff toca área sensível do manifesto, um adapter de entrada ou um adapter de saída de banco</td>
+<td>dado sensível, autorização, log, segredo, zona de contenção, injeção</td>
 </tr>
 <tr>
 <td><code>architect</code></td>
@@ -2473,11 +2490,11 @@ cd ${BKS_VAULT}/repos/backside/pix-comprovante
 </tbody>
 </table>
 <p>O <code>tester</code> não revisa os próprios testes. A força das asserções e a fragilidade são do <code>quality</code>.</p>
-<p><strong>Pré-requisito.</strong> O manifesto em <code>{repo}/.claude/multiagente.md</code>. Sem ele, <code>tester</code> e <code>quality</code> rodam, o <code>security</code> não, e o comando orienta a criar o manifesto a partir do template <code>manifesto-projeto.md</code>.</p>
+<p><strong>Pré-requisito.</strong> O manifesto em <code>{repo}/.claude/multiagente.md</code>. Sem ele, <code>tester</code> e <code>quality</code> rodam, o <code>security</code> só roda se o diff tocar adapter, e o comando orienta a criar o manifesto a partir do template <code>manifesto-projeto.md</code>.</p>
 <p><strong>Argumentos.</strong> O repo a revisar, <code>${BKS_VAULT}/repos/{categoria}/{projeto}</code>. Sem argumento, o comando pergunta. Ele nunca adivinha o projeto ativo.</p>
 <p><strong>O que ele faz, passo a passo.</strong></p>
 <ol>
-<li>Confere o manifesto e se a mudança toca área sensível. Isso decide se o <code>security</code> roda.</li>
+<li>Confere se o diff toca adapter de entrada ou de saída de banco e, pelo manifesto, se toca área sensível. Qualquer um dos dois faz o <code>security</code> rodar; pelo adapter, ele revisa a injeção mesmo sem manifesto.</li>
 <li>Monta o contexto de cada agente: o diff da entrega, o TEST, as invariantes e áreas sensíveis do manifesto, <code>decisions/</code>.</li>
 <li>Chama os agentes em invocações separadas e paralelas.</li>
 <li>Junta os achados, cada um com <code>arquivo:linha</code>, e classifica:</li>
@@ -2776,7 +2793,7 @@ Cobertura (tester): os 4 cenários do TEST estão cobertos.
 <p><strong>Cuidados.</strong></p>
 <ul>
 <li>O comando nunca aprova documento para passar na prontidão; aprovar é decisão sua.</li>
-<li>Nenhum modo afrouxa os guardas, o RED antes do código, as 4 tentativas e o <code>security</code> em área sensível.</li>
+<li>Nenhum modo afrouxa os guardas, o RED antes do código, as 4 tentativas e o <code>security</code> em área sensível e em diff de adapter.</li>
 </ul>
 <hr />
 <h4><code>/bkhar:retro</code></h4>
@@ -3278,7 +3295,7 @@ Cobertura (tester): os 4 cenários do TEST estão cobertos.
 <p>O formato real dos agentes do <code>bkhar</code>, aqui com a Segurança, resumida de <code>agents/security.md</code>. O frontmatter tem só as quatro chaves que o Claude Code lê; as skills que o papel carrega ficam numa seção do corpo, para não depender de chave que a plataforma não conhece. A primeira linha do corpo anuncia o tier, e as sete seções são as mesmas em todo perfil.</p>
 <pre><code class="language-markdown">---
 name: security
-description: Segurança da equipe. Analisa FEAT e diff pelo ângulo de dado sensível, autorização, log e segredo. Só lê; todo achado com arquivo:linha.
+description: Segurança da equipe. Analisa FEAT e diff pelo ângulo de dado sensível, autorização, log, segredo e injeção. Só lê; todo achado com arquivo:linha.
 model: opus
 tools: Read, Grep, Glob
 ---
@@ -3294,6 +3311,7 @@ Direto, cético, nunca aprova por cortesia.
 ## Responsabilidades
 - No refinamento, até três perguntas pelo ângulo da segurança
 - Na revisão em painel, o diff que toca área sensível do manifesto
+- Todo diff de adapter de entrada ou de banco, pelo ângulo da injeção
 - Classificar cada achado: bloqueante, sugestão ou aprendizado
 
 ## Limites
@@ -3309,6 +3327,10 @@ Direto, cético, nunca aprova por cortesia.
 1. Que dado sensível passa por aqui?
 2. Quem pode ver este dado, e como isso é verificado?
 3. Algum log, mensagem de erro ou trace expõe o dado?
+4. Algum segredo aparece fora do cofre de credenciais?
+5. A resposta revela a existência de um recurso a quem não deveria?
+6. Alguma entrada externa chega a SQL, shell, caminho de arquivo ou URL
+   sem parâmetro nem validação?
 
 ## Skills que carrega
 `security-audit` e `bks-standards`.
@@ -3555,9 +3577,21 @@ Ver evals/: cada caso traz um diff e os achados esperados.
 <tbody>
 <tr>
 <td>Apresentação BKS Harness</td>
+<td>3.0.1</td>
+<td>2026-11-27</td>
+<td>Contagens e versão referidas à 3.1.0: 51 regras; versões dos artefatos em dia</td>
+</tr>
+<tr>
+<td>Apresentação BKS Harness</td>
 <td>3.0.0</td>
 <td>2026-11-20</td>
 <td>Revista contra o Atlas 2.0.0: quatro slides novos (guias e sensores, a equipe em terminais, travas e recuperação, regras e medição), arquitetura, componentes, modelo e provedor, comandos, caminho e versões reescritos; <code>/tasks</code> no fluxo; o que não existe sai como proposto; 34 slides</td>
+</tr>
+<tr>
+<td>Atlas do BKS Harness</td>
+<td>2.1.0</td>
+<td>2026-11-27</td>
+<td>Segurança da aplicação gerada com sensor (<code>SEC-01</code> a <code>SEC-03</code>); a Segurança também em diff de adapter; 3.1.0 no roteiro de versões; 51 regras; Apêndice A com as seis perguntas da Segurança</td>
 </tr>
 <tr>
 <td>Atlas do BKS Harness</td>

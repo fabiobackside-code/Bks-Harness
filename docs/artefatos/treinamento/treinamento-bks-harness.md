@@ -1,6 +1,6 @@
 # Treinamento do bks-harness — Instalação e uso
 
-Versão 1.5.0, sobre o plugin `bkhar` 3.0.1. A instalação foi testada com o Claude Code 2.1.303 e o `bkhar` 0.9.0; a prova numa instalação limpa da 3.0.0 ainda não rodou.
+Versão 1.6.0, sobre o plugin `bkhar` 3.1.0. A instalação foi testada com o Claude Code 2.1.303 e o `bkhar` 0.9.0; a prova numa instalação limpa da 3.0.0 ainda não rodou.
 
 ## Antes de começar
 
@@ -104,7 +104,7 @@ plugin é lido direto da pasta: o que estiver no disco vale na próxima sessão.
 
 ```
 ❯ bkhar@bks-harness
-  Version: 3.0.1
+  Version: 3.1.0
   Scope: user
   Status: ✔ enabled
 ```
@@ -318,7 +318,8 @@ Quem escreve o teste não é quem o faz passar. É essa separação que impede o
 para caber no código.
 
 Depois, o `/bkhar:review` revisa em painel: o `tester` confere a cobertura dos cenários, o
-`quality` julga o código e os testes e, em área sensível, o `security` entra. Cada achado sai como
+`quality` julga o código e os testes e, em área sensível ou diff de adapter de entrada ou de
+banco, o `security` entra. Cada achado sai como
 bloqueante, sugestão ou aprendizado.
 
 &#91;embedded content: LOOP-4 com passo 0\]
@@ -365,7 +366,7 @@ modelo e agente. Por ele você responde a um bloqueio, pausa a onda ou troca o m
 pedido é aplicado entre tentativas. O `/bkhar:status` mostra a mesma tabela no terminal.
 
 Nenhum modo afrouxa os guardas, o RED antes do código, as quatro tentativas e a revisão de
-segurança em área sensível. A volta para o `collaborative` é sempre permitida.
+segurança em área sensível e em diff de adapter. A volta para o `collaborative` é sempre permitida.
 
 **O que você ensina.** Cada correção sua vira proposta candidata em `inbox/proposals/`. O
 `/bkhar:retro` mostra as candidatas, e você promove cada uma a regra do projeto, do vault ou do kit,
@@ -459,6 +460,7 @@ O detalhe de cada comando, com passo a passo e exemplo, está no manual de coman
 
 | Versão | Data | O que mudou |
 |---|---|---|
+| 1.6.0 | 2026-11-27 | Alinhado à 3.1.0: o `security` também em diff de adapter de entrada ou de banco |
 | 1.5.0 | 2026-11-20 | Alinhado à 3.0: `/bkhar:tasks` no ciclo e na referência, `/bkhar:audit`, `--resume` do loop, Bash limitado do `architect` e ponteiro para o guia para quem chega |
 | 1.4.0 | 2026-11-06 | Capítulo 13, "Usar com o Maestri", com o `/bkhar:maestri` e o ponteiro para o guia do Maestri |
 | 1.3.0 | 2026-11-05 | Guia de preparação da máquina e dos provedores de modelo, apontando para o manual de comandos |

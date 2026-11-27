@@ -64,6 +64,7 @@ Cada linha da tabela de borda do FEAT deve ter pelo menos um caso aqui.
 | E1 | [ex: payload vazio] | [ex: body: {}] | [ex: HTTP 400, mensagem "payload obrigatório"] | Validação |
 | E2 | [ex: timeout na dep. externa] | [ex: serviço X indisponível] | [ex: HTTP 503, evento registrado no log] | Resiliência |
 | E3 | [ex: requisição duplicada] | [ex: mesmo ID enviado duas vezes] | [ex: HTTP 200 com resultado da primeira operação] | Idempotência |
+| E4 | [ex: payload de injeção em texto livre] | [ex: nome: `'; DROP TABLE orders; --`] | [ex: HTTP 201, texto gravado igual ao enviado, tabela intacta] | Segurança |
 
 **Tipos de borda aceitos:**
 - `Validação` — entrada inválida ou fora do contrato esperado
@@ -122,6 +123,11 @@ no FEAT podem ser adicionados, mas devem ser justificados.
 A coluna **Tipo** é obrigatória — ajuda o agente implementador a entender o que está sendo
 testado e escolher a estratégia de implementação correta.
 
+FEAT que recebe texto livre vindo de fora (nome, busca, filtro, comentário) tem pelo menos um caso
+`Segurança` com **payload de injeção**, mesmo que o §3 do FEAT não o cite. O payload é o do destino
+do texto: `'; DROP TABLE x; --` para SQL, `; rm -rf /` para shell, `../../etc/passwd` para caminho
+de arquivo. O resultado esperado é o texto tratado como dado, nunca como comando.
+
 **Cenários Fora de Escopo (§4):** Esta seção é tão importante quanto os cenários positivos.
 Um agente sem esta seção pode implementar testes de responsabilidade de outra feature,
 criando acoplamento indesejado entre specs. Mínimo: 1 linha. Se nenhum caso se aplicar,
@@ -130,6 +136,9 @@ escrever: *"Nenhum caso identificado como fora de escopo para esta feature."*
 **Pré-condições de Ambiente (§5):** Listar apenas o que é específico para esta feature —
 não listar dependências genéricas do projeto. Se uma pré-condição deve ser configurada
 pelo agente como parte das tasks, indicar isso explicitamente.
+
+O caso de payload de injeção em SQL pede banco real (Testcontainers), declarado aqui: mock de
+repositório não prova que o valor foi como parâmetro.
 
 ---
 
